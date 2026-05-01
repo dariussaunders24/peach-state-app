@@ -545,6 +545,29 @@ export default function EventsPage() {
   );
 }
 
+function StatusBadge({ status }: { status: string }) {
+  let styles = "border-white/20 bg-white/10 text-white/60";
+  let label = "Not RSVP";
+
+  if (status === "going") {
+    styles = "border-green-400/30 bg-green-500/20 text-green-300";
+    label = "Going";
+  }
+
+  if (status === "waitlist") {
+    styles = "border-yellow-400/30 bg-yellow-500/20 text-yellow-300";
+    label = "Waitlist";
+  }
+
+  return (
+    <div
+      className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] ${styles}`}
+    >
+      {label}
+    </div>
+  );
+}
+
 function EventCard({
   event,
   rsvp,
@@ -610,13 +633,7 @@ function EventCard({
             )}
           </div>
 
-          <div className="rounded-full border border-[#F28C52]/40 bg-[#F28C52]/10 px-3 py-1 text-sm font-semibold text-[#F28C52]">
-            {userStatus === "going"
-              ? "Going"
-              : userStatus === "waitlist"
-              ? "Waitlist"
-              : "Not RSVP’d"}
-          </div>
+          <StatusBadge status={userStatus} />
         </div>
 
         {event.difficulty && (
@@ -690,10 +707,21 @@ function EventCard({
               )}
             </div>
           ) : (
-            <p className="text-sm text-gray-400">
-              Exact meetup location, route links, and ride instructions are only
-              visible after RSVP to help manage space, safety, and group size.
-            </p>
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg">
+                🔒
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-white">
+                  Details unlock after RSVP
+                </p>
+
+                <p className="mt-1 text-sm leading-6 text-gray-400">
+                  Exact meetup location, route links, and ride instructions are visible after RSVP to help manage space, safety, and group size.
+                </p>
+              </div>
+            </div>
           )}
         </div>
 
@@ -706,13 +734,13 @@ function EventCard({
             <div className="mt-3 space-y-3">
               {goingAttendees.length > 0 && (
                 <div>
-                  <p className="text-sm font-semibold text-[#F28C52]">Going</p>
+                  <p className="text-sm font-semibold text-green-300">Going</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {goingAttendees.map((attendee: any) => (
                       <a
                         key={`${event.id}-${attendee.user_id}`}
                         href={`/members/${attendee.user_id}`}
-                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white hover:border-[#F28C52] hover:text-[#F28C52]"
+                        className="rounded-full border border-green-400/20 bg-green-500/10 px-3 py-1 text-sm text-green-200 hover:border-green-300"
                       >
                         {attendee.profiles?.name || "Member"}
                       </a>
