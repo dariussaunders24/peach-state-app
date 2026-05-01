@@ -51,19 +51,30 @@ export default function ProfilesPage() {
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 text-white sm:px-6 lg:px-8">
-      {/* HEADER */}
-      <div className="mb-8">
-        <p className="text-xs uppercase tracking-[0.3em] text-[#F28C52]/80">
-          Peach State Members
-        </p>
+      {/* HEADER WITH EDIT BUTTON */}
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-[#F28C52]/80">
+            Peach State Members
+          </p>
 
-        <h1 className="mt-2 font-cinzel text-3xl font-bold text-white md:text-4xl">
-          Member Profiles
-        </h1>
+          <h1 className="mt-2 font-cinzel text-3xl font-bold text-white md:text-4xl">
+            Member Profiles
+          </h1>
 
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-white/70">
-          Explore member rigs, builds, locations, and setups from the Peach State Off-Road and Overlanding community.
-        </p>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-white/70">
+            Explore member rigs, builds, locations, and setups from the Peach State Off-Road and Overlanding community.
+          </p>
+        </div>
+
+        {currentUserId && (
+          <a
+            href="/profiles/edit"
+            className="rounded-lg border border-[#F28C52] px-5 py-3 text-center text-sm font-semibold text-[#F28C52] transition hover:bg-[#F28C52] hover:text-black"
+          >
+            Edit My Profile
+          </a>
+        )}
       </div>
 
       {/* STATES */}
@@ -77,122 +88,108 @@ export default function ProfilesPage() {
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {profiles.map((profile) => {
-            const isMyProfile = currentUserId === profile.user_id;
+          {profiles.map((profile) => (
+            <article
+              key={profile.id || profile.user_id}
+              className="overflow-hidden rounded-2xl border border-white/10 bg-black/45 shadow-xl backdrop-blur transition hover:border-[#F28C52]/40"
+            >
+              {/* IMAGE */}
+              <div>
+                {profile.image_url ? (
+                  <img
+                    src={profile.image_url}
+                    alt={profile.rig_name || profile.vehicle || "Member rig"}
+                    className="h-64 w-full object-cover md:h-80"
+                  />
+                ) : (
+                  <div className="flex h-64 w-full items-center justify-center bg-white/5 md:h-80">
+                    <p className="text-sm text-white/40">No rig image yet</p>
+                  </div>
+                )}
+              </div>
 
-            return (
-              <article
-                key={profile.id || profile.user_id}
-                className="overflow-hidden rounded-2xl border border-white/10 bg-black/45 shadow-xl backdrop-blur transition hover:border-[#F28C52]/40"
-              >
-                {/* IMAGE */}
-                <div>
-                  {profile.image_url ? (
-                    <img
-                      src={profile.image_url}
-                      alt={profile.rig_name || profile.vehicle || "Member rig"}
-                      className="h-64 w-full object-cover md:h-80"
-                    />
-                  ) : (
-                    <div className="flex h-64 w-full items-center justify-center bg-white/5 md:h-80">
-                      <p className="text-sm text-white/40">No rig image yet</p>
-                    </div>
-                  )}
-                </div>
+              {/* MEMBER NAME */}
+              <div className="border-b border-white/10 px-5 py-5">
+                <p className="text-xs uppercase tracking-[0.25em] text-white/50">
+                  Member
+                </p>
 
-                {/* MEMBER NAME */}
-                <div className="border-b border-white/10 px-5 py-5">
+                <h2 className="mt-1 font-cinzel text-2xl font-bold leading-tight text-white">
+                  {profile.name || "Unnamed Member"}
+                </h2>
+              </div>
+
+              {/* CONTENT */}
+              <div className="space-y-4 p-5">
+                {/* BUILD NAME */}
+                <div className="border-b border-[#F28C52]/20 pb-4">
                   <p className="text-xs uppercase tracking-[0.25em] text-white/50">
-                    Member
+                    Build Name
                   </p>
 
-                  <h2 className="mt-1 font-cinzel text-2xl font-bold leading-tight text-white">
-                    {profile.name || "Unnamed Member"}
-                  </h2>
+                  <p className="mt-1 text-xl font-bold leading-tight text-[#F28C52]">
+                    {profile.rig_name || "Unnamed Build"}
+                  </p>
                 </div>
 
-                {/* CONTENT */}
-                <div className="space-y-4 p-5">
-                  {/* BUILD NAME */}
-                  <div className="border-b border-[#F28C52]/20 pb-4">
-                    <p className="text-xs uppercase tracking-[0.25em] text-white/50">
-                      Build Name
-                    </p>
+                {/* VEHICLE */}
+                <div className="border-b border-white/10 pb-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">
+                    Vehicle
+                  </p>
 
-                    <p className="mt-1 text-xl font-bold leading-tight text-[#F28C52]">
-                      {profile.rig_name || "Unnamed Build"}
-                    </p>
-                  </div>
-
-                  {/* VEHICLE */}
-                  <div className="border-b border-white/10 pb-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-white/50">
-                      Vehicle
-                    </p>
-
-                    <p className="mt-1 text-base text-white">
-                      {profile.vehicle || "Not listed"}
-                    </p>
-                  </div>
-
-                  {/* LOCATION + EXPERIENCE */}
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.2em] text-white/50">
-                        Location
-                      </p>
-
-                      <p className="mt-1 text-sm text-white/80">
-                        {profile.location || "Not listed"}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.2em] text-white/50">
-                        Experience
-                      </p>
-
-                      <p className="mt-1 text-sm text-white/80">
-                        {profile.experience_level || "Not listed"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* MODS */}
-                  <div className="border-t border-white/10 pt-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-white/50">
-                      Mods / Setup
-                    </p>
-
-                    <p className="mt-2 text-sm leading-6 text-white/75">
-                      {profile.mods || "No mods listed yet."}
-                    </p>
-                  </div>
-
-                  {/* RECOVERY */}
-                  <div className="border-t border-white/10 pt-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-white/50">
-                      Recovery Gear
-                    </p>
-
-                    <p className="mt-2 text-sm leading-6 text-white/75">
-                      {profile.recovery_gear || "No recovery gear listed yet."}
-                    </p>
-                  </div>
-
-                  {/* EDIT BUTTON FOR OWNER ONLY */}
-                  {isMyProfile && (
-                    <a
-                      href="/profiles/edit"
-                      className="block rounded-lg border border-[#F28C52] px-4 py-2 text-center text-sm font-semibold text-[#F28C52] transition hover:bg-[#F28C52] hover:text-black"
-                    >
-                      Edit My Profile
-                    </a>
-                  )}
+                  <p className="mt-1 text-base text-white">
+                    {profile.vehicle || "Not listed"}
+                  </p>
                 </div>
-              </article>
-            );
-          })}
+
+                {/* LOCATION + EXPERIENCE */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-white/50">
+                      Location
+                    </p>
+
+                    <p className="mt-1 text-sm text-white/80">
+                      {profile.location || "Not listed"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-white/50">
+                      Experience
+                    </p>
+
+                    <p className="mt-1 text-sm text-white/80">
+                      {profile.experience_level || "Not listed"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* MODS */}
+                <div className="border-t border-white/10 pt-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">
+                    Mods / Setup
+                  </p>
+
+                  <p className="mt-2 text-sm leading-6 text-white/75">
+                    {profile.mods || "No mods listed yet."}
+                  </p>
+                </div>
+
+                {/* RECOVERY */}
+                <div className="border-t border-white/10 pt-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">
+                    Recovery Gear
+                  </p>
+
+                  <p className="mt-2 text-sm leading-6 text-white/75">
+                    {profile.recovery_gear || "No recovery gear listed yet."}
+                  </p>
+                </div>
+              </div>
+            </article>
+          ))}
         </div>
       )}
     </main>
