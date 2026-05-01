@@ -8,10 +8,16 @@ type ProfileForm = {
   location: string;
   vehicle: string;
   rig_name: string;
-  mods: string;
-  recovery_gear: string;
-  experience_level: string;
   image_url: string;
+  suspension: string;
+  tires_wheels: string;
+  armor_protection: string;
+  lighting: string;
+  recovery_gear: string;
+  comms: string;
+  roof_camp_setup: string;
+  future_mods: string;
+  build_notes: string;
 };
 
 export default function EditProfilePage() {
@@ -25,10 +31,16 @@ export default function EditProfilePage() {
     location: "",
     vehicle: "",
     rig_name: "",
-    mods: "",
-    recovery_gear: "",
-    experience_level: "",
     image_url: "",
+    suspension: "",
+    tires_wheels: "",
+    armor_protection: "",
+    lighting: "",
+    recovery_gear: "",
+    comms: "",
+    roof_camp_setup: "",
+    future_mods: "",
+    build_notes: "",
   });
 
   useEffect(() => {
@@ -63,10 +75,16 @@ export default function EditProfilePage() {
         location: data.location || "",
         vehicle: data.vehicle || "",
         rig_name: data.rig_name || "",
-        mods: data.mods || "",
-        recovery_gear: data.recovery_gear || "",
-        experience_level: data.experience_level || "",
         image_url: data.image_url || "",
+        suspension: data.suspension || "",
+        tires_wheels: data.tires_wheels || "",
+        armor_protection: data.armor_protection || "",
+        lighting: data.lighting || "",
+        recovery_gear: data.recovery_gear || "",
+        comms: data.comms || "",
+        roof_camp_setup: data.roof_camp_setup || "",
+        future_mods: data.future_mods || "",
+        build_notes: data.build_notes || "",
       });
     }
 
@@ -75,7 +93,6 @@ export default function EditProfilePage() {
 
   async function uploadProfileImage(file: File) {
     if (!userId) return alert("You must be logged in.");
-    if (!file) return;
 
     setUploading(true);
 
@@ -120,10 +137,16 @@ export default function EditProfilePage() {
         location: form.location.trim(),
         vehicle: form.vehicle.trim(),
         rig_name: form.rig_name.trim(),
-        mods: form.mods.trim(),
-        recovery_gear: form.recovery_gear.trim(),
-        experience_level: form.experience_level.trim(),
         image_url: form.image_url.trim(),
+        suspension: form.suspension.trim(),
+        tires_wheels: form.tires_wheels.trim(),
+        armor_protection: form.armor_protection.trim(),
+        lighting: form.lighting.trim(),
+        recovery_gear: form.recovery_gear.trim(),
+        comms: form.comms.trim(),
+        roof_camp_setup: form.roof_camp_setup.trim(),
+        future_mods: form.future_mods.trim(),
+        build_notes: form.build_notes.trim(),
       },
       {
         onConflict: "user_id",
@@ -166,12 +189,11 @@ export default function EditProfilePage() {
         </h1>
 
         <p className="mt-3 max-w-2xl text-sm leading-6 text-white/70">
-          Update your member info, rig photo, build name, vehicle setup, and recovery gear.
+          Update your member info, rig image, and build sections shown on your public profile.
         </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
-        {/* IMAGE / PREVIEW CARD */}
         <section className="overflow-hidden rounded-2xl border border-white/10 bg-black/45 shadow-xl backdrop-blur">
           {form.image_url ? (
             <img
@@ -219,14 +241,9 @@ export default function EditProfilePage() {
                 }}
               />
             </label>
-
-            <p className="text-xs leading-5 text-white/45">
-              This image will appear on your member profile card.
-            </p>
           </div>
         </section>
 
-        {/* FORM CARD */}
         <section className="space-y-6 rounded-2xl border border-white/10 bg-black/45 p-5 shadow-xl backdrop-blur">
           <FormSection title="Member Info">
             <Field
@@ -244,42 +261,84 @@ export default function EditProfilePage() {
             />
 
             <Field
-              label="Experience Level"
-              value={form.experience_level}
-              onChange={(value) => updateField("experience_level", value)}
-              placeholder="Beginner, Intermediate, Advanced"
-            />
-          </FormSection>
-
-          <FormSection title="Rig Build">
-            <Field
-              label="Build Name"
-              value={form.rig_name}
-              onChange={(value) => updateField("rig_name", value)}
-              placeholder="MtnRoo, Trail Pig, etc."
-            />
-
-            <Field
               label="Vehicle"
               value={form.vehicle}
               onChange={(value) => updateField("vehicle", value)}
               placeholder="2020 Subaru Ascent, Jeep Wrangler, Tacoma, etc."
             />
 
-            <TextArea
-              label="Mods / Setup"
-              value={form.mods}
-              onChange={(value) => updateField("mods", value)}
-              placeholder="Lift, tires, armor, lights, suspension, comms, racks, storage, etc."
+            <Field
+              label="Build Name"
+              value={form.rig_name}
+              onChange={(value) => updateField("rig_name", value)}
+              placeholder="MtnRoo, Trail Pig, etc."
             />
           </FormSection>
 
-          <FormSection title="Recovery Setup">
+          <FormSection title="Rig Build">
+            <TextArea
+              label="Suspension"
+              value={form.suspension}
+              onChange={(value) => updateField("suspension", value)}
+              placeholder="Lift, shocks, springs, control arms, sway bar setup, etc."
+            />
+
+            <TextArea
+              label="Tires / Wheels"
+              value={form.tires_wheels}
+              onChange={(value) => updateField("tires_wheels", value)}
+              placeholder="Tire size, wheel specs, tire model, spare setup, etc."
+            />
+
+            <TextArea
+              label="Armor / Protection"
+              value={form.armor_protection}
+              onChange={(value) => updateField("armor_protection", value)}
+              placeholder="Skid plates, sliders, bumpers, diff protection, etc."
+            />
+
+            <TextArea
+              label="Lighting"
+              value={form.lighting}
+              onChange={(value) => updateField("lighting", value)}
+              placeholder="Ditch lights, light bars, fogs, rear chase lights, etc."
+            />
+
             <TextArea
               label="Recovery Gear"
               value={form.recovery_gear}
               onChange={(value) => updateField("recovery_gear", value)}
-              placeholder="Winch, straps, soft shackles, traction boards, compressor, tire repair kit, tools, etc."
+              placeholder="Winch, straps, soft shackles, traction boards, compressor, etc."
+            />
+
+            <TextArea
+              label="Comms"
+              value={form.comms}
+              onChange={(value) => updateField("comms", value)}
+              placeholder="GMRS radio, antenna, handhelds, mounts, etc."
+            />
+
+            <TextArea
+              label="Roof / Camp Setup"
+              value={form.roof_camp_setup}
+              onChange={(value) => updateField("roof_camp_setup", value)}
+              placeholder="Roof rack, awning, tent, storage, fridge, power setup, etc."
+            />
+
+            <TextArea
+              label="Future Mods"
+              value={form.future_mods}
+              onChange={(value) => updateField("future_mods", value)}
+              placeholder="Planned upgrades, future build goals, etc."
+            />
+          </FormSection>
+
+          <FormSection title="Additional Build Notes">
+            <TextArea
+              label="Build Notes"
+              value={form.build_notes}
+              onChange={(value) => updateField("build_notes", value)}
+              placeholder="Anything else you want members to know about your rig."
             />
           </FormSection>
 
@@ -318,7 +377,7 @@ function FormSection({
         {title}
       </h2>
 
-      <div className="space-y-4">{children}</div>
+      <div className="grid gap-4 md:grid-cols-2">{children}</div>
     </div>
   );
 }
@@ -371,7 +430,7 @@ function TextArea({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        rows={5}
+        rows={4}
         className="mt-2 w-full rounded-lg border border-white/20 bg-white px-3 py-3 text-black placeholder-gray-500"
       />
     </label>
