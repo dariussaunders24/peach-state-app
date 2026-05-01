@@ -40,6 +40,9 @@ export default function RootLayout({
                   <a href="/" className="hover:text-[#F28C52]">
                     Home
                   </a>
+                  <a href="/admin" className="block hover:text-[#F28C52]">
+  Admin
+</a>
                   <a href="/profiles" className="hover:text-[#F28C52]">
                     My Profile
                   </a>
