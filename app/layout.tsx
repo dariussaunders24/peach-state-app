@@ -4,6 +4,7 @@ import "./globals.css";
 import { Cinzel, Inter } from "next/font/google";
 import LogoutButton from "./components/LogoutButton";
 import MobileNav from "./components/MobileNav";
+import AdminNavLink from "./components/AdminNavLink";
 
 const cinzel = Cinzel({ subsets: ["latin"], weight: ["700"] });
 const inter = Inter({ subsets: ["latin"] });
@@ -40,27 +41,33 @@ export default function RootLayout({
                   <a href="/" className="hover:text-[#F28C52]">
                     Home
                   </a>
-                  <a href="/admin" className="block hover:text-[#F28C52]">
-  Admin
-</a>
+
+                  <AdminNavLink className="hover:text-[#F28C52]" />
+
                   <a href="/profiles" className="hover:text-[#F28C52]">
                     My Profile
                   </a>
+
                   <a href="/events" className="hover:text-[#F28C52]">
                     Events
                   </a>
+
                   <a href="/gallery" className="hover:text-[#F28C52]">
                     Gallery
                   </a>
+
                   <a href="/store" className="hover:text-[#F28C52]">
                     Store
                   </a>
+
                   <a href="/members" className="hover:text-[#F28C52]">
-  Members
-</a>
+                    Members
+                  </a>
+
                   <a href="/vendors" className="hover:text-[#F28C52]">
                     Vendors
                   </a>
+
                   <a href="/faq" className="hover:text-[#F28C52]">
                     FAQ
                   </a>
