@@ -61,26 +61,35 @@ export default function MemberProfilePage() {
       return;
     }
 
-    const { data: badgeData, error: badgeError } = await supabase
+    const { data: memberBadgeData, error: memberBadgeError } = await supabase
       .from("member_badges")
-      .select(`
-        badge_id,
-        badges:badge_id (
-          id,
-          name,
-          description,
-          image_url
-        )
-      `)
+      .select("badge_id")
       .eq("user_id", id);
 
-    if (badgeError) {
-      console.error("Error loading member badges:", badgeError.message);
+    if (memberBadgeError) {
+      console.error("Error loading member badge IDs:", memberBadgeError.message);
+    }
+
+    const badgeIds = (memberBadgeData || []).map((item) => item.badge_id);
+
+    let earnedBadges: Badge[] = [];
+
+    if (badgeIds.length > 0) {
+      const { data: earnedBadgeData, error: earnedBadgeError } = await supabase
+        .from("badges")
+        .select("id, name, description, image_url")
+        .in("id", badgeIds);
+
+      if (earnedBadgeError) {
+        console.error("Error loading earned badges:", earnedBadgeError.message);
+      }
+
+      earnedBadges = earnedBadgeData || [];
     }
 
     const { data: badgeList, error: badgeListError } = await supabase
       .from("badges")
-      .select("*")
+      .select("id, name, description, image_url")
       .order("name", { ascending: true });
 
     if (badgeListError) {
@@ -88,29 +97,19 @@ export default function MemberProfilePage() {
     }
 
     setProfile(profileData || null);
-
-    setBadges(
-      (badgeData || [])
-        .map((b: any) => b.badges)
-        .filter(Boolean)
-    );
-
+    setBadges(earnedBadges);
     setAllBadges(badgeList || []);
     setLoading(false);
   }
 
   async function assignBadge(badgeId: string) {
-    const { error } = await supabase.from("member_badges").upsert(
-      {
-        user_id: id,
-        badge_id: badgeId,
-      },
-      {
-        onConflict: "user_id,badge_id",
-      }
-    );
+    const { error } = await supabase.from("member_badges").insert({
+      user_id: id,
+      badge_id: badgeId,
+    });
 
-    if (error) {
+    // 23505 means the badge is already assigned
+    if (error && error.code !== "23505") {
       alert(error.message);
       return;
     }

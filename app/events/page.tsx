@@ -13,7 +13,10 @@ export default function EventsPage() {
 
   const [newEvent, setNewEvent] = useState({
     title: "",
-    location: "",
+    public_location: "",
+    private_location: "",
+    private_details: "",
+    route_link: "",
     event_date: "",
     capacity: "",
     difficulty: "",
@@ -38,7 +41,10 @@ export default function EventsPage() {
 
   async function createEvent() {
     const title = newEvent.title.trim();
-    const location = newEvent.location.trim();
+    const publicLocation = newEvent.public_location.trim();
+    const privateLocation = newEvent.private_location.trim();
+    const privateDetails = newEvent.private_details.trim();
+    const routeLink = newEvent.route_link.trim();
     const eventDate = newEvent.event_date.trim();
     const capacity = Number(newEvent.capacity);
     const difficulty = newEvent.difficulty.trim();
@@ -49,7 +55,11 @@ export default function EventsPage() {
 
     const { error } = await supabase.from("events").insert({
       title,
-      location,
+      location: publicLocation,
+      public_location: publicLocation,
+      private_location: privateLocation,
+      private_details: privateDetails,
+      route_link: routeLink,
       event_date: eventDate,
       capacity,
       difficulty,
@@ -59,7 +69,10 @@ export default function EventsPage() {
 
     setNewEvent({
       title: "",
-      location: "",
+      public_location: "",
+      private_location: "",
+      private_details: "",
+      route_link: "",
       event_date: "",
       capacity: "",
       difficulty: "",
@@ -299,10 +312,48 @@ export default function EventsPage() {
 
           <input
             type="text"
-            placeholder="Location"
-            value={newEvent.location}
+            placeholder="Public Location, example: North Georgia area"
+            value={newEvent.public_location}
             onChange={(e) =>
-              setNewEvent((prev) => ({ ...prev, location: e.target.value }))
+              setNewEvent((prev) => ({
+                ...prev,
+                public_location: e.target.value,
+              }))
+            }
+            className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
+          />
+
+          <input
+            type="text"
+            placeholder="Private Exact Location, visible after RSVP"
+            value={newEvent.private_location}
+            onChange={(e) =>
+              setNewEvent((prev) => ({
+                ...prev,
+                private_location: e.target.value,
+              }))
+            }
+            className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
+          />
+
+          <textarea
+            placeholder="Private Details, meetup notes, parking, gate codes, instructions"
+            value={newEvent.private_details}
+            onChange={(e) =>
+              setNewEvent((prev) => ({
+                ...prev,
+                private_details: e.target.value,
+              }))
+            }
+            className="min-h-24 w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
+          />
+
+          <input
+            type="url"
+            placeholder="Private Route Link, OnX / GPX / Google Maps"
+            value={newEvent.route_link}
+            onChange={(e) =>
+              setNewEvent((prev) => ({ ...prev, route_link: e.target.value }))
             }
             className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
           />
@@ -433,6 +484,9 @@ function EventCard({
     }
   }
 
+  const canViewPrivateDetails = isAdmin || userStatus === "going" || userStatus === "waitlist";
+  const publicLocation = event.public_location || event.location;
+
   return (
     <div className="overflow-hidden rounded-xl border border-[#F28C52]/20 bg-black/40">
       {event.cover_photo_url && (
@@ -446,7 +500,9 @@ function EventCard({
       <div className="p-5">
         <h3 className="text-xl font-bold text-white">{event.title}</h3>
 
-        {event.location && <p className="text-gray-300">{event.location}</p>}
+        {publicLocation && (
+          <p className="text-gray-300">Area: {publicLocation}</p>
+        )}
 
         {event.difficulty && (
           <p className="mt-2 text-sm font-semibold text-[#F28C52]">
@@ -470,6 +526,49 @@ function EventCard({
           </p>
         )}
 
+        <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-4">
+          {canViewPrivateDetails ? (
+            <div className="space-y-3">
+              <p className="text-sm font-semibold text-[#F28C52]">
+                RSVP Details
+              </p>
+
+              {event.private_location ? (
+                <p className="text-sm text-white">
+                  <span className="text-gray-400">Exact location:</span>{" "}
+                  {event.private_location}
+                </p>
+              ) : (
+                <p className="text-sm text-gray-400">
+                  Exact location has not been added yet.
+                </p>
+              )}
+
+              {event.private_details && (
+                <p className="whitespace-pre-line text-sm text-gray-300">
+                  {event.private_details}
+                </p>
+              )}
+
+              {event.route_link && (
+                <a
+                  href={event.route_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block rounded-lg border border-[#F28C52] px-4 py-2 text-center text-sm font-semibold text-[#F28C52] hover:bg-[#F28C52] hover:text-black"
+                >
+                  Open Route / Map
+                </a>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400">
+              Exact meetup location, route links, and ride instructions are only
+              visible after RSVP to help manage space, safety, and group size.
+            </p>
+          )}
+        </div>
+
         <div className="mt-4 flex flex-col gap-3">
           <a
             href={`/events/${event.id}`}
@@ -481,14 +580,20 @@ function EventCard({
           {currentUserId &&
             (userStatus ? (
               <button
-                onClick={() => cancelRsvp(event)}
+                onClick={async () => {
+                  await cancelRsvp(event);
+                  await loadStatus();
+                }}
                 className="rounded-lg border border-red-400 px-4 py-2 text-red-300"
               >
                 Cancel RSVP
               </button>
             ) : (
               <button
-                onClick={() => rsvp(event)}
+                onClick={async () => {
+                  await rsvp(event);
+                  await loadStatus();
+                }}
                 className="rounded-lg bg-white px-4 py-2 text-black"
               >
                 {event.goingCount >= event.capacity ? "Join Waitlist" : "RSVP"}
