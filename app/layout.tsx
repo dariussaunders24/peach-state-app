@@ -1,3 +1,4 @@
+import AuthGuard from "./components/AuthGuard";
 import type { Metadata } from "next";
 import "./globals.css";
 import { Cinzel, Inter } from "next/font/google";
@@ -47,9 +48,11 @@ export default function RootLayout({
             </div>
           </header>
 
-          <main className="mx-auto max-w-6xl px-4 py-8">
-            {children}
-          </main>
+          <AuthGuard>
+  <main className="mx-auto max-w-6xl px-4 py-8">
+    {children}
+  </main>
+</AuthGuard>
         </div>
       </body>
     </html>
