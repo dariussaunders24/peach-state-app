@@ -63,7 +63,15 @@ export default function MemberProfilePage() {
 
     const { data: badgeData, error: badgeError } = await supabase
       .from("member_badges")
-      .select("badges(*)")
+      .select(`
+        badge_id,
+        badges:badge_id (
+          id,
+          name,
+          description,
+          image_url
+        )
+      `)
       .eq("user_id", id);
 
     if (badgeError) {
@@ -80,18 +88,27 @@ export default function MemberProfilePage() {
     }
 
     setProfile(profileData || null);
-    setBadges((badgeData || []).map((b: any) => b.badges).filter(Boolean));
+
+    setBadges(
+      (badgeData || [])
+        .map((b: any) => b.badges)
+        .filter(Boolean)
+    );
+
     setAllBadges(badgeList || []);
     setLoading(false);
   }
 
   async function assignBadge(badgeId: string) {
-    
-
-    const { error } = await supabase.from("member_badges").insert({
-      user_id: id,
-      badge_id: badgeId,
-    });
+    const { error } = await supabase.from("member_badges").upsert(
+      {
+        user_id: id,
+        badge_id: badgeId,
+      },
+      {
+        onConflict: "user_id,badge_id",
+      }
+    );
 
     if (error) {
       alert(error.message);
@@ -137,6 +154,8 @@ export default function MemberProfilePage() {
       </main>
     );
   }
+
+  const earnedBadgeIds = badges.map((badge) => badge.id);
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-10 text-white">
@@ -282,20 +301,28 @@ export default function MemberProfilePage() {
             </h3>
 
             <div className="relative z-50 mt-3 flex flex-wrap gap-2">
-              {allBadges.map((badge) => (
-                <button
-                  key={badge.id}
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    assignBadge(badge.id);
-                  }}
-                  className="relative z-50 rounded-lg border border-[#F28C52]/40 px-3 py-2 text-sm text-white transition hover:bg-[#F28C52] hover:text-black"
-                >
-                  {badge.name}
-                </button>
-              ))}
+              {allBadges.map((badge) => {
+                const alreadyEarned = earnedBadgeIds.includes(badge.id);
+
+                return (
+                  <button
+                    key={badge.id}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      assignBadge(badge.id);
+                    }}
+                    className={`relative z-50 rounded-lg border px-3 py-2 text-sm transition ${
+                      alreadyEarned
+                        ? "border-[#F28C52]/20 bg-[#F28C52]/10 text-[#F28C52]"
+                        : "border-[#F28C52]/40 text-white hover:bg-[#F28C52] hover:text-black"
+                    }`}
+                  >
+                    {alreadyEarned ? `${badge.name} ✓` : badge.name}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
