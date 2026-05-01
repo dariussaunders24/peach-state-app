@@ -52,6 +52,9 @@ export default function RootLayout({
                   <a href="/store" className="hover:text-[#F28C52]">
                     Store
                   </a>
+                  <a href="/members" className="hover:text-[#F28C52]">
+  Members
+</a>
                   <a href="/vendors" className="hover:text-[#F28C52]">
                     Vendors
                   </a>

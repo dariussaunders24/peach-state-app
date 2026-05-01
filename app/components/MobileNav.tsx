@@ -11,6 +11,7 @@ export default function MobileNav() {
     { href: "/profiles", label: "My Profile" },
     { href: "/events", label: "Events" },
     { href: "/gallery", label: "Gallery" },
+    { href: "/members", label: "Members" },
     { href: "/store", label: "Store" },
     { href: "/vendors", label: "Vendors" },
     { href: "/faq", label: "FAQ" },
