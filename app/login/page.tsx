@@ -7,18 +7,31 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  async function signUp() {
-    const { error } = await supabase.auth.signUp({ email, password });
-    alert(error ? error.message : "Check your email to confirm your account.");
+  async function handleRegister() {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    alert("Registration complete. You may now log in.");
   }
 
   async function signIn() {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
     if (error) {
-  alert(error.message);
-} else {
-  window.location.href = "/";
-};
+      alert(error.message);
+    } else {
+      window.location.href = "/";
+    }
   }
 
   return (
@@ -33,6 +46,7 @@ export default function LoginPage() {
           className="w-full rounded-lg border border-gray-700 bg-white p-3 text-black"
           placeholder="Email"
           type="email"
+          value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
 
@@ -40,6 +54,7 @@ export default function LoginPage() {
           className="w-full rounded-lg border border-gray-700 bg-white p-3 text-black"
           placeholder="Password"
           type="password"
+          value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
 
@@ -52,7 +67,7 @@ export default function LoginPage() {
           </button>
 
           <button
-            onClick={signUp}
+            onClick={handleRegister}
             className="flex-1 rounded-lg border border-[#F28C52] px-4 py-3 font-semibold text-[#F28C52]"
           >
             Register
