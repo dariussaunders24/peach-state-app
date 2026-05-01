@@ -10,10 +10,16 @@ type Profile = {
   location?: string;
   vehicle?: string;
   rig_name?: string;
-  mods?: string;
-  recovery_gear?: string;
-  experience_level?: string;
   image_url?: string;
+  suspension?: string;
+  tires_wheels?: string;
+  armor_protection?: string;
+  lighting?: string;
+  recovery_gear?: string;
+  comms?: string;
+  roof_camp_setup?: string;
+  future_mods?: string;
+  build_notes?: string;
 };
 
 export default function ProfilesPage() {
@@ -51,7 +57,6 @@ export default function ProfilesPage() {
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 text-white sm:px-6 lg:px-8">
-      {/* HEADER WITH EDIT BUTTON */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-[#F28C52]/80">
@@ -77,7 +82,6 @@ export default function ProfilesPage() {
         )}
       </div>
 
-      {/* STATES */}
       {loading ? (
         <div className="rounded-2xl border border-white/10 bg-black/40 p-6 text-white/70">
           Loading member profiles...
@@ -87,28 +91,24 @@ export default function ProfilesPage() {
           No member profiles found yet.
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-6 xl:grid-cols-2">
           {profiles.map((profile) => (
             <article
               key={profile.id || profile.user_id}
               className="overflow-hidden rounded-2xl border border-white/10 bg-black/45 shadow-xl backdrop-blur transition hover:border-[#F28C52]/40"
             >
-              {/* IMAGE */}
-              <div>
-                {profile.image_url ? (
-                  <img
-                    src={profile.image_url}
-                    alt={profile.rig_name || profile.vehicle || "Member rig"}
-                    className="h-64 w-full object-cover md:h-80"
-                  />
-                ) : (
-                  <div className="flex h-64 w-full items-center justify-center bg-white/5 md:h-80">
-                    <p className="text-sm text-white/40">No rig image yet</p>
-                  </div>
-                )}
-              </div>
+              {profile.image_url ? (
+                <img
+                  src={profile.image_url}
+                  alt={profile.rig_name || profile.vehicle || "Member rig"}
+                  className="h-72 w-full object-cover md:h-96"
+                />
+              ) : (
+                <div className="flex h-72 w-full items-center justify-center bg-white/5 md:h-96">
+                  <p className="text-sm text-white/40">No rig image yet</p>
+                </div>
+              )}
 
-              {/* MEMBER NAME */}
               <div className="border-b border-white/10 px-5 py-5">
                 <p className="text-xs uppercase tracking-[0.25em] text-white/50">
                   Member
@@ -117,81 +117,68 @@ export default function ProfilesPage() {
                 <h2 className="mt-1 font-cinzel text-2xl font-bold leading-tight text-white">
                   {profile.name || "Unnamed Member"}
                 </h2>
+
+                <p className="mt-2 text-xl font-bold text-[#F28C52]">
+                  {profile.rig_name || "Unnamed Build"}
+                </p>
+
+                <p className="mt-1 text-sm text-white/70">
+                  {profile.vehicle || "Vehicle not listed"}
+                </p>
+
+                {profile.location && (
+                  <p className="mt-1 text-sm text-white/50">
+                    {profile.location}
+                  </p>
+                )}
               </div>
 
-              {/* CONTENT */}
-              <div className="space-y-4 p-5">
-                {/* BUILD NAME */}
-                <div className="border-b border-[#F28C52]/20 pb-4">
-                  <p className="text-xs uppercase tracking-[0.25em] text-white/50">
-                    Build Name
-                  </p>
+              <div className="space-y-6 p-5">
+                <section className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                  <h3 className="font-cinzel text-xl font-bold text-[#F28C52]">
+                    Rig Build
+                  </h3>
 
-                  <p className="mt-1 text-xl font-bold leading-tight text-[#F28C52]">
-                    {profile.rig_name || "Unnamed Build"}
-                  </p>
-                </div>
-
-                {/* VEHICLE */}
-                <div className="border-b border-white/10 pb-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">
-                    Vehicle
-                  </p>
-
-                  <p className="mt-1 text-base text-white">
-                    {profile.vehicle || "Not listed"}
-                  </p>
-                </div>
-
-                {/* LOCATION + EXPERIENCE */}
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-white/50">
-                      Location
-                    </p>
-
-                    <p className="mt-1 text-sm text-white/80">
-                      {profile.location || "Not listed"}
-                    </p>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <BuildBlock label="Suspension" value={profile.suspension} />
+                    <BuildBlock label="Tires / Wheels" value={profile.tires_wheels} />
+                    <BuildBlock label="Armor / Protection" value={profile.armor_protection} />
+                    <BuildBlock label="Lighting" value={profile.lighting} />
+                    <BuildBlock label="Recovery Gear" value={profile.recovery_gear} />
+                    <BuildBlock label="Comms" value={profile.comms} />
+                    <BuildBlock label="Roof / Camp Setup" value={profile.roof_camp_setup} />
+                    <BuildBlock label="Future Mods" value={profile.future_mods} />
                   </div>
+                </section>
 
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-white/50">
-                      Experience
-                    </p>
+                <section className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                  <h3 className="font-cinzel text-xl font-bold text-[#F28C52]">
+                    Additional Build Notes
+                  </h3>
 
-                    <p className="mt-1 text-sm text-white/80">
-                      {profile.experience_level || "Not listed"}
-                    </p>
-                  </div>
-                </div>
-
-                {/* MODS */}
-                <div className="border-t border-white/10 pt-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">
-                    Mods / Setup
+                  <p className="mt-4 whitespace-pre-line text-sm leading-6 text-white/80">
+                    {profile.build_notes || "No additional build notes listed."}
                   </p>
-
-                  <p className="mt-2 text-sm leading-6 text-white/75">
-                    {profile.mods || "No mods listed yet."}
-                  </p>
-                </div>
-
-                {/* RECOVERY */}
-                <div className="border-t border-white/10 pt-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">
-                    Recovery Gear
-                  </p>
-
-                  <p className="mt-2 text-sm leading-6 text-white/75">
-                    {profile.recovery_gear || "No recovery gear listed yet."}
-                  </p>
-                </div>
+                </section>
               </div>
             </article>
           ))}
         </div>
       )}
     </main>
+  );
+}
+
+function BuildBlock({ label, value }: { label: string; value?: string }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-black/40 p-4">
+      <p className="text-xs uppercase tracking-[0.18em] text-white/50">
+        {label}
+      </p>
+
+      <p className="mt-2 whitespace-pre-line text-sm font-semibold leading-6 text-white">
+        {value && value.trim() ? value : "Not listed"}
+      </p>
+    </div>
   );
 }
