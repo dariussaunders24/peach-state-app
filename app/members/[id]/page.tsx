@@ -14,6 +14,16 @@ type Profile = {
   bio?: string | null;
   mods?: string | null;
   instagram?: string | null;
+
+  rig_name?: string | null;
+  suspension?: string | null;
+  tires?: string | null;
+  armor?: string | null;
+  lighting?: string | null;
+  recovery_gear?: string | null;
+  comms?: string | null;
+  roof_camp_setup?: string | null;
+  future_mods?: string | null;
 };
 
 type Badge = {
@@ -29,8 +39,6 @@ export default function MemberProfilePage() {
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [badges, setBadges] = useState<Badge[]>([]);
-  const [allBadges, setAllBadges] = useState<Badge[]>([]);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,14 +47,6 @@ export default function MemberProfilePage() {
 
   async function loadProfile() {
     setLoading(true);
-
-    const { data: userData } = await supabase.auth.getUser();
-
-    if (userData.user?.email === "dariussaunders24@gmail.com") {
-      setIsAdmin(true);
-    } else {
-      setIsAdmin(false);
-    }
 
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
@@ -87,54 +87,14 @@ export default function MemberProfilePage() {
       earnedBadges = earnedBadgeData || [];
     }
 
-    const { data: badgeList, error: badgeListError } = await supabase
-      .from("badges")
-      .select("id, name, description, image_url")
-      .order("name", { ascending: true });
-
-    if (badgeListError) {
-      console.error("Error loading all badges:", badgeListError.message);
-    }
-
     setProfile(profileData || null);
     setBadges(earnedBadges);
-    setAllBadges(badgeList || []);
     setLoading(false);
-  }
-
-  async function assignBadge(badgeId: string) {
-    const { error } = await supabase.from("member_badges").insert({
-      user_id: id,
-      badge_id: badgeId,
-    });
-
-    // 23505 means the badge is already assigned
-    if (error && error.code !== "23505") {
-      alert(error.message);
-      return;
-    }
-
-    await loadProfile();
-  }
-
-  async function removeBadge(badgeId: string) {
-    const { error } = await supabase
-      .from("member_badges")
-      .delete()
-      .eq("user_id", id)
-      .eq("badge_id", badgeId);
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    await loadProfile();
   }
 
   if (loading) {
     return (
-      <main className="max-w-3xl mx-auto px-4 py-10 text-white">
+      <main className="max-w-4xl mx-auto px-4 py-10 text-white">
         <p className="text-white/70">Loading profile...</p>
       </main>
     );
@@ -142,7 +102,7 @@ export default function MemberProfilePage() {
 
   if (!profile) {
     return (
-      <main className="max-w-3xl mx-auto px-4 py-10 text-white">
+      <main className="max-w-4xl mx-auto px-4 py-10 text-white">
         <p>Profile not found.</p>
         <Link
           href="/members"
@@ -154,77 +114,140 @@ export default function MemberProfilePage() {
     );
   }
 
-  const earnedBadgeIds = badges.map((badge) => badge.id);
-
   return (
-    <main className="max-w-3xl mx-auto px-4 py-10 text-white">
+    <main className="max-w-4xl mx-auto px-4 py-10 text-white">
       <Link href="/members" className="text-sm text-[#F28C52] hover:underline">
         ← Back to Members
       </Link>
 
-      <div className="mt-6 rounded-2xl border border-[#F28C52]/20 bg-black/40 p-6 shadow-lg">
-        <h1 className="text-3xl md:text-4xl font-bold text-[#F28C52]">
-          {profile.name || "Member"}
-        </h1>
-
+      <div className="mt-6 overflow-hidden rounded-2xl border border-[#F28C52]/20 bg-black/40 shadow-lg">
         {profile.image_url ? (
           <img
             src={profile.image_url}
-            alt="Vehicle"
-            className="mt-6 h-64 w-full rounded-xl object-cover"
+            alt={profile.vehicle || "Member vehicle"}
+            className="h-72 w-full object-cover"
           />
         ) : (
-          <div className="mt-6 flex h-64 w-full items-center justify-center rounded-xl border border-white/10 bg-black/30 text-white/50">
+          <div className="flex h-72 w-full items-center justify-center border-b border-white/10 bg-black/30 text-white/50">
             No vehicle photo uploaded
           </div>
         )}
 
-        <div className="mt-6 space-y-5">
-          <div>
-            <p className="text-sm uppercase tracking-wide text-white/50">
-              Vehicle
-            </p>
-            <p className="text-xl font-semibold text-white">
-              {profile.vehicle || "Not listed"}
-            </p>
-          </div>
-
-          <div>
-            <p className="text-sm uppercase tracking-wide text-white/50">
-              Location
-            </p>
-            <p className="text-xl font-semibold text-white">
-              {profile.location || "Not listed"}
-            </p>
-          </div>
-
-          {profile.bio && (
+        <div className="p-6">
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-sm uppercase tracking-wide text-white/50">
-                About
-              </p>
-              <p className="mt-1 whitespace-pre-line text-white/90">
-                {profile.bio}
+              <h1 className="text-3xl md:text-4xl font-bold text-[#F28C52]">
+                {profile.name || "Member"}
+              </h1>
+
+              {profile.rig_name && (
+                <p className="mt-1 text-xl font-semibold text-white">
+                  “{profile.rig_name}”
+                </p>
+              )}
+
+              <p className="mt-1 text-white/70">
+                {profile.vehicle || "Vehicle not listed"}
               </p>
             </div>
+
+            {profile.location && (
+              <p className="text-sm text-white/60">{profile.location}</p>
+            )}
+          </div>
+
+          {/* Badges */}
+          <section className="mt-6">
+            <h2 className="text-xl font-semibold text-[#F28C52]">Badges</h2>
+
+            {badges.length === 0 ? (
+              <p className="mt-2 text-white/60">No badges yet.</p>
+            ) : (
+              <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                {badges.map((badge) => (
+                  <div
+                    key={badge.id}
+                    className="rounded-xl border border-[#F28C52]/30 bg-black/30 p-3 text-center"
+                  >
+                    {badge.image_url ? (
+                      <img
+                        src={badge.image_url}
+                        alt={badge.name}
+                        className="mx-auto mb-2 h-20 w-20 object-contain"
+                      />
+                    ) : (
+                      <div className="mx-auto mb-2 flex h-20 w-20 items-center justify-center rounded-full border border-[#F28C52]/40 text-xl font-bold text-[#F28C52]">
+                        ★
+                      </div>
+                    )}
+
+                    <p className="text-sm font-semibold text-white">
+                      {badge.name}
+                    </p>
+
+                    {badge.description && (
+                      <p className="mt-1 text-xs text-white/60">
+                        {badge.description}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* About */}
+          {profile.bio && (
+            <Section title="About">
+              <p className="whitespace-pre-line text-white/90">{profile.bio}</p>
+            </Section>
           )}
 
+          {/* Rig Build */}
+          <Section title="Rig Build">
+            <div className="grid gap-4 md:grid-cols-2">
+              <InfoBlock
+                label="Suspension"
+                value={profile.suspension || "Not listed"}
+              />
+              <InfoBlock
+                label="Tires / Wheels"
+                value={profile.tires || "Not listed"}
+              />
+              <InfoBlock
+                label="Armor / Protection"
+                value={profile.armor || "Not listed"}
+              />
+              <InfoBlock
+                label="Lighting"
+                value={profile.lighting || "Not listed"}
+              />
+              <InfoBlock
+                label="Recovery Gear"
+                value={profile.recovery_gear || "Not listed"}
+              />
+              <InfoBlock label="Comms" value={profile.comms || "Not listed"} />
+              <InfoBlock
+                label="Roof / Camp Setup"
+                value={profile.roof_camp_setup || "Not listed"}
+              />
+              <InfoBlock
+                label="Future Mods"
+                value={profile.future_mods || "Not listed"}
+              />
+            </div>
+          </Section>
+
           {profile.mods && (
-            <div>
-              <p className="text-sm uppercase tracking-wide text-white/50">
-                Build / Mods
-              </p>
-              <p className="mt-1 whitespace-pre-line text-white/90">
+            <Section title="Additional Build Notes">
+              <p className="whitespace-pre-line text-white/90">
                 {profile.mods}
               </p>
-            </div>
+            </Section>
           )}
 
           {profile.instagram && (
-            <div>
-              <p className="text-sm uppercase tracking-wide text-white/50">
-                Instagram
-              </p>
+            <Section title="Instagram">
               <a
                 href={`https://instagram.com/${profile.instagram.replace(
                   "@",
@@ -236,96 +259,28 @@ export default function MemberProfilePage() {
               >
                 @{profile.instagram.replace("@", "")}
               </a>
-            </div>
+            </Section>
           )}
         </div>
-
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold text-[#F28C52]">Badges</h2>
-
-          {badges.length === 0 && (
-            <p className="mt-2 text-white/60">No badges yet.</p>
-          )}
-
-          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {badges.map((badge) => (
-              <div
-                key={badge.id}
-                className="rounded-xl border border-[#F28C52]/30 bg-black/30 p-3 text-center"
-              >
-                {badge.image_url ? (
-                  <img
-                    src={badge.image_url}
-                    alt={badge.name}
-                    className="mx-auto mb-2 h-16 w-16 object-contain"
-                  />
-                ) : (
-                  <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full border border-[#F28C52]/40 text-xl font-bold text-[#F28C52]">
-                    ★
-                  </div>
-                )}
-
-                <p className="text-sm font-semibold text-white">
-                  {badge.name}
-                </p>
-
-                {badge.description && (
-                  <p className="mt-1 text-xs text-white/60">
-                    {badge.description}
-                  </p>
-                )}
-
-                {isAdmin && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      removeBadge(badge.id);
-                    }}
-                    className="relative z-50 mt-3 rounded-lg border border-red-400/40 px-3 py-1 text-xs text-red-300 transition hover:bg-red-500 hover:text-white"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {isAdmin && (
-          <div className="relative z-50 mt-8 rounded-xl border border-[#F28C52]/20 bg-black/30 p-4">
-            <h3 className="text-lg font-semibold text-[#F28C52]">
-              Assign Badge
-            </h3>
-
-            <div className="relative z-50 mt-3 flex flex-wrap gap-2">
-              {allBadges.map((badge) => {
-                const alreadyEarned = earnedBadgeIds.includes(badge.id);
-
-                return (
-                  <button
-                    key={badge.id}
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      assignBadge(badge.id);
-                    }}
-                    className={`relative z-50 rounded-lg border px-3 py-2 text-sm transition ${
-                      alreadyEarned
-                        ? "border-[#F28C52]/20 bg-[#F28C52]/10 text-[#F28C52]"
-                        : "border-[#F28C52]/40 text-white hover:bg-[#F28C52] hover:text-black"
-                    }`}
-                  >
-                    {alreadyEarned ? `${badge.name} ✓` : badge.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
     </main>
+  );
+}
+
+function Section({ title, children }: any) {
+  return (
+    <section className="mt-8 rounded-xl border border-white/10 bg-black/30 p-4">
+      <h2 className="mb-4 text-xl font-semibold text-[#F28C52]">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+function InfoBlock({ label, value }: any) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-black/30 p-3">
+      <p className="text-xs uppercase tracking-wide text-white/50">{label}</p>
+      <p className="mt-1 whitespace-pre-line text-white">{value}</p>
+    </div>
   );
 }
