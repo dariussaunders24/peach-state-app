@@ -16,8 +16,13 @@ type Profile = {
 
   rig_name?: string | null;
   suspension?: string | null;
+
+  // 🔥 BOTH old + new supported
+  tires?: string | null;
+  armor?: string | null;
   tires_wheels?: string | null;
   armor_protection?: string | null;
+
   lighting?: string | null;
   recovery_gear?: string | null;
   comms?: string | null;
@@ -61,28 +66,20 @@ export default function MemberProfilePage() {
       return;
     }
 
-    const { data: memberBadgeData, error: memberBadgeError } = await supabase
+    const { data: memberBadgeData } = await supabase
       .from("member_badges")
       .select("badge_id")
       .eq("user_id", id);
-
-    if (memberBadgeError) {
-      console.error("Error loading member badge IDs:", memberBadgeError.message);
-    }
 
     const badgeIds = (memberBadgeData || []).map((item) => item.badge_id);
 
     let earnedBadges: Badge[] = [];
 
     if (badgeIds.length > 0) {
-      const { data: earnedBadgeData, error: earnedBadgeError } = await supabase
+      const { data: earnedBadgeData } = await supabase
         .from("badges")
         .select("id, name, description, image_url")
         .in("id", badgeIds);
-
-      if (earnedBadgeError) {
-        console.error("Error loading earned badges:", earnedBadgeError.message);
-      }
 
       earnedBadges = earnedBadgeData || [];
     }
@@ -94,7 +91,7 @@ export default function MemberProfilePage() {
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-4xl px-4 py-10 text-white">
+      <main className="max-w-4xl mx-auto px-4 py-10 text-white">
         <p className="text-white/70">Loading profile...</p>
       </main>
     );
@@ -102,7 +99,7 @@ export default function MemberProfilePage() {
 
   if (!profile) {
     return (
-      <main className="mx-auto max-w-4xl px-4 py-10 text-white">
+      <main className="max-w-4xl mx-auto px-4 py-10 text-white">
         <p>Profile not found.</p>
 
         <Link
@@ -116,7 +113,7 @@ export default function MemberProfilePage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10 text-white">
+    <main className="max-w-4xl mx-auto px-4 py-10 text-white">
       <Link href="/members" className="text-sm text-[#F28C52] hover:underline">
         ← Back to Members
       </Link>
@@ -129,7 +126,7 @@ export default function MemberProfilePage() {
             className="h-72 w-full object-cover"
           />
         ) : (
-          <div className="flex h-72 w-full items-center justify-center border-b border-white/10 bg-black/30 text-white/50">
+          <div className="flex h-72 w-full items-center justify-center bg-black/30 text-white/50">
             No vehicle photo uploaded
           </div>
         )}
@@ -157,6 +154,7 @@ export default function MemberProfilePage() {
             )}
           </div>
 
+          {/* BADGES */}
           <section className="mt-6">
             <h2 className="text-xl font-semibold text-[#F28C52]">Badges</h2>
 
@@ -196,53 +194,52 @@ export default function MemberProfilePage() {
             )}
           </section>
 
-          {profile.bio && (
-            <Section title="About">
-              <p className="whitespace-pre-line text-white/90">{profile.bio}</p>
-            </Section>
-          )}
-
+          {/* RIG BUILD */}
           <Section title="Rig Build">
             <div className="grid gap-4 md:grid-cols-2">
               <InfoBlock
                 label="Suspension"
-                value={profile.suspension || "Not listed"}
+                value={profile.suspension}
               />
 
               <InfoBlock
                 label="Tires / Wheels"
-                value={profile.tires_wheels || "Not listed"}
+                value={profile.tires_wheels || profile.tires}
               />
 
               <InfoBlock
                 label="Armor / Protection"
-                value={profile.armor_protection || "Not listed"}
+                value={profile.armor_protection || profile.armor}
               />
 
               <InfoBlock
                 label="Lighting"
-                value={profile.lighting || "Not listed"}
+                value={profile.lighting}
               />
 
               <InfoBlock
                 label="Recovery Gear"
-                value={profile.recovery_gear || "Not listed"}
+                value={profile.recovery_gear}
               />
 
-              <InfoBlock label="Comms" value={profile.comms || "Not listed"} />
+              <InfoBlock
+                label="Comms"
+                value={profile.comms}
+              />
 
               <InfoBlock
                 label="Roof / Camp Setup"
-                value={profile.roof_camp_setup || "Not listed"}
+                value={profile.roof_camp_setup}
               />
 
               <InfoBlock
                 label="Future Mods"
-                value={profile.future_mods || "Not listed"}
+                value={profile.future_mods}
               />
             </div>
           </Section>
 
+          {/* NOTES */}
           {profile.build_notes && (
             <Section title="Additional Build Notes">
               <p className="whitespace-pre-line text-white/90">
@@ -251,6 +248,7 @@ export default function MemberProfilePage() {
             </Section>
           )}
 
+          {/* INSTAGRAM */}
           {profile.instagram && (
             <Section title="Instagram">
               <a
@@ -272,13 +270,7 @@ export default function MemberProfilePage() {
   );
 }
 
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function Section({ title, children }: any) {
   return (
     <section className="mt-8 rounded-xl border border-white/10 bg-black/30 p-4">
       <h2 className="mb-4 text-xl font-semibold text-[#F28C52]">{title}</h2>
@@ -287,13 +279,7 @@ function Section({
   );
 }
 
-function InfoBlock({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | null | undefined;
-}) {
+function InfoBlock({ label, value }: any) {
   return (
     <div className="rounded-lg border border-white/10 bg-black/30 p-3">
       <p className="text-xs uppercase tracking-wide text-white/50">{label}</p>
