@@ -1,13 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import LogoutButton from "./LogoutButton";
+import { supabase } from "../lib/supabase";
+
+const adminEmails = ["dariussaunders24@gmail.com"];
 
 export default function MobileNav() {
   const [open, setOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    checkAdmin();
+  }, []);
+
+  async function checkAdmin() {
+    const { data } = await supabase.auth.getUser();
+
+    if (
+      data.user &&
+      adminEmails.includes((data.user.email || "").toLowerCase().trim())
+    ) {
+      setIsAdmin(true);
+    }
+  }
 
   const links = [
     { href: "/", label: "Home" },
+    ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
     { href: "/profiles", label: "My Profile" },
     { href: "/events", label: "Events" },
     { href: "/gallery", label: "Gallery" },
