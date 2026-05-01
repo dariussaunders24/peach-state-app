@@ -12,18 +12,18 @@ type Profile = {
   location: string | null;
   image_url: string | null;
   bio?: string | null;
-  mods?: string | null;
   instagram?: string | null;
 
   rig_name?: string | null;
   suspension?: string | null;
-  tires?: string | null;
-  armor?: string | null;
+  tires_wheels?: string | null;
+  armor_protection?: string | null;
   lighting?: string | null;
   recovery_gear?: string | null;
   comms?: string | null;
   roof_camp_setup?: string | null;
   future_mods?: string | null;
+  build_notes?: string | null;
 };
 
 type Badge = {
@@ -94,7 +94,7 @@ export default function MemberProfilePage() {
 
   if (loading) {
     return (
-      <main className="max-w-4xl mx-auto px-4 py-10 text-white">
+      <main className="mx-auto max-w-4xl px-4 py-10 text-white">
         <p className="text-white/70">Loading profile...</p>
       </main>
     );
@@ -102,8 +102,9 @@ export default function MemberProfilePage() {
 
   if (!profile) {
     return (
-      <main className="max-w-4xl mx-auto px-4 py-10 text-white">
+      <main className="mx-auto max-w-4xl px-4 py-10 text-white">
         <p>Profile not found.</p>
+
         <Link
           href="/members"
           className="mt-4 inline-block text-[#F28C52] hover:underline"
@@ -115,7 +116,7 @@ export default function MemberProfilePage() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-10 text-white">
+    <main className="mx-auto max-w-4xl px-4 py-10 text-white">
       <Link href="/members" className="text-sm text-[#F28C52] hover:underline">
         ← Back to Members
       </Link>
@@ -136,7 +137,7 @@ export default function MemberProfilePage() {
         <div className="p-6">
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-[#F28C52]">
+              <h1 className="text-3xl font-bold text-[#F28C52] md:text-4xl">
                 {profile.name || "Member"}
               </h1>
 
@@ -156,7 +157,6 @@ export default function MemberProfilePage() {
             )}
           </div>
 
-          {/* Badges */}
           <section className="mt-6">
             <h2 className="text-xl font-semibold text-[#F28C52]">Badges</h2>
 
@@ -196,41 +196,46 @@ export default function MemberProfilePage() {
             )}
           </section>
 
-          {/* About */}
           {profile.bio && (
             <Section title="About">
               <p className="whitespace-pre-line text-white/90">{profile.bio}</p>
             </Section>
           )}
 
-          {/* Rig Build */}
           <Section title="Rig Build">
             <div className="grid gap-4 md:grid-cols-2">
               <InfoBlock
                 label="Suspension"
                 value={profile.suspension || "Not listed"}
               />
+
               <InfoBlock
                 label="Tires / Wheels"
-                value={profile.tires || "Not listed"}
+                value={profile.tires_wheels || "Not listed"}
               />
+
               <InfoBlock
                 label="Armor / Protection"
-                value={profile.armor || "Not listed"}
+                value={profile.armor_protection || "Not listed"}
               />
+
               <InfoBlock
                 label="Lighting"
                 value={profile.lighting || "Not listed"}
               />
+
               <InfoBlock
                 label="Recovery Gear"
                 value={profile.recovery_gear || "Not listed"}
               />
+
               <InfoBlock label="Comms" value={profile.comms || "Not listed"} />
+
               <InfoBlock
                 label="Roof / Camp Setup"
                 value={profile.roof_camp_setup || "Not listed"}
               />
+
               <InfoBlock
                 label="Future Mods"
                 value={profile.future_mods || "Not listed"}
@@ -238,10 +243,10 @@ export default function MemberProfilePage() {
             </div>
           </Section>
 
-          {profile.mods && (
+          {profile.build_notes && (
             <Section title="Additional Build Notes">
               <p className="whitespace-pre-line text-white/90">
-                {profile.mods}
+                {profile.build_notes}
               </p>
             </Section>
           )}
@@ -267,7 +272,13 @@ export default function MemberProfilePage() {
   );
 }
 
-function Section({ title, children }: any) {
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <section className="mt-8 rounded-xl border border-white/10 bg-black/30 p-4">
       <h2 className="mb-4 text-xl font-semibold text-[#F28C52]">{title}</h2>
@@ -276,11 +287,20 @@ function Section({ title, children }: any) {
   );
 }
 
-function InfoBlock({ label, value }: any) {
+function InfoBlock({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | null | undefined;
+}) {
   return (
     <div className="rounded-lg border border-white/10 bg-black/30 p-3">
       <p className="text-xs uppercase tracking-wide text-white/50">{label}</p>
-      <p className="mt-1 whitespace-pre-line text-white">{value}</p>
+
+      <p className="mt-1 whitespace-pre-line text-white">
+        {value && value.trim() ? value : "Not listed"}
+      </p>
     </div>
   );
 }
