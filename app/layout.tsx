@@ -55,11 +55,7 @@ export default function RootLayout({
                   <a href="/gallery" className="hover:text-[#F28C52]">
                     Gallery
                   </a>
-
-                  <a href="/store" className="hover:text-[#F28C52]">
-                    Store
-                  </a>
-
+                  
                   <a href="/members" className="hover:text-[#F28C52]">
                     Members
                   </a>
@@ -70,6 +66,10 @@ export default function RootLayout({
 
                   <a href="/faq" className="hover:text-[#F28C52]">
                     FAQ
+                  </a>
+
+                  <a href="/store" className="hover:text-[#F28C52]">
+                    Store
                   </a>
                 </nav>
 
