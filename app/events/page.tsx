@@ -5,6 +5,32 @@ import { supabase } from "../lib/supabase";
 
 const adminEmails = ["dariussaunders24@gmail.com"];
 
+const bringOptions = [
+  "GMRS radio",
+  "Recovery gear",
+  "Tire deflator",
+  "Air compressor",
+  "Lunch / snacks",
+  "Water / drinks",
+  "Camp chair",
+  "Weather-appropriate clothing",
+  "Closed-toe shoes",
+  "Full tank of gas",
+  "Basic tools",
+  "First aid kit",
+  "Trash bag",
+  "Bug spray / sunscreen",
+  "Portable toilet supplies, if needed",
+  "Cash for park fees",
+  "OnX / GPX app downloaded",
+  "Phone charger / battery pack",
+  "Tow points required",
+  "Skid plates recommended",
+];
+
+const defaultDisclaimer =
+  "By RSVP’ing to this event, you accept any and all risk for vehicle damage, personal injury, recovery needs, or liability. Peach State Off-Road and Overlanding and its organizers are not liable.";
+
 export default function EventsPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [pastEvents, setPastEvents] = useState<any[]>([]);
@@ -20,6 +46,8 @@ export default function EventsPage() {
     event_date: "",
     capacity: "",
     difficulty: "",
+    bring_items: [] as string[],
+    rsvp_disclaimer: defaultDisclaimer,
   });
 
   useEffect(() => {
@@ -33,10 +61,23 @@ export default function EventsPage() {
     if (data.user) {
       setCurrentUserId(data.user.id);
 
-      if (adminEmails.includes((data.user.email || "").toLowerCase())) {
+      if (adminEmails.includes((data.user.email || "").toLowerCase().trim())) {
         setIsAdmin(true);
       }
     }
+  }
+
+  function toggleBringItem(item: string) {
+    setNewEvent((prev) => {
+      const exists = prev.bring_items.includes(item);
+
+      return {
+        ...prev,
+        bring_items: exists
+          ? prev.bring_items.filter((i) => i !== item)
+          : [...prev.bring_items, item],
+      };
+    });
   }
 
   async function createEvent() {
@@ -63,6 +104,8 @@ export default function EventsPage() {
       event_date: eventDate,
       capacity,
       difficulty,
+      bring_items: newEvent.bring_items,
+      rsvp_disclaimer: newEvent.rsvp_disclaimer.trim() || defaultDisclaimer,
     });
 
     if (error) return alert(error.message);
@@ -76,6 +119,8 @@ export default function EventsPage() {
       event_date: "",
       capacity: "",
       difficulty: "",
+      bring_items: [],
+      rsvp_disclaimer: defaultDisclaimer,
     });
 
     await loadEvents();
@@ -111,10 +156,17 @@ export default function EventsPage() {
             .eq("event_id", event.id)
             .eq("status", "waitlist");
 
+          const { data: attendees } = await supabase
+            .from("rsvps")
+            .select("user_id, status, profiles(name, image_url)")
+            .eq("event_id", event.id)
+            .order("created_at", { ascending: true });
+
           return {
             ...event,
             goingCount: goingCount || 0,
             waitlistCount: waitlistCount || 0,
+            attendees: attendees || [],
           };
         })
       );
@@ -232,6 +284,9 @@ export default function EventsPage() {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return;
 
+    const accepted = confirm(event.rsvp_disclaimer || defaultDisclaimer);
+    if (!accepted) return;
+
     const { data: existing } = await supabase
       .from("rsvps")
       .select("*")
@@ -297,7 +352,7 @@ export default function EventsPage() {
       <h1 className="text-3xl font-bold text-[#F28C52]">Events</h1>
 
       {isAdmin && (
-        <div className="space-y-3 rounded-xl border border-[#F28C52]/30 bg-black/40 p-4">
+        <div className="space-y-5 rounded-xl border border-[#F28C52]/30 bg-black/40 p-4">
           <h2 className="text-xl font-bold text-white">Create Event</h2>
 
           <input
@@ -389,6 +444,47 @@ export default function EventsPage() {
               setNewEvent((prev) => ({ ...prev, capacity: e.target.value }))
             }
             className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
+          />
+
+          <div className="rounded-lg border border-white/10 bg-black/30 p-4">
+            <h3 className="font-semibold text-white">What to Bring</h3>
+            <p className="mt-1 text-sm text-gray-400">
+              Tap items to include them on this event.
+            </p>
+
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {bringOptions.map((item) => {
+                const selected = newEvent.bring_items.includes(item);
+
+                return (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => toggleBringItem(item)}
+                    className={`rounded-lg border px-3 py-2 text-left text-sm transition ${
+                      selected
+                        ? "border-[#F28C52] bg-[#F28C52] font-semibold text-black"
+                        : "border-white/10 bg-black/30 text-white hover:border-[#F28C52] hover:text-[#F28C52]"
+                    }`}
+                  >
+                    {selected ? "✓ " : "+ "}
+                    {item}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <textarea
+            placeholder="RSVP Disclaimer"
+            value={newEvent.rsvp_disclaimer}
+            onChange={(e) =>
+              setNewEvent((prev) => ({
+                ...prev,
+                rsvp_disclaimer: e.target.value,
+              }))
+            }
+            className="min-h-24 w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
           />
 
           <button
@@ -484,8 +580,15 @@ function EventCard({
     }
   }
 
-  const canViewPrivateDetails = isAdmin || userStatus === "going" || userStatus === "waitlist";
+  const canViewPrivateDetails =
+    isAdmin || userStatus === "going" || userStatus === "waitlist";
+
   const publicLocation = event.public_location || event.location;
+  const bringItems = event.bring_items || [];
+  const goingAttendees =
+    event.attendees?.filter((a: any) => a.status === "going") || [];
+  const waitlistAttendees =
+    event.attendees?.filter((a: any) => a.status === "waitlist") || [];
 
   return (
     <div className="overflow-hidden rounded-xl border border-[#F28C52]/20 bg-black/40">
@@ -498,11 +601,23 @@ function EventCard({
       )}
 
       <div className="p-5">
-        <h3 className="text-xl font-bold text-white">{event.title}</h3>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-xl font-bold text-white">{event.title}</h3>
 
-        {publicLocation && (
-          <p className="text-gray-300">Area: {publicLocation}</p>
-        )}
+            {publicLocation && (
+              <p className="text-gray-300">Area: {publicLocation}</p>
+            )}
+          </div>
+
+          <div className="rounded-full border border-[#F28C52]/40 bg-[#F28C52]/10 px-3 py-1 text-sm font-semibold text-[#F28C52]">
+            {userStatus === "going"
+              ? "Going"
+              : userStatus === "waitlist"
+              ? "Waitlist"
+              : "Not RSVP’d"}
+          </div>
+        </div>
 
         {event.difficulty && (
           <p className="mt-2 text-sm font-semibold text-[#F28C52]">
@@ -524,6 +639,19 @@ function EventCard({
           <p className="text-sm text-yellow-300">
             Waitlist: {event.waitlistCount}
           </p>
+        )}
+
+        {bringItems.length > 0 && (
+          <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-4">
+            <h4 className="font-semibold text-white">What to Bring</h4>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {bringItems.map((item: string) => (
+                <div key={item} className="text-sm text-gray-300">
+                  ✓ {item}
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
         <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-4">
@@ -566,6 +694,52 @@ function EventCard({
               Exact meetup location, route links, and ride instructions are only
               visible after RSVP to help manage space, safety, and group size.
             </p>
+          )}
+        </div>
+
+        <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-4">
+          <h4 className="font-semibold text-white">Attendees</h4>
+
+          {goingAttendees.length === 0 && waitlistAttendees.length === 0 ? (
+            <p className="mt-2 text-sm text-gray-400">No RSVPs yet.</p>
+          ) : (
+            <div className="mt-3 space-y-3">
+              {goingAttendees.length > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-[#F28C52]">Going</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {goingAttendees.map((attendee: any) => (
+                      <a
+                        key={`${event.id}-${attendee.user_id}`}
+                        href={`/members/${attendee.user_id}`}
+                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white hover:border-[#F28C52] hover:text-[#F28C52]"
+                      >
+                        {attendee.profiles?.name || "Member"}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {waitlistAttendees.length > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-yellow-300">
+                    Waitlist
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {waitlistAttendees.map((attendee: any) => (
+                      <a
+                        key={`${event.id}-${attendee.user_id}`}
+                        href={`/members/${attendee.user_id}`}
+                        className="rounded-full border border-yellow-300/20 bg-yellow-300/10 px-3 py-1 text-sm text-yellow-200 hover:border-yellow-300"
+                      >
+                        {attendee.profiles?.name || "Member"}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
@@ -675,7 +849,8 @@ function PastEventCard({
       <div className="mt-3 space-y-2">
         {route?.title && (
           <p className="text-sm text-gray-300">
-            Route: <span className="font-semibold text-white">{route.title}</span>
+            Route:{" "}
+            <span className="font-semibold text-white">{route.title}</span>
           </p>
         )}
 
@@ -722,7 +897,10 @@ function PastEventCard({
             placeholder="Difficulty"
             value={newRoute.difficulty}
             onChange={(e) =>
-              setNewRoute((prev) => ({ ...prev, difficulty: e.target.value }))
+              setNewRoute((prev) => ({
+                ...prev,
+                difficulty: e.target.value,
+              }))
             }
             className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
           />
