@@ -10,6 +10,7 @@ type Profile = {
   vehicle: string | null;
   location: string | null;
   image_url: string | null;
+  is_banned?: boolean | null;
 };
 
 export default function MembersPage() {
@@ -17,23 +18,26 @@ export default function MembersPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadProfiles() {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("user_id, name, vehicle, location, image_url")
-        .order("name", { ascending: true });
-
-      if (error) {
-        console.error("Error loading profiles:", error.message);
-      } else {
-        setProfiles(data || []);
-      }
-
-      setLoading(false);
-    }
-
     loadProfiles();
   }, []);
+
+  async function loadProfiles() {
+    setLoading(true);
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("user_id, name, vehicle, location, image_url, is_banned")
+      .eq("is_banned", false) // 🔥 hide banned users
+      .order("name", { ascending: true });
+
+    if (error) {
+      console.error("Error loading profiles:", error.message);
+    } else {
+      setProfiles(data || []);
+    }
+
+    setLoading(false);
+  }
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-10 text-white">
@@ -48,14 +52,12 @@ export default function MembersPage() {
       </div>
 
       {/* Loading */}
-      {loading && (
-        <p className="text-white/70">Loading members...</p>
-      )}
+      {loading && <p className="text-white/70">Loading members...</p>}
 
-      {/* Empty state */}
+      {/* Empty */}
       {!loading && profiles.length === 0 && (
         <div className="rounded-2xl border border-[#F28C52]/20 bg-black/30 p-6">
-          <p className="text-white/70">No member profiles found yet.</p>
+          <p className="text-white/70">No active members found.</p>
         </div>
       )}
 
@@ -67,7 +69,7 @@ export default function MembersPage() {
             href={`/members/${profile.user_id}`}
             className="rounded-2xl border border-[#F28C52]/20 bg-black/35 p-5 shadow-lg transition hover:border-[#F28C52]/60 hover:bg-black/50"
           >
-            {/* Top section */}
+            {/* Avatar */}
             <div className="flex items-center gap-4">
               <div className="h-16 w-16 overflow-hidden rounded-full border border-[#F28C52]/40 bg-black/50">
                 {profile.image_url ? (
@@ -93,7 +95,7 @@ export default function MembersPage() {
               </div>
             </div>
 
-            {/* Vehicle section */}
+            {/* Vehicle */}
             <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
               <p className="text-xs uppercase tracking-wide text-[#F28C52]">
                 Vehicle
