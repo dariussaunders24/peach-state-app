@@ -30,9 +30,13 @@ export default function AdminPage() {
   async function loadData() {
     const { data: memberData } = await supabase
       .from("profiles")
-      .select("*");
+      .select("*")
+      .order("name", { ascending: true });
 
-    const { data: eventData } = await supabase.from("events").select("*");
+    const { data: eventData } = await supabase
+      .from("events")
+      .select("*")
+      .order("event_date", { ascending: true });
 
     const { data: badgeData } = await supabase.from("badges").select("*");
 
@@ -56,6 +60,8 @@ export default function AdminPage() {
   }
 
   async function assignBadge(userId: string, badgeId: string) {
+    if (!badgeId) return;
+
     const { error } = await supabase.from("member_badges").insert({
       user_id: userId,
       badge_id: badgeId,
@@ -73,10 +79,28 @@ export default function AdminPage() {
   }
 
   async function removeBadge(memberBadgeId: string) {
-    await supabase
-      .from("member_badges")
-      .delete()
-      .eq("id", memberBadgeId);
+    await supabase.from("member_badges").delete().eq("id", memberBadgeId);
+    loadData();
+  }
+
+  async function toggleBan(member: any) {
+    const confirmAction = confirm(
+      member.is_banned
+        ? "Unban this member?"
+        : "Ban this member? They will lose access immediately."
+    );
+
+    if (!confirmAction) return;
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ is_banned: !member.is_banned })
+      .eq("user_id", member.user_id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
 
     loadData();
   }
@@ -91,9 +115,7 @@ export default function AdminPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold text-[#F28C52]">
-        Admin Dashboard
-      </h1>
+      <h1 className="text-3xl font-bold text-[#F28C52]">Admin Dashboard</h1>
 
       {/* Members */}
       <div className="rounded-xl border border-white/10 bg-black/30 p-4">
@@ -105,21 +127,52 @@ export default function AdminPage() {
               key={member.user_id}
               className="rounded-lg border border-white/10 bg-black/40 p-4"
             >
-              <div className="flex justify-between">
-                <span className="text-white font-semibold">
-                  {member.name || "Unnamed"}
-                </span>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-semibold text-white">
+                      {member.name || "Unnamed"}
+                    </span>
+
+                    {member.is_banned && (
+                      <span className="rounded bg-red-500/20 px-2 py-1 text-xs font-semibold text-red-300">
+                        BANNED
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="mt-1 text-sm text-white/60">
+                    {member.vehicle || "Vehicle not listed"}
+                  </p>
+
+                  <p className="text-sm text-white/40">
+                    {member.location || "Location not listed"}
+                  </p>
+                </div>
 
                 <a
                   href={`/members/${member.user_id}`}
-                  className="text-sm text-[#F28C52]"
+                  className="text-sm font-semibold text-[#F28C52]"
                 >
                   View Profile
                 </a>
               </div>
 
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  onClick={() => toggleBan(member)}
+                  className={`rounded px-3 py-2 text-sm font-semibold text-white ${
+                    member.is_banned
+                      ? "bg-green-600 hover:bg-green-700"
+                      : "bg-red-600 hover:bg-red-700"
+                  }`}
+                >
+                  {member.is_banned ? "Unban Member" : "Ban Member"}
+                </button>
+              </div>
+
               {/* Current Badges */}
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-4 flex flex-wrap gap-2">
                 {member.memberBadges.map((b: any) => (
                   <div
                     key={b.id}
@@ -128,15 +181,14 @@ export default function AdminPage() {
                     {b.badges?.image_url ? (
                       <img
                         src={b.badges.image_url}
+                        alt={b.badges?.name || "Badge"}
                         className="h-6 w-6 rounded"
                       />
                     ) : (
                       <span>★</span>
                     )}
 
-                    <span className="text-sm text-white">
-                      {b.badges?.name}
-                    </span>
+                    <span className="text-sm text-white">{b.badges?.name}</span>
 
                     <button
                       onClick={() => removeBadge(b.id)}
@@ -149,12 +201,11 @@ export default function AdminPage() {
               </div>
 
               {/* Assign Badge */}
-              <div className="mt-3 flex gap-2">
+              <div className="mt-4 flex gap-2">
                 <select
                   className="rounded bg-white p-2 text-black"
-                  onChange={(e) =>
-                    assignBadge(member.user_id, e.target.value)
-                  }
+                  defaultValue=""
+                  onChange={(e) => assignBadge(member.user_id, e.target.value)}
                 >
                   <option value="">Assign badge</option>
                   {badges.map((badge) => (
@@ -182,7 +233,9 @@ export default function AdminPage() {
               <span className="text-white">{event.title}</span>
 
               <span className="text-sm text-gray-400">
-                {new Date(event.event_date).toLocaleDateString()}
+                {event.event_date
+                  ? new Date(event.event_date).toLocaleDateString()
+                  : "No date"}
               </span>
             </div>
           ))}

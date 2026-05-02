@@ -12,7 +12,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   async function checkAccess() {
     const currentPath = window.location.pathname;
-    const publicPaths = ["/login", "/register", "/signup"];
+    const publicPaths = ["/login", "/register", "/signup", "/banned"];
 
     if (publicPaths.includes(currentPath)) {
       setLoading(false);
@@ -28,12 +28,17 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
     const { data: profile, error } = await supabase
       .from("profiles")
-      .select("name, vehicle")
+      .select("name, vehicle, is_banned")
       .eq("user_id", data.user.id)
       .maybeSingle();
 
     if (error) {
       console.error("Profile check error:", error.message);
+    }
+
+    if (profile?.is_banned) {
+      window.location.href = "/banned";
+      return;
     }
 
     const profileIncomplete =
