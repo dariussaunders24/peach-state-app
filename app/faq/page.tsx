@@ -1,6 +1,11 @@
 export default function FAQPage() {
   const faqs = [
     {
+      question: "About Peach State Off-Road and Overlanding",
+      answer:
+        "Peach State Off-Road and Overlanding is a Georgia-based community for people who enjoy off-road trails, overlanding, camping, and learning how to explore responsibly. We welcome all experience levels, from first-time trail riders to more experienced drivers. Our goal is to create a supportive group where members can attend organized rides, learn recovery and trail skills, connect with other enthusiasts, and take advantage of community and vendor opportunities. If you want to get outside, build confidence, meet good people, and be part of a respectful off-road community, this is the place to be.",
+    },
+    {
       question: "Do I need an off-road vehicle to join?",
       answer:
         "Yes. All vehicles must be AWD or 4x4 and equipped with all-terrain tires. This ensures safety and the ability to complete trails without issues.",
@@ -13,7 +18,7 @@ export default function FAQPage() {
     {
       question: "What should I bring to a ride?",
       answer:
-        "Recommended items include water, snacks or lunch, recovery gear (if you have it), a GMRS radio, and a positive attitude. Chairs are also encouraged for breaks.",
+        "Recommended items include water, snacks or lunch, recovery gear if you have it, a GMRS radio, and a positive attitude. Chairs are also encouraged for breaks.",
     },
     {
       question: "Are GMRS radios required?",
@@ -69,13 +74,17 @@ export default function FAQPage() {
         {faqs.map((faq, index) => (
           <div
             key={index}
-            className="rounded-xl border border-white/10 bg-black/30 p-5"
+            className={`rounded-xl border p-5 ${
+              index === 0
+                ? "border-[#F28C52]/30 bg-black/45"
+                : "border-white/10 bg-black/30"
+            }`}
           >
             <h2 className="text-lg font-semibold text-[#F28C52]">
               {faq.question}
             </h2>
 
-            <p className="mt-2 text-gray-300">{faq.answer}</p>
+            <p className="mt-2 leading-7 text-gray-300">{faq.answer}</p>
           </div>
         ))}
       </div>
