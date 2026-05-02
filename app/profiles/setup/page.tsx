@@ -7,6 +7,7 @@ export default function ProfileSetupPage() {
   const [userId, setUserId] = useState("");
   const [name, setName] = useState("");
   const [vehicle, setVehicle] = useState("");
+  const [redirectTo, setRedirectTo] = useState("/");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -15,6 +16,13 @@ export default function ProfileSetupPage() {
   }, []);
 
   async function checkUser() {
+    const params = new URLSearchParams(window.location.search);
+    const redirect = params.get("redirect");
+
+    if (redirect && redirect.startsWith("/")) {
+      setRedirectTo(redirect);
+    }
+
     const { data } = await supabase.auth.getUser();
 
     if (!data.user) {
@@ -31,7 +39,7 @@ export default function ProfileSetupPage() {
       .maybeSingle();
 
     if (profile?.name && profile?.vehicle) {
-      window.location.href = "/";
+      window.location.href = redirect && redirect.startsWith("/") ? redirect : "/";
       return;
     }
 
@@ -40,9 +48,26 @@ export default function ProfileSetupPage() {
     setLoading(false);
   }
 
+  function validateForm() {
+    const cleanName = name.trim();
+    const cleanVehicle = vehicle.trim();
+
+    if (cleanName.length < 2) {
+      alert("Please enter your name.");
+      return false;
+    }
+
+    if (cleanVehicle.length < 5 || cleanVehicle.split(" ").length < 2) {
+      alert("Please enter your vehicle year, make, and model. Example: 2020 Subaru Ascent");
+      return false;
+    }
+
+    return true;
+  }
+
   async function saveProfile() {
-    if (!name.trim()) return alert("Name is required.");
-    if (!vehicle.trim()) return alert("Vehicle make/model is required.");
+    if (!userId) return alert("You must be logged in.");
+    if (!validateForm()) return;
 
     setSaving(true);
 
@@ -64,7 +89,7 @@ export default function ProfileSetupPage() {
       return;
     }
 
-    window.location.href = "/";
+    window.location.href = redirectTo;
   }
 
   if (loading) {
@@ -78,6 +103,10 @@ export default function ProfileSetupPage() {
   return (
     <main className="mx-auto max-w-xl px-4 py-10 text-white">
       <div className="rounded-2xl border border-[#F28C52]/30 bg-black/45 p-6 shadow-xl">
+        <div className="mb-5 rounded-full border border-[#F28C52]/30 bg-[#F28C52]/10 px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.25em] text-[#F28C52]">
+          Step 1 of 1
+        </div>
+
         <p className="text-xs uppercase tracking-[0.3em] text-[#F28C52]/80">
           Required Setup
         </p>
@@ -87,7 +116,7 @@ export default function ProfileSetupPage() {
         </h1>
 
         <p className="mt-3 text-sm leading-6 text-white/70">
-          Before accessing the member app, please add your name and vehicle make/model. This helps other members know who you are and what you drive.
+          This takes about 10 seconds. Before entering the member app, add your name and vehicle so other members know who you are and what you drive.
         </p>
 
         <div className="mt-6 space-y-5">
@@ -102,6 +131,10 @@ export default function ProfileSetupPage() {
               placeholder="Your name"
               className="mt-2 w-full rounded-lg border border-white/20 bg-white px-3 py-3 text-black placeholder-gray-500"
             />
+
+            <p className="mt-2 text-xs text-white/45">
+              This will be shown on your member profile.
+            </p>
           </label>
 
           <label className="block">
@@ -115,6 +148,10 @@ export default function ProfileSetupPage() {
               placeholder="Example: 2020 Subaru Ascent"
               className="mt-2 w-full rounded-lg border border-white/20 bg-white px-3 py-3 text-black placeholder-gray-500"
             />
+
+            <p className="mt-2 text-xs text-white/45">
+              Include year, make, and model when possible.
+            </p>
           </label>
 
           <button

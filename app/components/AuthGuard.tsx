@@ -3,11 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
-export default function AuthGuard({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,7 +12,6 @@ export default function AuthGuard({
 
   async function checkAccess() {
     const currentPath = window.location.pathname;
-
     const publicPaths = ["/login", "/register", "/signup"];
 
     if (publicPaths.includes(currentPath)) {
@@ -45,7 +40,9 @@ export default function AuthGuard({
       !profile || !profile.name?.trim() || !profile.vehicle?.trim();
 
     if (profileIncomplete && currentPath !== "/profiles/setup") {
-      window.location.href = "/profiles/setup";
+      window.location.href = `/profiles/setup?redirect=${encodeURIComponent(
+        currentPath
+      )}`;
       return;
     }
 
