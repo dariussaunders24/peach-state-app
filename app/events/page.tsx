@@ -321,11 +321,11 @@ export default function EventsPage() {
 
     if (status === "going") {
       showConfirmation(
-        "RSVP confirmed. You’re on the Going list. Please cancel at least 24 hours before the event if you can no longer attend."
+        "RSVP confirmed. You’re on the Going list.\n\nReminder: No-shows without canceling your RSVP at least 24 hours before the event will result in a 1-ride ban. This helps us keep spots available for members who want to attend."
       );
     } else {
       showConfirmation(
-        "This event is currently full. You’ve been added to the waitlist."
+        "This event is currently full. You’ve been added to the waitlist.\n\nReminder: If you are moved from the waitlist to Going and can no longer attend, please cancel at least 24 hours before the event."
       );
     }
   }
@@ -381,7 +381,7 @@ export default function EventsPage() {
               Event Update
             </h2>
 
-            <p className="mt-4 text-sm leading-6 text-white/75">
+            <p className="mt-4 whitespace-pre-line text-sm leading-6 text-white/75">
               {confirmationMessage}
             </p>
 
