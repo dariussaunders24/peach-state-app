@@ -22,72 +22,73 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-[#100B08] text-white`}>
-        <div className="min-h-screen bg-[radial-gradient(circle_at_top,#5C2D18_0%,#100B08_45%,#050505_100%)]">
-          <header className="relative border-b border-[#F28C52]/30 bg-black/40 backdrop-blur">
-            <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-              <div>
-                <p
-                  className={`${cinzel.className} text-2xl tracking-wide text-[#F28C52] sm:text-3xl`}
-                >
-                  Peach State
-                </p>
-                <p className="text-xs uppercase tracking-[0.2em] text-gray-300 sm:text-sm sm:tracking-[0.25em]">
-                  Off-Road and Overlanding
-                </p>
-              </div>
+        <AuthGuard>
+          <div className="min-h-screen bg-[radial-gradient(circle_at_top,#5C2D18_0%,#100B08_45%,#050505_100%)]">
+            <header className="relative border-b border-[#F28C52]/30 bg-black/40 backdrop-blur">
+              <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+                <div className="text-center">
+                  <p
+                    className={`${cinzel.className} text-2xl tracking-wide text-[#F28C52] sm:text-3xl`}
+                  >
+                    Peach State
+                  </p>
 
-              <div className="flex items-center gap-6">
-                <nav className="hidden gap-6 text-base font-medium text-gray-300 md:flex">
-                  <a href="/" className="hover:text-[#F28C52]">
-                    Home
-                  </a>
-
-                  <AdminNavLink className="hover:text-[#F28C52]" />
-
-                  <a href="/profiles" className="hover:text-[#F28C52]">
-                    My Profile
-                  </a>
-
-                  <a href="/events" className="hover:text-[#F28C52]">
-                    Events
-                  </a>
-
-                  <a href="/gallery" className="hover:text-[#F28C52]">
-                    Gallery
-                  </a>
-                  
-                  <a href="/members" className="hover:text-[#F28C52]">
-                    Members
-                  </a>
-
-                  <a href="/vendors" className="hover:text-[#F28C52]">
-                    Vendors
-                  </a>
-
-                  <a href="/faq" className="hover:text-[#F28C52]">
-                    FAQ
-                  </a>
-
-                  <a href="/store" className="hover:text-[#F28C52]">
-                    Store
-                  </a>
-                </nav>
-
-                <div className="hidden md:block">
-                  <LogoutButton />
+                  <p className="text-xs uppercase tracking-[0.2em] text-gray-300 sm:text-sm sm:tracking-[0.25em]">
+                    Off-Road and Overlanding
+                  </p>
                 </div>
 
-                <MobileNav />
-              </div>
-            </div>
-          </header>
+                <div className="flex items-center gap-6">
+                  <nav className="hidden gap-6 text-base font-medium text-gray-300 md:flex">
+                    <a href="/" className="hover:text-[#F28C52]">
+                      Home
+                    </a>
 
-          <AuthGuard>
+                    <AdminNavLink className="hover:text-[#F28C52]" />
+
+                    <a href="/profiles" className="hover:text-[#F28C52]">
+                      My Profile
+                    </a>
+
+                    <a href="/events" className="hover:text-[#F28C52]">
+                      Events
+                    </a>
+
+                    <a href="/gallery" className="hover:text-[#F28C52]">
+                      Gallery
+                    </a>
+
+                    <a href="/members" className="hover:text-[#F28C52]">
+                      Members
+                    </a>
+
+                    <a href="/vendors" className="hover:text-[#F28C52]">
+                      Vendors
+                    </a>
+
+                    <a href="/faq" className="hover:text-[#F28C52]">
+                      FAQ
+                    </a>
+
+                    <a href="/store" className="hover:text-[#F28C52]">
+                      Store
+                    </a>
+                  </nav>
+
+                  <div className="hidden md:block">
+                    <LogoutButton />
+                  </div>
+
+                  <MobileNav />
+                </div>
+              </div>
+            </header>
+
             <main className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
               {children}
             </main>
-          </AuthGuard>
-        </div>
+          </div>
+        </AuthGuard>
       </body>
     </html>
   );
