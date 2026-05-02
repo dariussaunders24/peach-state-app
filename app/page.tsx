@@ -47,10 +47,7 @@ export default function Home() {
   return (
     <div className="space-y-8">
       <section className="rounded-2xl border border-[#F28C52]/30 bg-black/40 p-6">
-        <p className="text-sm uppercase tracking-[0.25em] text-gray-400">
-          Peach State Off-Road
-        </p>
-
+        
         <h1 className="mt-3 text-4xl font-bold text-[#F28C52]">
           Welcome to the Trail Hub
         </h1>
