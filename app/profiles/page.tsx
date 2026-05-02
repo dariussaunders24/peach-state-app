@@ -22,8 +22,16 @@ type Profile = {
   build_notes?: string | null;
 };
 
+type Badge = {
+  id: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+};
+
 export default function MyProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [badges, setBadges] = useState<Badge[]>([]);
   const [userId, setUserId] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -52,8 +60,40 @@ export default function MyProfilePage() {
     if (error) {
       console.error("Error loading my profile:", error.message);
       setProfile(null);
+      setLoading(false);
+      return;
+    }
+
+    setProfile(data);
+
+    const { data: memberBadgeData, error: memberBadgeError } = await supabase
+      .from("member_badges")
+      .select("badge_id")
+      .eq("user_id", userData.user.id);
+
+    if (memberBadgeError) {
+      console.error("Error loading member badge IDs:", memberBadgeError.message);
+      setBadges([]);
+      setLoading(false);
+      return;
+    }
+
+    const badgeIds = (memberBadgeData || []).map((item) => item.badge_id);
+
+    if (badgeIds.length > 0) {
+      const { data: earnedBadgeData, error: earnedBadgeError } = await supabase
+        .from("badges")
+        .select("id, name, description, image_url")
+        .in("id", badgeIds);
+
+      if (earnedBadgeError) {
+        console.error("Error loading earned badges:", earnedBadgeError.message);
+        setBadges([]);
+      } else {
+        setBadges(earnedBadgeData || []);
+      }
     } else {
-      setProfile(data);
+      setBadges([]);
     }
 
     setLoading(false);
@@ -171,6 +211,43 @@ export default function MyProfilePage() {
               <p className="text-sm text-white/60">{profile.location}</p>
             )}
           </div>
+
+          <Section title="Badges">
+            {badges.length === 0 ? (
+              <p className="text-white/60">No badges yet.</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                {badges.map((badge) => (
+                  <div
+                    key={badge.id}
+                    className="rounded-xl border border-[#F28C52]/30 bg-black/30 p-3 text-center"
+                  >
+                    {badge.image_url ? (
+                      <img
+                        src={badge.image_url}
+                        alt={badge.name}
+                        className="mx-auto mb-2 h-20 w-20 object-contain"
+                      />
+                    ) : (
+                      <div className="mx-auto mb-2 flex h-20 w-20 items-center justify-center rounded-full border border-[#F28C52]/40 text-xl font-bold text-[#F28C52]">
+                        ★
+                      </div>
+                    )}
+
+                    <p className="text-sm font-semibold text-white">
+                      {badge.name}
+                    </p>
+
+                    {badge.description && (
+                      <p className="mt-1 text-xs text-white/60">
+                        {badge.description}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </Section>
 
           <Section title="Rig Build">
             <div className="grid gap-4 md:grid-cols-2">
