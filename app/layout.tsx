@@ -1,4 +1,5 @@
 import AuthGuard from "./components/AuthGuard";
+import NotificationBanner from "./components/NotificationBanner";
 import type { Metadata } from "next";
 import "./globals.css";
 import { Cinzel, Inter } from "next/font/google";
@@ -85,6 +86,7 @@ export default function RootLayout({
             </header>
 
             <main className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
+              <NotificationBanner />
               {children}
             </main>
           </div>

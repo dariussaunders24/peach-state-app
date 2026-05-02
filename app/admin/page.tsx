@@ -67,6 +67,8 @@ export default function AdminPage() {
   async function assignBadge(userId: string, badgeId: string) {
     if (!badgeId) return;
 
+    const badge = badges.find((item) => item.id === badgeId);
+
     const { error } = await supabase.from("member_badges").insert({
       user_id: userId,
       badge_id: badgeId,
@@ -78,8 +80,18 @@ export default function AdminPage() {
       } else {
         alert(error.message);
       }
+      return;
     }
 
+    await supabase.from("notifications").insert({
+      user_id: userId,
+      title: "New Badge Awarded",
+      message: `You earned the ${
+        badge?.name || "new"
+      } badge in Peach State Off-Road and Overlanding!`,
+    });
+
+    alert("Badge assigned and member notified.");
     loadData();
   }
 
@@ -153,7 +165,6 @@ export default function AdminPage() {
         />
       </div>
 
-      {/* Members */}
       <div className="rounded-xl border border-white/10 bg-black/30 p-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
@@ -244,7 +255,6 @@ export default function AdminPage() {
                   </button>
                 </div>
 
-                {/* Current Badges */}
                 <div className="mt-4 flex flex-wrap gap-2">
                   {member.memberBadges.map((b: any) => (
                     <div
@@ -275,7 +285,6 @@ export default function AdminPage() {
                   ))}
                 </div>
 
-                {/* Assign Badge */}
                 <div className="mt-4 flex gap-2">
                   <select
                     className="rounded bg-white p-2 text-black"
@@ -296,7 +305,6 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Events */}
       <div className="rounded-xl border border-white/10 bg-black/30 p-4">
         <h2 className="text-xl font-bold text-white">Events</h2>
 
