@@ -29,13 +29,14 @@ const bringOptions = [
 ];
 
 const defaultDisclaimer =
-  "By RSVP’ing to this event, you accept any and all risk for vehicle damage, personal injury, recovery needs, or liability. Peach State Off-Road and Overlanding and its organizers are not liable.";
+  "By RSVP’ing to this event, you accept any and all risk for vehicle damage, personal injury, recovery needs, or liability. Peach State Off-Road and Overlanding and its organizers are not liable. No-shows without canceling your RSVP at least 24 hours before the event will result in a (1) ride ban. This is so we can ensure maximum enjoyment and available spots for all members who want to attend.";
 
 export default function EventsPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [pastEvents, setPastEvents] = useState<any[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [currentUserId, setCurrentUserId] = useState("");
+  const [confirmationMessage, setConfirmationMessage] = useState("");
 
   const [newEvent, setNewEvent] = useState({
     title: "",
@@ -54,6 +55,10 @@ export default function EventsPage() {
     checkUser();
     loadEvents();
   }, []);
+
+  function showConfirmation(message: string) {
+    setConfirmationMessage(message);
+  }
 
   async function checkUser() {
     const { data } = await supabase.auth.getUser();
@@ -295,19 +300,34 @@ export default function EventsPage() {
       .limit(1);
 
     if (existing && existing.length > 0) {
-      alert("Already RSVP'd");
+      showConfirmation("You are already RSVP’d for this event.");
       return;
     }
 
     const status = event.goingCount >= event.capacity ? "waitlist" : "going";
 
-    await supabase.from("rsvps").insert({
+    const { error } = await supabase.from("rsvps").insert({
       user_id: userData.user.id,
       event_id: event.id,
       status,
     });
 
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
     await loadEvents();
+
+    if (status === "going") {
+      showConfirmation(
+        "RSVP confirmed. You’re on the Going list. Please cancel at least 24 hours before the event if you can no longer attend."
+      );
+    } else {
+      showConfirmation(
+        "This event is currently full. You’ve been added to the waitlist."
+      );
+    }
   }
 
   async function cancelRsvp(event: any) {
@@ -345,10 +365,36 @@ export default function EventsPage() {
     }
 
     await loadEvents();
+    showConfirmation("Your RSVP has been canceled.");
   }
 
   return (
     <div className="space-y-8">
+      {confirmationMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-[#F28C52]/40 bg-[#100B08] p-6 text-center shadow-2xl">
+            <p className="text-xs uppercase tracking-[0.3em] text-[#F28C52]/80">
+              Confirmation
+            </p>
+
+            <h2 className="mt-2 font-cinzel text-2xl font-bold text-white">
+              Event Update
+            </h2>
+
+            <p className="mt-4 text-sm leading-6 text-white/75">
+              {confirmationMessage}
+            </p>
+
+            <button
+              onClick={() => setConfirmationMessage("")}
+              className="mt-6 rounded-lg bg-[#F28C52] px-6 py-3 font-semibold text-black transition hover:bg-[#C96A2C]"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
       <h1 className="text-3xl font-bold text-[#F28C52]">Events</h1>
 
       {isAdmin && (
