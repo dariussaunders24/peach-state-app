@@ -6,6 +6,7 @@ import { supabase } from "./lib/supabase";
 export default function Home() {
   const [nextEvent, setNextEvent] = useState<any>(null);
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
+  const [hasProfile, setHasProfile] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,6 +20,14 @@ export default function Home() {
       window.location.href = "/login";
       return;
     }
+
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("user_id", userData.user.id)
+      .limit(1);
+
+    setHasProfile(!!profileData && profileData.length > 0);
 
     const now = new Date().toISOString();
 
@@ -46,16 +55,62 @@ export default function Home() {
 
   return (
     <div className="space-y-8">
+      {!hasProfile && (
+        <section className="rounded-2xl border border-[#F28C52]/40 bg-black/50 p-6 shadow-xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F28C52]/80">
+            Start Here
+          </p>
+
+          <h1 className="mt-3 text-4xl font-bold text-[#F28C52]">
+            Welcome to Peach State Off-Road
+          </h1>
+
+          <p className="mt-4 max-w-3xl text-gray-300">
+            This is your members-only hub for rides, profiles, photos, vendor
+            discounts, and trail resources. Start by completing your profile so
+            other members can recognize you and your rig.
+          </p>
+
+          <div className="mt-6 grid gap-3 md:grid-cols-4">
+            <a
+              href="/profiles"
+              className="rounded-xl bg-[#F28C52] px-5 py-4 text-center font-semibold text-black hover:bg-[#C96A2C]"
+            >
+              1. Complete Profile
+            </a>
+
+            <a
+              href="/events"
+              className="rounded-xl border border-[#F28C52] px-5 py-4 text-center font-semibold text-[#F28C52] hover:bg-[#F28C52] hover:text-black"
+            >
+              2. View Events
+            </a>
+
+            <a
+              href="/members"
+              className="rounded-xl border border-white/20 px-5 py-4 text-center font-semibold text-white hover:border-[#F28C52] hover:text-[#F28C52]"
+            >
+              Browse Members
+            </a>
+
+            <a
+              href="/vendors"
+              className="rounded-xl border border-white/20 px-5 py-4 text-center font-semibold text-white hover:border-[#F28C52] hover:text-[#F28C52]"
+            >
+              Vendor Discounts
+            </a>
+          </div>
+        </section>
+      )}
+
       <section className="rounded-2xl border border-[#F28C52]/30 bg-black/40 p-6">
-        
         <h1 className="mt-3 text-4xl font-bold text-[#F28C52]">
           Welcome to the Trail Hub
         </h1>
 
         <p className="mt-4 max-w-3xl text-gray-300">
-          Find upcoming events, manage your profile, view past events, and
-          stay connected with the Peach State Off-Road and Overlanding
-          community.
+          Find upcoming events, manage your profile, view past events, and stay
+          connected with the Peach State Off-Road and Overlanding community.
         </p>
 
         <div className="mt-6 flex flex-wrap gap-3">
@@ -97,8 +152,10 @@ export default function Home() {
                 {nextEvent.title}
               </h3>
 
-              {nextEvent.location && (
-                <p className="mt-2 text-gray-300">{nextEvent.location}</p>
+              {(nextEvent.public_location || nextEvent.location) && (
+                <p className="mt-2 text-gray-300">
+                  {nextEvent.public_location || nextEvent.location}
+                </p>
               )}
 
               {nextEvent.difficulty && (
@@ -141,9 +198,9 @@ export default function Home() {
               >
                 <h3 className="font-bold text-white">{event.title}</h3>
 
-                {event.location && (
+                {(event.public_location || event.location) && (
                   <p className="mt-1 text-sm text-gray-300">
-                    {event.location}
+                    {event.public_location || event.location}
                   </p>
                 )}
 
