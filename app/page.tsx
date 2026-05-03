@@ -6,7 +6,7 @@ import { supabase } from "./lib/supabase";
 export default function Home() {
   const [nextEvent, setNextEvent] = useState<any>(null);
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
-  const [hasProfile, setHasProfile] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,13 +21,22 @@ export default function Home() {
       return;
     }
 
+    // 🔥 UPDATED PROFILE CHECK
     const { data: profileData } = await supabase
       .from("profiles")
-      .select("id")
+      .select("name, vehicle, location, image_url")
       .eq("user_id", userData.user.id)
       .limit(1);
 
-    setHasProfile(!!profileData && profileData.length > 0);
+    const profile = profileData?.[0];
+
+    const profileComplete =
+      !!profile?.name &&
+      !!profile?.vehicle &&
+      !!profile?.location &&
+      !!profile?.image_url;
+
+    setShowWelcome(!profileComplete);
 
     const now = new Date().toISOString();
 
@@ -55,7 +64,8 @@ export default function Home() {
 
   return (
     <div className="space-y-8">
-      {!hasProfile && (
+      {/* 🔥 SMART WELCOME PANEL */}
+      {showWelcome && (
         <section className="rounded-2xl border border-[#F28C52]/40 bg-black/50 p-6 shadow-xl">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F28C52]/80">
             Start Here
@@ -66,9 +76,8 @@ export default function Home() {
           </h1>
 
           <p className="mt-4 max-w-3xl text-gray-300">
-            This is your members-only hub for rides, profiles, photos, vendor
-            discounts, and trail resources. Start by completing your profile so
-            other members can recognize you and your rig.
+            You’re in. Finish setting up your profile and jump into your first ride.
+            This helps other members recognize you and your rig on the trail.
           </p>
 
           <div className="mt-6 grid gap-3 md:grid-cols-4">
@@ -76,14 +85,14 @@ export default function Home() {
               href="/profiles"
               className="rounded-xl bg-[#F28C52] px-5 py-4 text-center font-semibold text-black hover:bg-[#C96A2C]"
             >
-              1. Complete Profile
+              Complete Profile
             </a>
 
             <a
               href="/events"
               className="rounded-xl border border-[#F28C52] px-5 py-4 text-center font-semibold text-[#F28C52] hover:bg-[#F28C52] hover:text-black"
             >
-              2. View Events
+              View Events
             </a>
 
             <a
@@ -103,6 +112,7 @@ export default function Home() {
         </section>
       )}
 
+      {/* EXISTING HERO */}
       <section className="rounded-2xl border border-[#F28C52]/30 bg-black/40 p-6">
         <h1 className="mt-3 text-4xl font-bold text-[#F28C52]">
           Welcome to the Trail Hub
@@ -130,6 +140,7 @@ export default function Home() {
         </div>
       </section>
 
+      {/* NEXT EVENT */}
       <section className="space-y-4">
         <h2 className="text-2xl font-bold text-white">Next Upcoming Event</h2>
 
@@ -181,6 +192,7 @@ export default function Home() {
         )}
       </section>
 
+      {/* UPCOMING GRID */}
       <section className="space-y-4">
         <h2 className="text-2xl font-bold text-white">Upcoming Events</h2>
 
@@ -215,43 +227,26 @@ export default function Home() {
         )}
       </section>
 
+      {/* NAV CARDS */}
       <section className="grid gap-4 md:grid-cols-4">
-        <a
-          href="/events"
-          className="rounded-xl border border-white/10 bg-black/30 p-5 hover:border-[#F28C52]"
-        >
+        <a href="/events" className="rounded-xl border border-white/10 bg-black/30 p-5 hover:border-[#F28C52]">
           <h3 className="font-bold text-[#F28C52]">Events</h3>
           <p className="mt-2 text-sm text-gray-400">RSVP for upcoming events.</p>
         </a>
 
-        <a
-          href="/profiles"
-          className="rounded-xl border border-white/10 bg-black/30 p-5 hover:border-[#F28C52]"
-        >
+        <a href="/profiles" className="rounded-xl border border-white/10 bg-black/30 p-5 hover:border-[#F28C52]">
           <h3 className="font-bold text-[#F28C52]">My Profile</h3>
-          <p className="mt-2 text-sm text-gray-400">
-            Update your vehicle and member info.
-          </p>
+          <p className="mt-2 text-sm text-gray-400">Update your vehicle and info.</p>
         </a>
 
-        <a
-          href="/gallery"
-          className="rounded-xl border border-white/10 bg-black/30 p-5 hover:border-[#F28C52]"
-        >
+        <a href="/gallery" className="rounded-xl border border-white/10 bg-black/30 p-5 hover:border-[#F28C52]">
           <h3 className="font-bold text-[#F28C52]">Gallery</h3>
-          <p className="mt-2 text-sm text-gray-400">
-            View community photos and trail memories.
-          </p>
+          <p className="mt-2 text-sm text-gray-400">View ride photos.</p>
         </a>
 
-        <a
-          href="/vendors"
-          className="rounded-xl border border-white/10 bg-black/30 p-5 hover:border-[#F28C52]"
-        >
+        <a href="/vendors" className="rounded-xl border border-white/10 bg-black/30 p-5 hover:border-[#F28C52]">
           <h3 className="font-bold text-[#F28C52]">Vendors</h3>
-          <p className="mt-2 text-sm text-gray-400">
-            See partner discounts and resources.
-          </p>
+          <p className="mt-2 text-sm text-gray-400">See discounts.</p>
         </a>
       </section>
     </div>
