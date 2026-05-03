@@ -567,11 +567,11 @@ export default function EventsPage() {
       </section>
 
       <section className="space-y-4 border-t border-white/10 pt-8">
-        <h2 className="text-2xl font-bold text-[#F28C52]">Past Rides</h2>
+        <h2 className="text-2xl font-bold text-[#F28C52]">Past Events</h2>
 
         {pastEvents.length === 0 ? (
           <div className="rounded-xl border border-white/10 bg-black/30 p-5">
-            <p className="text-gray-400">No past rides yet.</p>
+            <p className="text-gray-400">No past events yet.</p>
           </div>
         ) : (
           pastEvents.map((event) => (
@@ -764,7 +764,7 @@ function EventCard({
                 </p>
 
                 <p className="mt-1 text-sm leading-6 text-gray-400">
-                  Exact meetup location, route links, and ride instructions are visible after RSVP to help manage space, safety, and group size.
+                  Exact meetup location, route links, and event instructions are visible after RSVP to help manage space, safety, and group size.
                 </p>
               </div>
             </div>
