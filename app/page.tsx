@@ -8,10 +8,21 @@ export default function Home() {
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
   const [showWelcome, setShowWelcome] = useState(false);
   const [welcomeStorageKey, setWelcomeStorageKey] = useState("");
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     checkUserAndLoadHome();
+  }, []);
+
+  useEffect(() => {
+    const dismissed =
+      typeof window !== "undefined" &&
+      localStorage.getItem("installBannerDismissed") === "true";
+
+    if (!dismissed) {
+      setShowInstallBanner(true);
+    }
   }, []);
 
   async function checkUserAndLoadHome() {
@@ -79,19 +90,39 @@ export default function Home() {
     setShowWelcome(false);
   }
 
+  function dismissInstallBanner() {
+    localStorage.setItem("installBannerDismissed", "true");
+    setShowInstallBanner(false);
+  }
+
   if (loading) {
     return <p className="text-gray-300">Loading home...</p>;
   }
 
   return (
     <div className="space-y-8">
-      <section className="rounded-xl border border-[#F28C52]/30 bg-black/40 p-4">
-  <p className="text-sm leading-6 text-gray-300">
-    📲 <span className="font-semibold text-[#F28C52]">Add this app to your phone:</span>{" "}
-    iPhone users, open in Safari, tap Share, then Add to Home Screen. Android users,
-    open in Chrome, tap the menu, then Add to Home Screen.
-  </p>
-</section>
+      {showInstallBanner && (
+        <section className="relative rounded-xl border border-[#F28C52]/30 bg-black/40 p-4">
+          <button
+            onClick={dismissInstallBanner}
+            aria-label="Dismiss install banner"
+            className="absolute right-3 top-2 text-lg font-bold text-red-400 hover:text-red-300"
+          >
+            ✕
+          </button>
+
+          <p className="pr-6 text-sm leading-6 text-gray-300">
+            📲{" "}
+            <span className="font-semibold text-[#F28C52]">
+              Add this app to your phone:
+            </span>{" "}
+            iPhone users, open in Safari, tap Share, then Add to Home Screen.
+            Android users, open in Chrome, tap the menu, then Add to Home
+            Screen.
+          </p>
+        </section>
+      )}
+
       {showWelcome && (
         <section className="relative rounded-2xl border border-[#F28C52]/40 bg-black/50 p-6 shadow-xl">
           <button
