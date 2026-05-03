@@ -15,6 +15,7 @@ export const metadata: Metadata = {
 
 const links = [
   { href: "/", label: "Home" },
+  { href: "/admin", label: "Admin" },
   { href: "/profiles", label: "My Profile" },
   { href: "/events", label: "Events" },
   { href: "/gallery", label: "Gallery" },
