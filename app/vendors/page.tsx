@@ -54,7 +54,7 @@ export default function VendorsPage() {
         <p className="mt-3 max-w-3xl text-gray-300">
           Peach State members get access to exclusive discounts and benefits
           from trusted off-road, overlanding, lighting, communications, and
-          automotive partners.
+          automotive partners. Click any vendor name below to visit their website.
         </p>
 
         <p className="mt-4 text-sm text-gray-400">
