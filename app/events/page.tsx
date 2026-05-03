@@ -211,7 +211,7 @@ export default function EventsPage() {
         (eventsList || []).map(async (event) => {
           const { data: routeData, error } = await supabase
             .from("route_links")
-            .select("id, event_id, title, onx_url, difficulty, created_at")
+            .select("*")
             .eq("event_id", event.id)
             .order("created_at", { ascending: false });
 
@@ -227,8 +227,12 @@ export default function EventsPage() {
       );
     }
 
-    setEvents(await attachCounts(upcomingData || []));
-    setPastEvents(await attachRoutes(pastData || []));
+    const upcomingWithCounts = await attachCounts(upcomingData || []);
+    const upcomingWithRoutes = await attachRoutes(upcomingWithCounts);
+    const pastWithRoutes = await attachRoutes(pastData || []);
+
+    setEvents(upcomingWithRoutes);
+    setPastEvents(pastWithRoutes);
   }
 
   async function deleteEvent(eventId: string) {
@@ -282,18 +286,25 @@ export default function EventsPage() {
     const title = route.title.trim();
     const difficulty = route.difficulty.trim();
     const onxUrl = route.onx_url.trim();
+    const gpxUrl = route.gpx_url.trim();
+    const googleMapsUrl = route.google_maps_url.trim();
+    const notes = route.notes.trim();
 
     if (!title) return alert("Route name required");
-    if (!difficulty) return alert("Difficulty required");
-    if (!onxUrl) return alert("GPX / OnX route link required");
+
+    if (!onxUrl && !gpxUrl && !googleMapsUrl && !notes) {
+      return alert("Add at least one route link or route note.");
+    }
 
     const { error } = await supabase.from("route_links").insert({
       event_id: eventId,
       title,
       difficulty,
       onx_url: onxUrl,
+      gpx_url: gpxUrl,
+      google_maps_url: googleMapsUrl,
+      notes,
       location: "",
-      notes: "",
     });
 
     if (error) return alert(error.message);
@@ -302,7 +313,7 @@ export default function EventsPage() {
   }
 
   async function deleteRoute(routeId: string) {
-    if (!confirm("Delete this GPX / OnX route?")) return;
+    if (!confirm("Delete this route?")) return;
 
     const { error } = await supabase
       .from("route_links")
@@ -643,6 +654,89 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+function RouteHub({ event }: any) {
+  const routes = event.routes || [];
+
+  if (routes.length === 0) {
+    return (
+      <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-4">
+        <h4 className="font-semibold text-[#F28C52]">Route Hub</h4>
+        <p className="mt-2 text-sm text-gray-400">
+          No route links have been added yet.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 rounded-lg border border-[#F28C52]/20 bg-black/30 p-4">
+      <h4 className="font-semibold text-[#F28C52]">Route Hub</h4>
+
+      <p className="mt-1 text-sm text-gray-400">
+        Route links, meetup pins, GPX files, and trail notes live here.
+      </p>
+
+      <div className="mt-4 space-y-4">
+        {routes.map((route: any) => (
+          <div
+            key={route.id}
+            className="rounded-lg border border-white/10 bg-black/20 p-3"
+          >
+            <p className="font-semibold text-white">{route.title}</p>
+
+            {route.difficulty && (
+              <p className="mt-1 text-sm text-[#F28C52]">
+                Difficulty: {route.difficulty}
+              </p>
+            )}
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {route.onx_url && (
+                <a
+                  href={route.onx_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg border border-[#F28C52] px-3 py-2 text-sm font-semibold text-[#F28C52] hover:bg-[#F28C52] hover:text-black"
+                >
+                  Open in onX
+                </a>
+              )}
+
+              {route.gpx_url && (
+                <a
+                  href={route.gpx_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg border border-white/20 px-3 py-2 text-sm font-semibold text-white hover:border-[#F28C52] hover:text-[#F28C52]"
+                >
+                  Download GPX
+                </a>
+              )}
+
+              {route.google_maps_url && (
+                <a
+                  href={route.google_maps_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg border border-white/20 px-3 py-2 text-sm font-semibold text-white hover:border-[#F28C52] hover:text-[#F28C52]"
+                >
+                  Open Meetup Pin
+                </a>
+              )}
+            </div>
+
+            {route.notes && (
+              <p className="mt-3 whitespace-pre-line text-sm leading-6 text-gray-300">
+                {route.notes}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function EventCard({
   event,
   rsvp,
@@ -770,16 +864,7 @@ function EventCard({
                 </p>
               )}
 
-              {event.route_link && (
-                <a
-                  href={event.route_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block rounded-lg border border-[#F28C52] px-4 py-2 text-center text-sm font-semibold text-[#F28C52] hover:bg-[#F28C52] hover:text-black"
-                >
-                  Open Route / Map
-                </a>
-              )}
+              <RouteHub event={event} />
             </div>
           ) : (
             <div className="flex items-start gap-3">
@@ -793,7 +878,7 @@ function EventCard({
                 </p>
 
                 <p className="mt-1 text-sm leading-6 text-gray-400">
-                  Exact meetup location, route links, and event instructions are visible after RSVP to help manage space, safety, and group size.
+                  Exact meetup location, Route Hub links, and event instructions are visible after RSVP to help manage space, safety, and group size.
                 </p>
               </div>
             </div>
@@ -927,21 +1012,21 @@ function PastEventCard({
     title: "",
     difficulty: "",
     onx_url: "",
+    gpx_url: "",
+    google_maps_url: "",
+    notes: "",
   });
 
-  const route = event.routes?.[0];
-
   async function handleAddRoute() {
-    await addRouteToEvent(event.id, {
-      title: newRoute.title,
-      difficulty: newRoute.difficulty,
-      onx_url: newRoute.onx_url,
-    });
+    await addRouteToEvent(event.id, newRoute);
 
     setNewRoute({
       title: "",
       difficulty: "",
       onx_url: "",
+      gpx_url: "",
+      google_maps_url: "",
+      notes: "",
     });
   }
 
@@ -950,15 +1035,8 @@ function PastEventCard({
       <h3 className="text-xl font-bold text-white">{event.title}</h3>
 
       <div className="mt-3 space-y-2">
-        {route?.title && (
-          <p className="text-sm text-gray-300">
-            Route:{" "}
-            <span className="font-semibold text-white">{route.title}</span>
-          </p>
-        )}
-
         <p className="text-sm font-semibold text-[#F28C52]">
-          Difficulty: {route?.difficulty || event.difficulty || "Not listed"}
+          Difficulty: {event.difficulty || "Not listed"}
         </p>
 
         {event.event_date && (
@@ -967,23 +1045,12 @@ function PastEventCard({
           </p>
         )}
 
-        {route?.onx_url ? (
-          <a
-            href={route.onx_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block rounded-lg border border-[#F28C52] px-4 py-2 text-center font-semibold text-[#F28C52] hover:bg-[#F28C52] hover:text-black"
-          >
-            Open GPX / OnX Route
-          </a>
-        ) : (
-          <p className="text-sm text-gray-400">No GPX / OnX route added.</p>
-        )}
+        <RouteHub event={event} />
       </div>
 
       {isAdmin && (
         <div className="mt-5 space-y-3 border-t border-white/10 pt-4">
-          <h4 className="font-semibold text-white">Add GPX / OnX Route</h4>
+          <h4 className="font-semibold text-white">Add Route Hub Link</h4>
 
           <input
             type="text"
@@ -1010,12 +1077,44 @@ function PastEventCard({
 
           <input
             type="url"
-            placeholder="GPX / OnX Route Link"
+            placeholder="onX Link"
             value={newRoute.onx_url}
             onChange={(e) =>
               setNewRoute((prev) => ({ ...prev, onx_url: e.target.value }))
             }
             className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
+          />
+
+          <input
+            type="url"
+            placeholder="GPX File Link"
+            value={newRoute.gpx_url}
+            onChange={(e) =>
+              setNewRoute((prev) => ({ ...prev, gpx_url: e.target.value }))
+            }
+            className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
+          />
+
+          <input
+            type="url"
+            placeholder="Google Maps Meetup Pin"
+            value={newRoute.google_maps_url}
+            onChange={(e) =>
+              setNewRoute((prev) => ({
+                ...prev,
+                google_maps_url: e.target.value,
+              }))
+            }
+            className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
+          />
+
+          <textarea
+            placeholder="Route Notes"
+            value={newRoute.notes}
+            onChange={(e) =>
+              setNewRoute((prev) => ({ ...prev, notes: e.target.value }))
+            }
+            className="min-h-24 w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
           />
 
           <div className="flex flex-wrap gap-2">
@@ -1026,14 +1125,15 @@ function PastEventCard({
               Save Route
             </button>
 
-            {route && (
+            {event.routes?.map((route: any) => (
               <button
+                key={route.id}
                 onClick={() => deleteRoute(route.id)}
                 className="rounded bg-red-500 px-4 py-2 font-semibold text-white hover:bg-red-600"
               >
-                Delete Route
+                Delete {route.title}
               </button>
-            )}
+            ))}
 
             <button
               onClick={() => updateEvent(event)}
