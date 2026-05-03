@@ -76,11 +76,11 @@ export default function Home() {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold text-white">Next Upcoming Ride</h2>
+        <h2 className="text-2xl font-bold text-white">Next Upcoming Event</h2>
 
         {!nextEvent ? (
           <div className="rounded-xl border border-white/10 bg-black/30 p-5">
-            <p className="text-gray-400">No upcoming rides scheduled yet.</p>
+            <p className="text-gray-400">No upcoming events scheduled yet.</p>
           </div>
         ) : (
           <div className="overflow-hidden rounded-2xl border border-[#F28C52]/30 bg-black/40">
@@ -117,7 +117,7 @@ export default function Home() {
                 href={`/events/${nextEvent.id}`}
                 className="mt-5 inline-block rounded-lg border border-[#F28C52] px-5 py-3 font-semibold text-[#F28C52] hover:bg-[#F28C52] hover:text-black"
               >
-                View Ride Details
+                View Event Details
               </a>
             </div>
           </div>
@@ -164,7 +164,7 @@ export default function Home() {
           className="rounded-xl border border-white/10 bg-black/30 p-5 hover:border-[#F28C52]"
         >
           <h3 className="font-bold text-[#F28C52]">Events</h3>
-          <p className="mt-2 text-sm text-gray-400">RSVP for upcoming rides.</p>
+          <p className="mt-2 text-sm text-gray-400">RSVP for upcoming events.</p>
         </a>
 
         <a
