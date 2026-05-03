@@ -149,29 +149,58 @@ export default function EventsPage() {
     async function attachCounts(eventsList: any[]) {
       return Promise.all(
         (eventsList || []).map(async (event) => {
-          const { count: goingCount } = await supabase
+          const { data: rsvpData, error: rsvpError } = await supabase
             .from("rsvps")
-            .select("*", { count: "exact", head: true })
-            .eq("event_id", event.id)
-            .eq("status", "going");
-
-          const { count: waitlistCount } = await supabase
-            .from("rsvps")
-            .select("*", { count: "exact", head: true })
-            .eq("event_id", event.id)
-            .eq("status", "waitlist");
-
-          const { data: attendees } = await supabase
-            .from("rsvps")
-            .select("user_id, status, profiles(name, image_url)")
+            .select("id, user_id, event_id, status, created_at")
             .eq("event_id", event.id)
             .order("created_at", { ascending: true });
 
+          if (rsvpError) {
+            console.error("RSVP load error:", rsvpError);
+          }
+
+          const rsvps = rsvpData || [];
+          const userIds = rsvps.map((rsvp) => rsvp.user_id);
+
+          let profiles: any[] = [];
+
+          if (userIds.length > 0) {
+            const { data: profileData, error: profileError } = await supabase
+              .from("profiles")
+              .select("user_id, name, image_url")
+              .in("user_id", userIds);
+
+            if (profileError) {
+              console.error("Profile load error:", profileError);
+            }
+
+            profiles = profileData || [];
+          }
+
+          const attendees = rsvps.map((rsvp) => {
+            const profile = profiles.find(
+              (profile) => profile.user_id === rsvp.user_id
+            );
+
+            return {
+              ...rsvp,
+              profiles: profile || null,
+            };
+          });
+
+          const goingCount = attendees.filter(
+            (attendee) => attendee.status === "going"
+          ).length;
+
+          const waitlistCount = attendees.filter(
+            (attendee) => attendee.status === "waitlist"
+          ).length;
+
           return {
             ...event,
-            goingCount: goingCount || 0,
-            waitlistCount: waitlistCount || 0,
-            attendees: attendees || [],
+            goingCount,
+            waitlistCount,
+            attendees,
           };
         })
       );
