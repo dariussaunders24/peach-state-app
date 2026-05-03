@@ -24,3 +24,38 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* =========================
+   GLOBAL CLICKABLE BEHAVIOR
+========================= */
+
+button,
+a,
+[role="button"] {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+button:hover,
+a:hover,
+[role="button"]:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+button:active,
+a:active,
+[role="button"]:active {
+  transform: translateY(0);
+  filter: brightness(0.95);
+}
+
+/* =========================
+   OPTIONAL: DISABLED STATES
+========================= */
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
