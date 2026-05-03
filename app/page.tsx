@@ -7,7 +7,7 @@ export default function Home() {
   const [nextEvent, setNextEvent] = useState<any>(null);
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
   const [showWelcome, setShowWelcome] = useState(false);
-  const [welcomeDismissed, setWelcomeDismissed] = useState(false);
+  const [welcomeStorageKey, setWelcomeStorageKey] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,16 +22,18 @@ export default function Home() {
       return;
     }
 
+    const userId = userData.user.id;
+    const storageKey = `welcomePanelDismissed:${userId}`;
+    setWelcomeStorageKey(storageKey);
+
     const dismissed =
       typeof window !== "undefined" &&
-      localStorage.getItem("welcomePanelDismissed") === "true";
-
-    setWelcomeDismissed(dismissed);
+      localStorage.getItem(storageKey) === "true";
 
     const { data: profileData } = await supabase
       .from("profiles")
       .select("name, vehicle, location, image_url")
-      .eq("user_id", userData.user.id)
+      .eq("user_id", userId)
       .limit(1);
 
     const profile = profileData?.[0];
@@ -43,11 +45,10 @@ export default function Home() {
       !!profile?.image_url;
 
     if (profileComplete) {
-      localStorage.setItem("welcomePanelDismissed", "true");
+      localStorage.setItem(storageKey, "true");
       setShowWelcome(false);
-      setWelcomeDismissed(true);
     } else {
-      setShowWelcome(true);
+      setShowWelcome(!dismissed);
     }
 
     const now = new Date().toISOString();
@@ -71,8 +72,11 @@ export default function Home() {
   }
 
   function dismissWelcomePanel() {
-    localStorage.setItem("welcomePanelDismissed", "true");
-    setWelcomeDismissed(true);
+    if (welcomeStorageKey) {
+      localStorage.setItem(welcomeStorageKey, "true");
+    }
+
+    setShowWelcome(false);
   }
 
   if (loading) {
@@ -81,7 +85,7 @@ export default function Home() {
 
   return (
     <div className="space-y-8">
-      {showWelcome && !welcomeDismissed && (
+      {showWelcome && (
         <section className="relative rounded-2xl border border-[#F28C52]/40 bg-black/50 p-6 shadow-xl">
           <button
             onClick={dismissWelcomePanel}
