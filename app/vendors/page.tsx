@@ -1,3 +1,5 @@
+"use client";
+
 const vendors = [
   {
     name: "Morrflate",
@@ -41,6 +43,14 @@ const vendors = [
     logo: "/vendors/allsouth.png",
     url: "https://www.allsouthautosports.com",
   },
+  {
+    name: "Warrior Winches",
+    discount: "10% Off",
+    description:
+      "High-quality winches and recovery gear built for demanding off-road conditions.",
+    logo: "/vendors/warrior.png",
+    url: "https://www.warriorwinches.com/",
+  },
 ];
 
 export default function VendorsPage() {
@@ -83,14 +93,14 @@ export default function VendorsPage() {
               />
             </div>
 
-           <a
-  href={vendor.url}
-  target="_blank"
-  rel="noopener noreferrer"
-  className="mt-5 block text-2xl font-bold text-white hover:text-[#F28C52]"
->
-  {vendor.name}
-</a>
+            <a
+              href={vendor.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 block text-2xl font-bold text-white hover:text-[#F28C52]"
+            >
+              {vendor.name}
+            </a>
 
             <p className="mt-2 text-xl font-bold text-[#F28C52]">
               {vendor.discount}
