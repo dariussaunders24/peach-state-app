@@ -53,7 +53,7 @@ export default function Home() {
         </h1>
 
         <p className="mt-4 max-w-3xl text-gray-300">
-          Find upcoming rides, manage your profile, view past trail routes, and
+          Find upcoming events, manage your profile, view past events, and
           stay connected with the Peach State Off-Road and Overlanding
           community.
         </p>
