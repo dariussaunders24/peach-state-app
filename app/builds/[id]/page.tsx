@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
 const maintenanceTypes = [
@@ -19,16 +20,45 @@ const maintenanceTypes = [
   "Other",
 ];
 
-export default function BuildDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+const buildFields = [
+  { key: "suspension", label: "Suspension" },
+  { key: "tires_wheels", label: "Tires / Wheels" },
+  { key: "armor_protection", label: "Armor / Protection" },
+  { key: "recovery_gear", label: "Recovery Gear" },
+  { key: "lighting", label: "Lighting" },
+  { key: "comms", label: "Comms" },
+  { key: "roof_camp_setup", label: "Roof / Camp Setup" },
+  { key: "future_mods", label: "Future Mods" },
+];
+
+export default function BuildDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
+
   const [vehicle, setVehicle] = useState<any>(null);
   const [logs, setLogs] = useState<any[]>([]);
   const [currentUserId, setCurrentUserId] = useState("");
   const [loading, setLoading] = useState(true);
   const [showMaintenanceForm, setShowMaintenanceForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+
+  const [editForm, setEditForm] = useState({
+    nickname: "",
+    year: "",
+    make: "",
+    model: "",
+    image_url: "",
+    suspension: "",
+    tires_wheels: "",
+    armor_protection: "",
+    recovery_gear: "",
+    lighting: "",
+    comms: "",
+    roof_camp_setup: "",
+    future_mods: "",
+    other_notes: "",
+    is_primary: false,
+  });
 
   const [maintenanceForm, setMaintenanceForm] = useState({
     maintenance_type: "Oil Change",
@@ -38,8 +68,10 @@ export default function BuildDetailPage({
   });
 
   useEffect(() => {
-    loadBuild();
-  }, []);
+    if (id) {
+      loadBuild();
+    }
+  }, [id]);
 
   async function loadBuild() {
     const { data: userData } = await supabase.auth.getUser();
@@ -54,7 +86,7 @@ export default function BuildDetailPage({
     const { data: vehicleData, error: vehicleError } = await supabase
       .from("vehicles")
       .select("*")
-      .eq("id", params.id)
+      .eq("id", id)
       .limit(1);
 
     if (vehicleError) {
@@ -73,10 +105,28 @@ export default function BuildDetailPage({
 
     setVehicle(foundVehicle);
 
+    setEditForm({
+      nickname: foundVehicle.nickname || "",
+      year: foundVehicle.year || "",
+      make: foundVehicle.make || "",
+      model: foundVehicle.model || "",
+      image_url: foundVehicle.image_url || "",
+      suspension: foundVehicle.suspension || "",
+      tires_wheels: foundVehicle.tires_wheels || "",
+      armor_protection: foundVehicle.armor_protection || "",
+      recovery_gear: foundVehicle.recovery_gear || "",
+      lighting: foundVehicle.lighting || "",
+      comms: foundVehicle.comms || "",
+      roof_camp_setup: foundVehicle.roof_camp_setup || "",
+      future_mods: foundVehicle.future_mods || "",
+      other_notes: foundVehicle.other_notes || "",
+      is_primary: !!foundVehicle.is_primary,
+    });
+
     const { data: logData, error: logError } = await supabase
       .from("maintenance_logs")
       .select("*")
-      .eq("vehicle_id", params.id)
+      .eq("vehicle_id", id)
       .order("service_date", { ascending: false })
       .order("created_at", { ascending: false });
 
@@ -94,16 +144,71 @@ export default function BuildDetailPage({
     setMaintenanceForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  async function addMaintenanceLog() {
+  function updateEditField(field: string, value: any) {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function uploadBuildImage(file: File) {
+    if (!currentUserId) return alert("You must be logged in.");
+
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${currentUserId}-${Date.now()}.${fileExt}`;
+    const filePath = `${currentUserId}/builds/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("vehicle-images")
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) return alert(uploadError.message);
+
+    const { data: publicUrlData } = supabase.storage
+      .from("vehicle-images")
+      .getPublicUrl(filePath);
+
+    updateEditField("image_url", publicUrlData.publicUrl);
+  }
+
+  async function saveBuildEdits() {
     if (!vehicle) return;
 
-    if (!maintenanceForm.maintenance_type) {
-      return alert("Maintenance type required");
+    if (editForm.is_primary) {
+      await supabase
+        .from("vehicles")
+        .update({ is_primary: false })
+        .eq("user_id", currentUserId);
     }
 
-    if (!maintenanceForm.service_date) {
-      return alert("Date required");
-    }
+    const { error } = await supabase
+      .from("vehicles")
+      .update({
+        nickname: editForm.nickname.trim(),
+        year: editForm.year.trim(),
+        make: editForm.make.trim(),
+        model: editForm.model.trim(),
+        image_url: editForm.image_url.trim(),
+        suspension: editForm.suspension.trim(),
+        tires_wheels: editForm.tires_wheels.trim(),
+        armor_protection: editForm.armor_protection.trim(),
+        recovery_gear: editForm.recovery_gear.trim(),
+        lighting: editForm.lighting.trim(),
+        comms: editForm.comms.trim(),
+        roof_camp_setup: editForm.roof_camp_setup.trim(),
+        future_mods: editForm.future_mods.trim(),
+        other_notes: editForm.other_notes.trim(),
+        is_primary: editForm.is_primary,
+      })
+      .eq("id", vehicle.id)
+      .eq("user_id", currentUserId);
+
+    if (error) return alert(error.message);
+
+    setShowEditForm(false);
+    await loadBuild();
+  }
+
+  async function addMaintenanceLog() {
+    if (!vehicle) return;
+    if (!maintenanceForm.service_date) return alert("Date required");
 
     const { error } = await supabase.from("maintenance_logs").insert({
       vehicle_id: vehicle.id,
@@ -141,9 +246,7 @@ export default function BuildDetailPage({
     await loadBuild();
   }
 
-  if (loading) {
-    return <p className="text-gray-300">Loading build...</p>;
-  }
+  if (loading) return <p className="text-gray-300">Loading build...</p>;
 
   if (!vehicle) {
     return (
@@ -165,12 +268,16 @@ export default function BuildDetailPage({
       </a>
 
       <section className="overflow-hidden rounded-2xl border border-[#F28C52]/30 bg-black/40">
-        {vehicle.image_url && (
+        {vehicle.image_url ? (
           <img
             src={vehicle.image_url}
             alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
             className="h-72 w-full object-cover"
           />
+        ) : (
+          <div className="flex h-72 w-full items-center justify-center bg-black/30 text-white/50">
+            No build image uploaded
+          </div>
         )}
 
         <div className="p-6">
@@ -180,48 +287,126 @@ export default function BuildDetailPage({
             </p>
           )}
 
-          <h1 className="text-3xl font-bold text-[#F28C52]">
-            {vehicle.year} {vehicle.make} {vehicle.model}
-          </h1>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-[#F28C52]">
+                {vehicle.year} {vehicle.make} {vehicle.model}
+              </h1>
 
-          {vehicle.nickname && (
-            <p className="mt-2 text-gray-300">{vehicle.nickname}</p>
-          )}
+              {vehicle.nickname && (
+                <p className="mt-2 text-gray-300">{vehicle.nickname}</p>
+              )}
+            </div>
+
+            {isOwner && (
+              <button
+                onClick={() => setShowEditForm(!showEditForm)}
+                className="rounded-lg border border-[#F28C52] px-4 py-2 font-semibold text-[#F28C52] hover:bg-[#F28C52] hover:text-black"
+              >
+                {showEditForm ? "Close Edit" : "Edit Build"}
+              </button>
+            )}
+          </div>
         </div>
       </section>
 
+      {showEditForm && isOwner && (
+        <section className="space-y-5 rounded-2xl border border-[#F28C52]/30 bg-black/40 p-6">
+          <h2 className="text-2xl font-bold text-white">Edit Build</h2>
+
+          <input
+            type="text"
+            placeholder="Build nickname"
+            value={editForm.nickname}
+            onChange={(e) => updateEditField("nickname", e.target.value)}
+            className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
+          />
+
+          <div className="grid gap-3 md:grid-cols-3">
+            <input
+              type="text"
+              placeholder="Year"
+              value={editForm.year}
+              onChange={(e) => updateEditField("year", e.target.value)}
+              className="rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
+            />
+
+            <input
+              type="text"
+              placeholder="Make"
+              value={editForm.make}
+              onChange={(e) => updateEditField("make", e.target.value)}
+              className="rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
+            />
+
+            <input
+              type="text"
+              placeholder="Model"
+              value={editForm.model}
+              onChange={(e) => updateEditField("model", e.target.value)}
+              className="rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
+            />
+          </div>
+
+          {editForm.image_url && (
+            <img
+              src={editForm.image_url}
+              alt="Build preview"
+              className="h-56 w-full rounded-xl object-cover"
+            />
+          )}
+
+          <label className="block cursor-pointer rounded-lg border border-[#F28C52] px-4 py-3 text-center text-sm font-semibold text-[#F28C52] hover:bg-[#F28C52] hover:text-black">
+            Upload Build Image
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) uploadBuildImage(file);
+              }}
+            />
+          </label>
+
+          <BuildFormFields form={editForm} updateField={updateEditField} />
+
+          <label className="flex items-center gap-3 text-sm text-gray-300">
+            <input
+              type="checkbox"
+              checked={editForm.is_primary}
+              onChange={(e) => updateEditField("is_primary", e.target.checked)}
+            />
+            Set as primary build
+          </label>
+
+          <button
+            onClick={saveBuildEdits}
+            className="rounded-lg bg-[#F28C52] px-5 py-3 font-semibold text-black hover:bg-[#C96A2C]"
+          >
+            Save Build Changes
+          </button>
+        </section>
+      )}
+
       <section className="grid gap-5 md:grid-cols-2">
-        <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
-          <h2 className="text-xl font-bold text-[#F28C52]">
-            Mods / Upgrades
-          </h2>
+        {buildFields.map((field) => (
+          <InfoBlock
+            key={field.key}
+            label={field.label}
+            value={vehicle[field.key]}
+          />
+        ))}
+      </section>
 
-          {vehicle.mods ? (
-            <p className="mt-3 whitespace-pre-line text-sm leading-6 text-gray-300">
-              {vehicle.mods}
-            </p>
-          ) : (
-            <p className="mt-3 text-sm text-gray-400">
-              No mods listed yet.
-            </p>
-          )}
-        </div>
+      <section className="rounded-2xl border border-white/10 bg-black/30 p-5">
+        <h2 className="text-xl font-bold text-[#F28C52]">
+          Other Build Notes
+        </h2>
 
-        <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
-          <h2 className="text-xl font-bold text-[#F28C52]">
-            Other Build Notes
-          </h2>
-
-          {vehicle.other_notes ? (
-            <p className="mt-3 whitespace-pre-line text-sm leading-6 text-gray-300">
-              {vehicle.other_notes}
-            </p>
-          ) : (
-            <p className="mt-3 text-sm text-gray-400">
-              No notes listed yet.
-            </p>
-          )}
-        </div>
+        <p className="mt-3 whitespace-pre-line text-sm leading-6 text-gray-300">
+          {vehicle.other_notes || "No notes listed yet."}
+        </p>
       </section>
 
       <section className="space-y-4 rounded-2xl border border-[#F28C52]/30 bg-black/40 p-6">
@@ -281,9 +466,7 @@ export default function BuildDetailPage({
             <textarea
               placeholder="Notes"
               value={maintenanceForm.notes}
-              onChange={(e) =>
-                updateMaintenanceField("notes", e.target.value)
-              }
+              onChange={(e) => updateMaintenanceField("notes", e.target.value)}
               className="min-h-24 w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
             />
 
@@ -340,5 +523,70 @@ export default function BuildDetailPage({
         )}
       </section>
     </div>
+  );
+}
+
+function BuildFormFields({ form, updateField }: any) {
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      {buildFields.map((field) => (
+        <TextArea
+          key={field.key}
+          label={field.label}
+          value={form[field.key]}
+          onChange={(value: string) => updateField(field.key, value)}
+          placeholder={`Enter ${field.label.toLowerCase()} details.`}
+        />
+      ))}
+
+      <div className="md:col-span-2">
+        <TextArea
+          label="Other Build Notes"
+          value={form.other_notes}
+          onChange={(value: string) => updateField("other_notes", value)}
+          placeholder="Anything else members should know about this build."
+        />
+      </div>
+    </div>
+  );
+}
+
+function InfoBlock({ label, value }: any) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
+      <p className="text-xs uppercase tracking-wide text-white/50">{label}</p>
+
+      <p className="mt-2 whitespace-pre-line text-sm leading-6 text-white">
+        {value && value.trim() ? value : "Not listed"}
+      </p>
+    </div>
+  );
+}
+
+function TextArea({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}) {
+  return (
+    <label className="block">
+      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
+        {label}
+      </span>
+
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        rows={4}
+        className="mt-2 w-full rounded-lg border border-white/20 bg-white px-3 py-3 text-black placeholder-gray-500"
+      />
+    </label>
   );
 }

@@ -8,18 +8,9 @@ type Profile = {
   user_id?: string;
   name?: string | null;
   location?: string | null;
-  vehicle?: string | null;
-  rig_name?: string | null;
   image_url?: string | null;
-  suspension?: string | null;
-  tires_wheels?: string | null;
-  armor_protection?: string | null;
-  lighting?: string | null;
-  recovery_gear?: string | null;
-  comms?: string | null;
-  roof_camp_setup?: string | null;
-  future_mods?: string | null;
-  build_notes?: string | null;
+  bio?: string | null;
+  instagram?: string | null;
 };
 
 type Badge = {
@@ -32,6 +23,7 @@ type Badge = {
 export default function MyProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [badges, setBadges] = useState<Badge[]>([]);
+  const [builds, setBuilds] = useState<any[]>([]);
   const [userId, setUserId] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -65,6 +57,20 @@ export default function MyProfilePage() {
     }
 
     setProfile(data);
+
+    const { data: vehicleData, error: vehicleError } = await supabase
+      .from("vehicles")
+      .select("*")
+      .eq("user_id", userData.user.id)
+      .order("is_primary", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    if (vehicleError) {
+      console.error("Error loading builds:", vehicleError.message);
+      setBuilds([]);
+    } else {
+      setBuilds(vehicleData || []);
+    }
 
     const { data: memberBadgeData, error: memberBadgeError } = await supabase
       .from("member_badges")
@@ -129,7 +135,7 @@ export default function MyProfilePage() {
       <main className="mx-auto max-w-5xl px-4 py-8 text-white">
         <div className="rounded-2xl border border-white/10 bg-black/40 p-6">
           <p className="text-xs uppercase tracking-[0.3em] text-[#F28C52]/80">
-            Member Build Profile
+            Member Profile
           </p>
 
           <h1 className="mt-2 font-cinzel text-3xl font-bold text-white">
@@ -156,7 +162,7 @@ export default function MyProfilePage() {
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-[#F28C52]/80">
-            Member Build Profile
+            Member Profile
           </p>
 
           <h1 className="mt-2 font-cinzel text-3xl font-bold text-white md:text-4xl">
@@ -180,12 +186,12 @@ export default function MyProfilePage() {
         {profile.image_url ? (
           <img
             src={profile.image_url}
-            alt={profile.vehicle || "Member vehicle"}
+            alt={profile.name || "Member profile"}
             className="h-72 w-full object-cover md:h-96"
           />
         ) : (
           <div className="flex h-72 w-full items-center justify-center bg-black/30 text-white/50 md:h-96">
-            No vehicle photo uploaded
+            No profile photo uploaded
           </div>
         )}
 
@@ -196,15 +202,25 @@ export default function MyProfilePage() {
                 {profile.name || "Member"}
               </h2>
 
-              {profile.rig_name && (
-                <p className="mt-1 text-xl font-semibold text-white">
-                  “{profile.rig_name}”
+              {profile.bio && (
+                <p className="mt-3 max-w-2xl whitespace-pre-line text-sm leading-6 text-white/75">
+                  {profile.bio}
                 </p>
               )}
 
-              <p className="mt-1 text-white/70">
-                {profile.vehicle || "Vehicle not listed"}
-              </p>
+              {profile.instagram && (
+                <a
+                  href={`https://instagram.com/${profile.instagram.replace(
+                    "@",
+                    ""
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-block text-sm font-semibold text-[#F28C52] hover:underline"
+                >
+                  @{profile.instagram.replace("@", "")}
+                </a>
+              )}
             </div>
 
             {profile.location && (
@@ -249,37 +265,40 @@ export default function MyProfilePage() {
             )}
           </Section>
 
-          <Section title="Rig Build">
-            <div className="grid gap-4 md:grid-cols-2">
-              <InfoBlock label="Suspension" value={profile.suspension} />
-              <InfoBlock label="Tires / Wheels" value={profile.tires_wheels} />
-              <InfoBlock
-                label="Armor / Protection"
-                value={profile.armor_protection}
-              />
-              <InfoBlock label="Lighting" value={profile.lighting} />
-              <InfoBlock label="Recovery Gear" value={profile.recovery_gear} />
-              <InfoBlock label="Comms" value={profile.comms} />
-              <InfoBlock
-                label="Roof / Camp Setup"
-                value={profile.roof_camp_setup}
-              />
-              <InfoBlock label="Future Mods" value={profile.future_mods} />
-            </div>
+          <Section title="My Builds">
+            {builds.length === 0 ? (
+              <div className="rounded-xl border border-white/10 bg-black/30 p-4">
+                <p className="text-white/60">No builds added yet.</p>
+
+                <Link
+                  href="/builds"
+                  className="mt-4 inline-block rounded-lg border border-[#F28C52] px-4 py-2 text-sm font-semibold text-[#F28C52] hover:bg-[#F28C52] hover:text-black"
+                >
+                  Add My First Build
+                </Link>
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {builds.map((build) => (
+                  <BuildPreview key={build.id} build={build} />
+                ))}
+              </div>
+            )}
           </Section>
 
-          <Section title="Additional Build Notes">
-            <p className="whitespace-pre-line text-white/90">
-              {profile.build_notes || "No additional build notes listed."}
-            </p>
-          </Section>
-
-          <div className="mt-6">
+          <div className="mt-6 flex flex-wrap gap-3">
             <Link
               href={`/members/${profile.user_id}`}
               className="inline-block rounded-lg border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:border-[#F28C52] hover:text-[#F28C52]"
             >
               View Public Profile Page
+            </Link>
+
+            <Link
+              href="/builds"
+              className="inline-block rounded-lg border border-[#F28C52] px-5 py-3 text-sm font-semibold text-[#F28C52] transition hover:bg-[#F28C52] hover:text-black"
+            >
+              Manage My Builds
             </Link>
           </div>
         </div>
@@ -305,20 +324,39 @@ function Section({
   );
 }
 
-function InfoBlock({
-  label,
-  value,
-}: {
-  label: string;
-  value?: string | null;
-}) {
+function BuildPreview({ build }: any) {
   return (
-    <div className="rounded-lg border border-white/10 bg-black/30 p-3">
-      <p className="text-xs uppercase tracking-wide text-white/50">{label}</p>
+    <div className="overflow-hidden rounded-xl border border-white/10 bg-black/40">
+      {build.image_url && (
+        <img
+          src={build.image_url}
+          alt={`${build.year} ${build.make} ${build.model}`}
+          className="h-40 w-full object-cover"
+        />
+      )}
 
-      <p className="mt-1 whitespace-pre-line text-white">
-        {value && value.trim() ? value : "Not listed"}
-      </p>
+      <div className="p-4">
+        {build.is_primary && (
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-[#F28C52]">
+            Primary Build
+          </p>
+        )}
+
+        <h4 className="text-lg font-bold text-white">
+          {build.year} {build.make} {build.model}
+        </h4>
+
+        {build.nickname && (
+          <p className="mt-1 text-sm text-white/60">{build.nickname}</p>
+        )}
+
+        <Link
+          href={`/builds/${build.id}`}
+          className="mt-4 inline-block rounded-lg border border-[#F28C52] px-4 py-2 text-sm font-semibold text-[#F28C52] hover:bg-[#F28C52] hover:text-black"
+        >
+          View Build
+        </Link>
+      </div>
     </div>
   );
 }

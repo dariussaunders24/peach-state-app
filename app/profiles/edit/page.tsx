@@ -6,18 +6,9 @@ import { supabase } from "../../lib/supabase";
 type ProfileForm = {
   name: string;
   location: string;
-  vehicle: string;
-  rig_name: string;
+  bio: string;
+  instagram: string;
   image_url: string;
-  suspension: string;
-  tires_wheels: string;
-  armor_protection: string;
-  lighting: string;
-  recovery_gear: string;
-  comms: string;
-  roof_camp_setup: string;
-  future_mods: string;
-  build_notes: string;
 };
 
 export default function EditProfilePage() {
@@ -29,18 +20,9 @@ export default function EditProfilePage() {
   const [form, setForm] = useState<ProfileForm>({
     name: "",
     location: "",
-    vehicle: "",
-    rig_name: "",
+    bio: "",
+    instagram: "",
     image_url: "",
-    suspension: "",
-    tires_wheels: "",
-    armor_protection: "",
-    lighting: "",
-    recovery_gear: "",
-    comms: "",
-    roof_camp_setup: "",
-    future_mods: "",
-    build_notes: "",
   });
 
   useEffect(() => {
@@ -73,18 +55,9 @@ export default function EditProfilePage() {
       setForm({
         name: data.name || "",
         location: data.location || "",
-        vehicle: data.vehicle || "",
-        rig_name: data.rig_name || "",
+        bio: data.bio || "",
+        instagram: data.instagram || "",
         image_url: data.image_url || "",
-        suspension: data.suspension || "",
-        tires_wheels: data.tires_wheels || "",
-        armor_protection: data.armor_protection || "",
-        lighting: data.lighting || "",
-        recovery_gear: data.recovery_gear || "",
-        comms: data.comms || "",
-        roof_camp_setup: data.roof_camp_setup || "",
-        future_mods: data.future_mods || "",
-        build_notes: data.build_notes || "",
       });
     }
 
@@ -98,13 +71,11 @@ export default function EditProfilePage() {
 
     const fileExt = file.name.split(".").pop();
     const fileName = `${userId}-${Date.now()}.${fileExt}`;
-    const filePath = `${userId}/${fileName}`;
+    const filePath = `${userId}/profile/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from("vehicle-images")
-      .upload(filePath, file, {
-        upsert: true,
-      });
+      .upload(filePath, file, { upsert: true });
 
     if (uploadError) {
       setUploading(false);
@@ -135,18 +106,9 @@ export default function EditProfilePage() {
         user_id: userId,
         name: form.name.trim(),
         location: form.location.trim(),
-        vehicle: form.vehicle.trim(),
-        rig_name: form.rig_name.trim(),
+        bio: form.bio.trim(),
+        instagram: form.instagram.trim(),
         image_url: form.image_url.trim(),
-        suspension: form.suspension.trim(),
-        tires_wheels: form.tires_wheels.trim(),
-        armor_protection: form.armor_protection.trim(),
-        lighting: form.lighting.trim(),
-        recovery_gear: form.recovery_gear.trim(),
-        comms: form.comms.trim(),
-        roof_camp_setup: form.roof_camp_setup.trim(),
-        future_mods: form.future_mods.trim(),
-        build_notes: form.build_notes.trim(),
       },
       {
         onConflict: "user_id",
@@ -181,7 +143,7 @@ export default function EditProfilePage() {
     <main className="mx-auto max-w-5xl px-4 py-8 text-white">
       <div className="mb-8">
         <p className="text-xs uppercase tracking-[0.3em] text-[#F28C52]/80">
-          Member Build Profile
+          Member Profile
         </p>
 
         <h1 className="mt-2 font-cinzel text-3xl font-bold text-white md:text-4xl">
@@ -189,52 +151,31 @@ export default function EditProfilePage() {
         </h1>
 
         <p className="mt-3 max-w-2xl text-sm leading-6 text-white/70">
-          Update your member info, rig image, and build sections shown on your public profile.
+          Update your personal info shown to other members.
         </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
-        <section className="overflow-hidden rounded-2xl border border-white/10 bg-black/45 shadow-xl backdrop-blur">
+        <section className="overflow-hidden rounded-2xl border border-white/10 bg-black/45">
           {form.image_url ? (
             <img
               src={form.image_url}
-              alt={form.rig_name || form.vehicle || "Rig photo"}
+              alt="Profile"
               className="h-72 w-full object-cover md:h-96"
             />
           ) : (
-            <div className="flex h-72 w-full items-center justify-center bg-white/5 md:h-96">
-              <p className="text-sm text-white/40">No rig image uploaded yet</p>
+            <div className="flex h-72 w-full items-center justify-center bg-white/5">
+              <p className="text-sm text-white/40">No profile image uploaded</p>
             </div>
           )}
 
-          <div className="space-y-4 p-5">
-            <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-white/50">
-                Build Name
-              </p>
-
-              <p className="mt-1 text-2xl font-bold leading-tight text-[#F28C52]">
-                {form.rig_name || "Unnamed Build"}
-              </p>
-            </div>
-
-            <div className="border-t border-white/10 pt-4">
-              <p className="text-xs uppercase tracking-[0.25em] text-white/50">
-                Vehicle
-              </p>
-
-              <p className="mt-1 text-base text-white">
-                {form.vehicle || "Vehicle not listed"}
-              </p>
-            </div>
-
-            <label className="block cursor-pointer rounded-lg border border-[#F28C52] px-4 py-3 text-center text-sm font-semibold text-[#F28C52] transition hover:bg-[#F28C52] hover:text-black">
-              {uploading ? "Uploading..." : "Upload Rig Image"}
+          <div className="p-5">
+            <label className="block cursor-pointer rounded-lg border border-[#F28C52] px-4 py-3 text-center text-sm font-semibold text-[#F28C52] hover:bg-[#F28C52] hover:text-black">
+              {uploading ? "Uploading..." : "Upload Profile Image"}
               <input
                 type="file"
                 accept="image/*"
                 className="hidden"
-                disabled={uploading}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) uploadProfileImage(file);
@@ -244,141 +185,45 @@ export default function EditProfilePage() {
           </div>
         </section>
 
-        <section className="space-y-6 rounded-2xl border border-white/10 bg-black/45 p-5 shadow-xl backdrop-blur">
-          <FormSection title="Member Info">
-            <Field
-              label="Name"
-              value={form.name}
-              onChange={(value) => updateField("name", value)}
-              placeholder="Your name"
-            />
+        <section className="space-y-6 rounded-2xl border border-white/10 bg-black/45 p-5">
+          <Field
+            label="Name"
+            value={form.name}
+            onChange={(value) => updateField("name", value)}
+            placeholder="Your name"
+          />
 
-            <Field
-              label="Location"
-              value={form.location}
-              onChange={(value) => updateField("location", value)}
-              placeholder="City / area"
-            />
+          <Field
+            label="Location"
+            value={form.location}
+            onChange={(value) => updateField("location", value)}
+            placeholder="City / area"
+          />
 
-            <Field
-              label="Vehicle"
-              value={form.vehicle}
-              onChange={(value) => updateField("vehicle", value)}
-              placeholder="2020 Subaru Ascent, Jeep Wrangler, Tacoma, etc."
-            />
+          <Field
+            label="Instagram"
+            value={form.instagram}
+            onChange={(value) => updateField("instagram", value)}
+            placeholder="@username"
+          />
 
-            <Field
-              label="Build Name"
-              value={form.rig_name}
-              onChange={(value) => updateField("rig_name", value)}
-              placeholder="MtnRoo, Trail Pig, etc."
-            />
-          </FormSection>
+          <TextArea
+            label="Bio"
+            value={form.bio}
+            onChange={(value) => updateField("bio", value)}
+            placeholder="Tell the group about yourself..."
+          />
 
-          <FormSection title="Rig Build">
-            <TextArea
-              label="Suspension"
-              value={form.suspension}
-              onChange={(value) => updateField("suspension", value)}
-              placeholder="Lift, shocks, springs, control arms, sway bar setup, etc."
-            />
-
-            <TextArea
-              label="Tires / Wheels"
-              value={form.tires_wheels}
-              onChange={(value) => updateField("tires_wheels", value)}
-              placeholder="Tire size, wheel specs, tire model, spare setup, etc."
-            />
-
-            <TextArea
-              label="Armor / Protection"
-              value={form.armor_protection}
-              onChange={(value) => updateField("armor_protection", value)}
-              placeholder="Skid plates, sliders, bumpers, diff protection, etc."
-            />
-
-            <TextArea
-              label="Lighting"
-              value={form.lighting}
-              onChange={(value) => updateField("lighting", value)}
-              placeholder="Ditch lights, light bars, fogs, rear chase lights, etc."
-            />
-
-            <TextArea
-              label="Recovery Gear"
-              value={form.recovery_gear}
-              onChange={(value) => updateField("recovery_gear", value)}
-              placeholder="Winch, straps, soft shackles, traction boards, compressor, etc."
-            />
-
-            <TextArea
-              label="Comms"
-              value={form.comms}
-              onChange={(value) => updateField("comms", value)}
-              placeholder="GMRS radio, antenna, handhelds, mounts, etc."
-            />
-
-            <TextArea
-              label="Roof / Camp Setup"
-              value={form.roof_camp_setup}
-              onChange={(value) => updateField("roof_camp_setup", value)}
-              placeholder="Roof rack, awning, tent, storage, fridge, power setup, etc."
-            />
-
-            <TextArea
-              label="Future Mods"
-              value={form.future_mods}
-              onChange={(value) => updateField("future_mods", value)}
-              placeholder="Planned upgrades, future build goals, etc."
-            />
-          </FormSection>
-
-          <FormSection title="Additional Build Notes">
-            <TextArea
-              label="Build Notes"
-              value={form.build_notes}
-              onChange={(value) => updateField("build_notes", value)}
-              placeholder="Anything else you want members to know about your rig."
-            />
-          </FormSection>
-
-          <div className="flex flex-col gap-3 border-t border-white/10 pt-5 sm:flex-row">
-            <button
-              onClick={saveProfile}
-              disabled={saving || uploading}
-              className="rounded-lg bg-[#F28C52] px-5 py-3 font-semibold text-black transition hover:bg-[#C96A2C] disabled:opacity-60"
-            >
-              {saving ? "Saving..." : "Save Profile"}
-            </button>
-
-            <a
-              href="/profiles"
-              className="rounded-lg border border-white/20 px-5 py-3 text-center font-semibold text-white transition hover:border-[#F28C52] hover:text-[#F28C52]"
-            >
-              Cancel
-            </a>
-          </div>
+          <button
+            onClick={saveProfile}
+            disabled={saving}
+            className="w-full rounded-lg bg-[#F28C52] px-5 py-3 font-semibold text-black hover:bg-[#C96A2C]"
+          >
+            {saving ? "Saving..." : "Save Profile"}
+          </button>
         </section>
       </div>
     </main>
-  );
-}
-
-function FormSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-4 border-b border-white/10 pb-6 last:border-b-0 last:pb-0">
-      <h2 className="font-cinzel text-xl font-bold text-[#F28C52]">
-        {title}
-      </h2>
-
-      <div className="grid gap-4 md:grid-cols-2">{children}</div>
-    </div>
   );
 }
 
@@ -394,16 +239,13 @@ function Field({
   placeholder: string;
 }) {
   return (
-    <label className="block">
-      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
-        {label}
-      </span>
-
+    <label>
+      <span className="text-xs uppercase text-white/50">{label}</span>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="mt-2 w-full rounded-lg border border-white/20 bg-white px-3 py-3 text-black placeholder-gray-500"
+        className="mt-2 w-full rounded-lg bg-white px-3 py-3 text-black"
       />
     </label>
   );
@@ -421,17 +263,14 @@ function TextArea({
   placeholder: string;
 }) {
   return (
-    <label className="block">
-      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
-        {label}
-      </span>
-
+    <label>
+      <span className="text-xs uppercase text-white/50">{label}</span>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={4}
-        className="mt-2 w-full rounded-lg border border-white/20 bg-white px-3 py-3 text-black placeholder-gray-500"
+        className="mt-2 w-full rounded-lg bg-white px-3 py-3 text-black"
       />
     </label>
   );

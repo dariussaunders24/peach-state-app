@@ -8,27 +8,10 @@ import { supabase } from "../../lib/supabase";
 type Profile = {
   user_id: string;
   name: string | null;
-  vehicle: string | null;
   location: string | null;
   image_url: string | null;
   bio?: string | null;
   instagram?: string | null;
-
-  rig_name?: string | null;
-  suspension?: string | null;
-
-  // 🔥 BOTH old + new supported
-  tires?: string | null;
-  armor?: string | null;
-  tires_wheels?: string | null;
-  armor_protection?: string | null;
-
-  lighting?: string | null;
-  recovery_gear?: string | null;
-  comms?: string | null;
-  roof_camp_setup?: string | null;
-  future_mods?: string | null;
-  build_notes?: string | null;
 };
 
 type Badge = {
@@ -38,12 +21,24 @@ type Badge = {
   image_url: string | null;
 };
 
+const buildFields = [
+  { key: "suspension", label: "Suspension" },
+  { key: "tires_wheels", label: "Tires / Wheels" },
+  { key: "armor_protection", label: "Armor / Protection" },
+  { key: "recovery_gear", label: "Recovery Gear" },
+  { key: "lighting", label: "Lighting" },
+  { key: "comms", label: "Comms" },
+  { key: "roof_camp_setup", label: "Roof / Camp Setup" },
+  { key: "future_mods", label: "Future Mods" },
+];
+
 export default function MemberProfilePage() {
   const params = useParams();
   const id = params.id as string;
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [badges, setBadges] = useState<Badge[]>([]);
+  const [builds, setBuilds] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -55,7 +50,7 @@ export default function MemberProfilePage() {
 
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
-      .select("*")
+      .select("user_id, name, location, image_url, bio, instagram")
       .eq("user_id", id)
       .single();
 
@@ -64,6 +59,20 @@ export default function MemberProfilePage() {
       setProfile(null);
       setLoading(false);
       return;
+    }
+
+    const { data: buildData, error: buildError } = await supabase
+      .from("vehicles")
+      .select("*")
+      .eq("user_id", id)
+      .order("is_primary", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    if (buildError) {
+      console.error("Error loading builds:", buildError.message);
+      setBuilds([]);
+    } else {
+      setBuilds(buildData || []);
     }
 
     const { data: memberBadgeData } = await supabase
@@ -91,7 +100,7 @@ export default function MemberProfilePage() {
 
   if (loading) {
     return (
-      <main className="max-w-4xl mx-auto px-4 py-10 text-white">
+      <main className="mx-auto max-w-5xl px-4 py-10 text-white">
         <p className="text-white/70">Loading profile...</p>
       </main>
     );
@@ -99,7 +108,7 @@ export default function MemberProfilePage() {
 
   if (!profile) {
     return (
-      <main className="max-w-4xl mx-auto px-4 py-10 text-white">
+      <main className="mx-auto max-w-5xl px-4 py-10 text-white">
         <p>Profile not found.</p>
 
         <Link
@@ -112,8 +121,11 @@ export default function MemberProfilePage() {
     );
   }
 
+  const primaryBuild = builds.find((build) => build.is_primary);
+  const otherBuilds = builds.filter((build) => !build.is_primary);
+
   return (
-    <main className="max-w-4xl mx-auto px-4 py-10 text-white">
+    <main className="mx-auto max-w-5xl px-4 py-10 text-white">
       <Link href="/members" className="text-sm text-[#F28C52] hover:underline">
         ← Back to Members
       </Link>
@@ -122,12 +134,12 @@ export default function MemberProfilePage() {
         {profile.image_url ? (
           <img
             src={profile.image_url}
-            alt={profile.vehicle || "Member vehicle"}
+            alt={profile.name || "Member profile"}
             className="h-72 w-full object-cover"
           />
         ) : (
           <div className="flex h-72 w-full items-center justify-center bg-black/30 text-white/50">
-            No vehicle photo uploaded
+            No profile photo uploaded
           </div>
         )}
 
@@ -138,15 +150,25 @@ export default function MemberProfilePage() {
                 {profile.name || "Member"}
               </h1>
 
-              {profile.rig_name && (
-                <p className="mt-1 text-xl font-semibold text-white">
-                  “{profile.rig_name}”
+              {profile.bio && (
+                <p className="mt-3 max-w-2xl whitespace-pre-line text-sm leading-6 text-white/75">
+                  {profile.bio}
                 </p>
               )}
 
-              <p className="mt-1 text-white/70">
-                {profile.vehicle || "Vehicle not listed"}
-              </p>
+              {profile.instagram && (
+                <a
+                  href={`https://instagram.com/${profile.instagram.replace(
+                    "@",
+                    ""
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-block text-sm font-semibold text-[#F28C52] hover:underline"
+                >
+                  @{profile.instagram.replace("@", "")}
+                </a>
+              )}
             </div>
 
             {profile.location && (
@@ -154,7 +176,6 @@ export default function MemberProfilePage() {
             )}
           </div>
 
-          {/* BADGES */}
           <section className="mt-6">
             <h2 className="text-xl font-semibold text-[#F28C52]">Badges</h2>
 
@@ -194,79 +215,81 @@ export default function MemberProfilePage() {
             )}
           </section>
 
-          {/* RIG BUILD */}
-          <Section title="Rig Build">
-            <div className="grid gap-4 md:grid-cols-2">
-              <InfoBlock
-                label="Suspension"
-                value={profile.suspension}
-              />
+          <Section title="Builds">
+            {builds.length === 0 ? (
+              <p className="text-white/60">No builds added yet.</p>
+            ) : (
+              <div className="space-y-6">
+                {primaryBuild && <MemberBuildCard build={primaryBuild} />}
 
-              <InfoBlock
-                label="Tires / Wheels"
-                value={profile.tires_wheels || profile.tires}
-              />
-
-              <InfoBlock
-                label="Armor / Protection"
-                value={profile.armor_protection || profile.armor}
-              />
-
-              <InfoBlock
-                label="Lighting"
-                value={profile.lighting}
-              />
-
-              <InfoBlock
-                label="Recovery Gear"
-                value={profile.recovery_gear}
-              />
-
-              <InfoBlock
-                label="Comms"
-                value={profile.comms}
-              />
-
-              <InfoBlock
-                label="Roof / Camp Setup"
-                value={profile.roof_camp_setup}
-              />
-
-              <InfoBlock
-                label="Future Mods"
-                value={profile.future_mods}
-              />
-            </div>
+                {otherBuilds.length > 0 && (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {otherBuilds.map((build) => (
+                      <MemberBuildCard key={build.id} build={build} compact />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </Section>
-
-          {/* NOTES */}
-          {profile.build_notes && (
-            <Section title="Additional Build Notes">
-              <p className="whitespace-pre-line text-white/90">
-                {profile.build_notes}
-              </p>
-            </Section>
-          )}
-
-          {/* INSTAGRAM */}
-          {profile.instagram && (
-            <Section title="Instagram">
-              <a
-                href={`https://instagram.com/${profile.instagram.replace(
-                  "@",
-                  ""
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#F28C52] hover:underline"
-              >
-                @{profile.instagram.replace("@", "")}
-              </a>
-            </Section>
-          )}
         </div>
       </div>
     </main>
+  );
+}
+
+function MemberBuildCard({ build, compact = false }: any) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-white/10 bg-black/40">
+      {build.image_url && (
+        <img
+          src={build.image_url}
+          alt={`${build.year} ${build.make} ${build.model}`}
+          className={compact ? "h-40 w-full object-cover" : "h-64 w-full object-cover"}
+        />
+      )}
+
+      <div className="p-4">
+        {build.is_primary && (
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-[#F28C52]">
+            Primary Build
+          </p>
+        )}
+
+        <h3 className="text-xl font-bold text-white">
+          {build.year} {build.make} {build.model}
+        </h3>
+
+        {build.nickname && (
+          <p className="mt-1 text-sm text-white/60">{build.nickname}</p>
+        )}
+
+        {!compact && (
+          <>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {buildFields.map((field) => (
+                <InfoBlock
+                  key={field.key}
+                  label={field.label}
+                  value={build[field.key]}
+                />
+              ))}
+            </div>
+
+            {build.other_notes && (
+              <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-3">
+                <p className="text-xs uppercase tracking-wide text-white/50">
+                  Other Build Notes
+                </p>
+                <p className="mt-1 whitespace-pre-line text-sm leading-6 text-white">
+                  {build.other_notes}
+                </p>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -284,7 +307,7 @@ function InfoBlock({ label, value }: any) {
     <div className="rounded-lg border border-white/10 bg-black/30 p-3">
       <p className="text-xs uppercase tracking-wide text-white/50">{label}</p>
 
-      <p className="mt-1 whitespace-pre-line text-white">
+      <p className="mt-1 whitespace-pre-line text-sm text-white">
         {value && value.trim() ? value : "Not listed"}
       </p>
     </div>
