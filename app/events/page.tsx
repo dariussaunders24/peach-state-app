@@ -31,14 +31,38 @@ const bringOptions = [
 const defaultDisclaimer =
   "By RSVP’ing to this event, you accept any and all risk for vehicle damage, personal injury, recovery needs, or liability. Peach State Off-Road and Overlanding and its organizers are not liable. No-shows without canceling your RSVP at least 24 hours before the event will result in a (1) ride ban. This is so we can ensure maximum enjoyment and available spots for all members who want to attend.";
 
+function formatDateForInput(dateValue: string) {
+  if (!dateValue) return "";
+
+  const date = new Date(dateValue);
+  const offset = date.getTimezoneOffset();
+  const localDate = new Date(date.getTime() - offset * 60000);
+
+  return localDate.toISOString().slice(0, 16);
+}
+
 export default function EventsPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [pastEvents, setPastEvents] = useState<any[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [currentUserId, setCurrentUserId] = useState("");
   const [confirmationMessage, setConfirmationMessage] = useState("");
+  const [editingEvent, setEditingEvent] = useState<any | null>(null);
 
   const [newEvent, setNewEvent] = useState({
+    title: "",
+    public_location: "",
+    private_location: "",
+    private_details: "",
+    route_link: "",
+    event_date: "",
+    capacity: "",
+    difficulty: "",
+    bring_items: [] as string[],
+    rsvp_disclaimer: defaultDisclaimer,
+  });
+
+  const [editForm, setEditForm] = useState({
     title: "",
     public_location: "",
     private_location: "",
@@ -83,6 +107,75 @@ export default function EventsPage() {
           : [...prev.bring_items, item],
       };
     });
+  }
+
+  function toggleEditBringItem(item: string) {
+    setEditForm((prev) => {
+      const exists = prev.bring_items.includes(item);
+
+      return {
+        ...prev,
+        bring_items: exists
+          ? prev.bring_items.filter((i) => i !== item)
+          : [...prev.bring_items, item],
+      };
+    });
+  }
+
+  function openEditEvent(event: any) {
+    setEditingEvent(event);
+
+    setEditForm({
+      title: event.title || "",
+      public_location: event.public_location || event.location || "",
+      private_location: event.private_location || "",
+      private_details: event.private_details || "",
+      route_link: event.route_link || "",
+      event_date: formatDateForInput(event.event_date),
+      capacity: event.capacity ? String(event.capacity) : "",
+      difficulty: event.difficulty || "",
+      bring_items: event.bring_items || [],
+      rsvp_disclaimer: event.rsvp_disclaimer || defaultDisclaimer,
+    });
+  }
+
+  async function saveEditedEvent() {
+    if (!editingEvent) return;
+
+    const title = editForm.title.trim();
+    const publicLocation = editForm.public_location.trim();
+    const privateLocation = editForm.private_location.trim();
+    const privateDetails = editForm.private_details.trim();
+    const routeLink = editForm.route_link.trim();
+    const eventDate = editForm.event_date.trim();
+    const capacity = Number(editForm.capacity);
+    const difficulty = editForm.difficulty.trim();
+
+    if (!title) return alert("Title required");
+    if (!eventDate) return alert("Date required");
+    if (!capacity || capacity < 1) return alert("Capacity required");
+
+    const { error } = await supabase
+      .from("events")
+      .update({
+        title,
+        location: publicLocation,
+        public_location: publicLocation,
+        private_location: privateLocation,
+        private_details: privateDetails,
+        route_link: routeLink,
+        event_date: eventDate,
+        capacity,
+        difficulty,
+        bring_items: editForm.bring_items,
+        rsvp_disclaimer: editForm.rsvp_disclaimer.trim() || defaultDisclaimer,
+      })
+      .eq("id", editingEvent.id);
+
+    if (error) return alert(error.message);
+
+    setEditingEvent(null);
+    await loadEvents();
   }
 
   async function createEvent() {
@@ -242,15 +335,6 @@ export default function EventsPage() {
     await supabase.from("event_photos").delete().eq("event_id", eventId);
     await supabase.from("route_links").delete().eq("event_id", eventId);
     await supabase.from("events").delete().eq("id", eventId);
-
-    await loadEvents();
-  }
-
-  async function updateEvent(event: any) {
-    const newTitle = prompt("Edit event name", event.title);
-    if (!newTitle) return;
-
-    await supabase.from("events").update({ title: newTitle }).eq("id", event.id);
 
     await loadEvents();
   }
@@ -435,6 +519,185 @@ export default function EventsPage() {
         </div>
       )}
 
+      {editingEvent && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 px-4 py-8">
+          <div className="mx-auto max-w-3xl rounded-2xl border border-[#F28C52]/40 bg-[#100B08] p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-[#F28C52]/80">
+                  Admin
+                </p>
+                <h2 className="mt-2 font-cinzel text-2xl font-bold text-white">
+                  Edit Event
+                </h2>
+              </div>
+
+              <button
+                onClick={() => setEditingEvent(null)}
+                className="rounded-lg border border-white/20 px-3 py-2 text-sm text-white hover:border-[#F28C52] hover:text-[#F28C52]"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <input
+                type="text"
+                placeholder="Title"
+                value={editForm.title}
+                onChange={(e) =>
+                  setEditForm((prev) => ({ ...prev, title: e.target.value }))
+                }
+                className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
+              />
+
+              <input
+                type="text"
+                placeholder="Public Location"
+                value={editForm.public_location}
+                onChange={(e) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    public_location: e.target.value,
+                  }))
+                }
+                className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
+              />
+
+              <input
+                type="text"
+                placeholder="Private Exact Location"
+                value={editForm.private_location}
+                onChange={(e) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    private_location: e.target.value,
+                  }))
+                }
+                className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
+              />
+
+              <textarea
+                placeholder="Private Details"
+                value={editForm.private_details}
+                onChange={(e) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    private_details: e.target.value,
+                  }))
+                }
+                className="min-h-24 w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
+              />
+
+              <input
+                type="url"
+                placeholder="Legacy Route Link"
+                value={editForm.route_link}
+                onChange={(e) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    route_link: e.target.value,
+                  }))
+                }
+                className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
+              />
+
+              <input
+                type="text"
+                placeholder="Difficulty"
+                value={editForm.difficulty}
+                onChange={(e) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    difficulty: e.target.value,
+                  }))
+                }
+                className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
+              />
+
+              <input
+                type="datetime-local"
+                value={editForm.event_date}
+                onChange={(e) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    event_date: e.target.value,
+                  }))
+                }
+                className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black"
+              />
+
+              <input
+                type="number"
+                min="1"
+                placeholder="Capacity"
+                value={editForm.capacity}
+                onChange={(e) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    capacity: e.target.value,
+                  }))
+                }
+                className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
+              />
+
+              <div className="rounded-lg border border-white/10 bg-black/30 p-4">
+                <h3 className="font-semibold text-white">What to Bring</h3>
+                <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                  {bringOptions.map((item) => {
+                    const selected = editForm.bring_items.includes(item);
+
+                    return (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => toggleEditBringItem(item)}
+                        className={`rounded-lg border px-3 py-2 text-left text-sm transition ${
+                          selected
+                            ? "border-[#F28C52] bg-[#F28C52] font-semibold text-black"
+                            : "border-white/10 bg-black/30 text-white hover:border-[#F28C52] hover:text-[#F28C52]"
+                        }`}
+                      >
+                        {selected ? "✓ " : "+ "}
+                        {item}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <textarea
+                placeholder="RSVP Disclaimer"
+                value={editForm.rsvp_disclaimer}
+                onChange={(e) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    rsvp_disclaimer: e.target.value,
+                  }))
+                }
+                className="min-h-24 w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
+              />
+
+              <div className="flex flex-wrap gap-3 pt-2">
+                <button
+                  onClick={saveEditedEvent}
+                  className="rounded-lg bg-[#F28C52] px-5 py-3 font-semibold text-black hover:bg-[#C96A2C]"
+                >
+                  Save Changes
+                </button>
+
+                <button
+                  onClick={() => setEditingEvent(null)}
+                  className="rounded-lg border border-white/20 px-5 py-3 font-semibold text-white hover:border-[#F28C52] hover:text-[#F28C52]"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <h1 className="text-3xl font-bold text-[#F28C52]">Events</h1>
 
       {isAdmin && (
@@ -598,7 +861,7 @@ export default function EventsPage() {
               cancelRsvp={cancelRsvp}
               currentUserId={currentUserId}
               isAdmin={isAdmin}
-              updateEvent={updateEvent}
+              updateEvent={openEditEvent}
               deleteEvent={deleteEvent}
               uploadCoverPhoto={uploadCoverPhoto}
             />
@@ -619,7 +882,7 @@ export default function EventsPage() {
               key={event.id}
               event={event}
               isAdmin={isAdmin}
-              updateEvent={updateEvent}
+              updateEvent={openEditEvent}
               deleteEvent={deleteEvent}
               addRouteToEvent={addRouteToEvent}
               deleteRoute={deleteRoute}
