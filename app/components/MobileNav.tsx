@@ -29,6 +29,7 @@ export default function MobileNav() {
     { href: "/", label: "Home" },
     ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
     { href: "/profiles", label: "My Profile" },
+    { href: "/builds", label: "My Builds" },
     { href: "/events", label: "Events" },
     { href: "/gallery", label: "Gallery" },
     { href: "/members", label: "Members" },
