@@ -85,6 +85,13 @@ export default function Home() {
 
   return (
     <div className="space-y-8">
+      <section className="rounded-xl border border-[#F28C52]/30 bg-black/40 p-4">
+  <p className="text-sm leading-6 text-gray-300">
+    📲 <span className="font-semibold text-[#F28C52]">Add this app to your phone:</span>{" "}
+    iPhone users, open in Safari, tap Share, then Add to Home Screen. Android users,
+    open in Chrome, tap the menu, then Add to Home Screen.
+  </p>
+</section>
       {showWelcome && (
         <section className="relative rounded-2xl border border-[#F28C52]/40 bg-black/50 p-6 shadow-xl">
           <button
