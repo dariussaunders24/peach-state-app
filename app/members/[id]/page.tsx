@@ -130,19 +130,20 @@ export default function MemberProfilePage() {
         ← Back to Members
       </Link>
 
-     <div className="flex justify-center bg-black/30 px-6 py-8">
-  {profile.image_url ? (
-    <img
-      src={profile.image_url}
-      alt={profile.name || "Member profile"}
-      className="h-72 w-72 rounded-full border-4 border-[#F28C52] object-cover shadow-xl md:h-80 md:w-80"
-    />
-  ) : (
-    <div className="flex h-72 w-72 items-center justify-center rounded-full border-4 border-[#F28C52]/40 bg-black/30 text-center text-white/50 md:h-80 md:w-80">
-      No profile photo uploaded
-    </div>
-  )}
-</div>
+           <div className="mt-6 overflow-hidden rounded-2xl border border-[#F28C52]/20 bg-black/40 shadow-lg">
+        <div className="flex justify-center bg-black/30 px-6 py-8">
+          {profile.image_url ? (
+            <img
+              src={profile.image_url}
+              alt={profile.name || "Member profile"}
+              className="h-72 w-72 rounded-full border-4 border-[#F28C52] object-cover shadow-xl md:h-80 md:w-80"
+            />
+          ) : (
+            <div className="flex h-72 w-72 items-center justify-center rounded-full border-4 border-[#F28C52]/40 bg-black/30 text-center text-white/50 md:h-80 md:w-80">
+              No profile photo uploaded
+            </div>
+          )}
+        </div>
 
         <div className="p-6">
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
