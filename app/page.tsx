@@ -215,13 +215,15 @@ export default function Home() {
           </div>
         ) : (
           <div className="overflow-hidden rounded-2xl border border-[#F28C52]/30 bg-black/40">
-            {nextEvent.cover_photo_url && (
-              <img
-                src={nextEvent.cover_photo_url}
-                alt={nextEvent.title}
-                className="h-64 w-full object-cover"
-              />
-            )}
+{nextEvent.cover_photo_url && (
+  <div className="w-full max-w-[380px] aspect-[4/5] bg-black mx-auto rounded-lg overflow-hidden border border-white/10 shadow-lg mt-5">
+    <img
+      src={nextEvent.cover_photo_url}
+      alt={nextEvent.title || "Event cover"}
+      className="h-full w-full object-contain"
+    />
+  </div>
+)}
 
             <div className="p-6">
               <h3 className="text-2xl font-bold text-[#F28C52]">
