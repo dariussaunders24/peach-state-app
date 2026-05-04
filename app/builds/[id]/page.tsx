@@ -79,6 +79,9 @@ export default function BuildDetailPage() {
   const [vehicle, setVehicle] = useState<any>(null);
   const [logs, setLogs] = useState<any[]>([]);
   const [reminders, setReminders] = useState<any[]>([]);
+  const [receiptUrls, setReceiptUrls] = useState<Record<string, string>>({});
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+
   const [currentUserId, setCurrentUserId] = useState("");
   const [loading, setLoading] = useState(true);
   const [showMaintenanceForm, setShowMaintenanceForm] = useState(false);
@@ -200,7 +203,28 @@ export default function BuildDetailPage() {
 
     setLogs(logData || []);
     setReminders(reminderData || []);
+
+    await createReceiptSignedUrls(logData || []);
+
     setLoading(false);
+  }
+
+  async function createReceiptSignedUrls(logData: any[]) {
+    const urls: Record<string, string> = {};
+
+    for (const log of logData) {
+      if (log.receipt_url) {
+        const { data, error } = await supabase.storage
+          .from("maintenance-receipts")
+          .createSignedUrl(log.receipt_url, 60 * 60);
+
+        if (!error && data?.signedUrl) {
+          urls[log.id] = data.signedUrl;
+        }
+      }
+    }
+
+    setReceiptUrls(urls);
   }
 
   function updateMaintenanceField(field: string, value: string) {
@@ -233,6 +257,26 @@ export default function BuildDetailPage() {
       .getPublicUrl(filePath);
 
     updateEditField("image_url", publicUrlData.publicUrl);
+  }
+
+  async function uploadReceipt(file: File) {
+    if (!currentUserId) throw new Error("You must be logged in.");
+
+    const fileExt = file.name.split(".").pop();
+    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "-");
+    const fileName = `${Date.now()}-${safeName}`;
+    const filePath = `${currentUserId}/maintenance/${fileName}`;
+
+    const { error } = await supabase.storage
+      .from("maintenance-receipts")
+      .upload(filePath, file, { upsert: false });
+
+    if (error) throw error;
+
+    return {
+      receipt_url: filePath,
+      receipt_file_name: file.name,
+    };
   }
 
   async function saveBuildEdits() {
@@ -277,6 +321,19 @@ export default function BuildDetailPage() {
     if (!vehicle) return;
     if (!maintenanceForm.service_date) return alert("Date required");
 
+    let receiptData = {
+      receipt_url: null as string | null,
+      receipt_file_name: null as string | null,
+    };
+
+    try {
+      if (receiptFile) {
+        receiptData = await uploadReceipt(receiptFile);
+      }
+    } catch (error: any) {
+      return alert(error.message);
+    }
+
     const { error } = await supabase.from("maintenance_logs").insert({
       vehicle_id: vehicle.id,
       user_id: currentUserId,
@@ -284,6 +341,8 @@ export default function BuildDetailPage() {
       service_date: maintenanceForm.service_date,
       mileage: maintenanceForm.mileage.trim(),
       notes: maintenanceForm.notes.trim(),
+      receipt_url: receiptData.receipt_url,
+      receipt_file_name: receiptData.receipt_file_name,
     });
 
     if (error) return alert(error.message);
@@ -295,6 +354,7 @@ export default function BuildDetailPage() {
       notes: "",
     });
 
+    setReceiptFile(null);
     setShowMaintenanceForm(false);
     await loadBuild();
   }
@@ -743,6 +803,28 @@ export default function BuildDetailPage() {
               className="min-h-24 w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
             />
 
+            <label className="block cursor-pointer rounded-lg border border-[#F28C52] px-4 py-3 text-center text-sm font-semibold text-[#F28C52] hover:bg-[#F28C52] hover:text-black">
+              {receiptFile ? receiptFile.name : "Upload Receipt"}
+              <input
+                type="file"
+                accept="image/*,.pdf"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) setReceiptFile(file);
+                }}
+              />
+            </label>
+
+            {receiptFile && (
+              <button
+                onClick={() => setReceiptFile(null)}
+                className="rounded-lg border border-red-400 px-3 py-2 text-sm font-semibold text-red-300 hover:bg-red-500 hover:text-white"
+              >
+                Remove Selected Receipt
+              </button>
+            )}
+
             <button
               onClick={addMaintenanceLog}
               className="rounded-lg bg-[#F28C52] px-5 py-3 font-semibold text-black hover:bg-[#C96A2C]"
@@ -789,6 +871,18 @@ export default function BuildDetailPage() {
                   <p className="mt-3 whitespace-pre-line text-sm leading-6 text-gray-300">
                     {log.notes}
                   </p>
+                )}
+
+                {log.receipt_url && receiptUrls[log.id] && (
+                  <a
+                    href={receiptUrls[log.id]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 inline-block rounded-lg border border-[#F28C52] px-4 py-2 text-sm font-semibold text-[#F28C52] hover:bg-[#F28C52] hover:text-black"
+                  >
+                    View Receipt
+                    {log.receipt_file_name ? `: ${log.receipt_file_name}` : ""}
+                  </a>
                 )}
               </div>
             ))}
