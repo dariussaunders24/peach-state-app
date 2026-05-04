@@ -182,20 +182,20 @@ export default function MemberProfilePage() {
             {badges.length === 0 ? (
               <p className="mt-2 text-white/60">No badges yet.</p>
             ) : (
-              <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
                 {badges.map((badge) => (
                   <div
                     key={badge.id}
-                    className="rounded-xl border border-[#F28C52]/30 bg-black/30 p-3 text-center"
+                    className="rounded-xl border border-[#F28C52]/30 bg-black/30 p-4 text-center"
                   >
                     {badge.image_url ? (
                       <img
                         src={badge.image_url}
                         alt={badge.name}
-                        className="mx-auto mb-2 h-20 w-20 object-contain"
+                        className="mx-auto mb-3 h-32 w-32 object-contain"
                       />
                     ) : (
-                      <div className="mx-auto mb-2 flex h-20 w-20 items-center justify-center rounded-full border border-[#F28C52]/40 text-xl font-bold text-[#F28C52]">
+                      <div className="mx-auto mb-3 flex h-32 w-32 items-center justify-center rounded-full border border-[#F28C52]/40 text-4xl font-bold text-[#F28C52]">
                         ★
                       </div>
                     )}
@@ -245,7 +245,11 @@ function MemberBuildCard({ build, compact = false }: any) {
         <img
           src={build.image_url}
           alt={`${build.year} ${build.make} ${build.model}`}
-          className={compact ? "h-40 w-full object-cover" : "h-64 w-full object-cover"}
+          className={
+            compact
+              ? "h-40 w-full object-cover"
+              : "h-64 w-full object-cover"
+          }
         />
       )}
 
