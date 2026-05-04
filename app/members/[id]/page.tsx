@@ -243,17 +243,15 @@ export default function MemberProfilePage() {
 function MemberBuildCard({ build, compact = false }: any) {
   return (
     <div className="overflow-hidden rounded-xl border border-white/10 bg-black/40">
-      {build.image_url && (
-        <img
-          src={build.image_url}
-          alt={`${build.year} ${build.make} ${build.model}`}
-          className={
-            compact
-               ? "h-40 w-full object-contain bg-black"
-        : "h-64 w-full object-contain bg-black"
-          }
-        />
-      )}
+  {build.image_url && (
+  <div className={compact ? "w-full aspect-[4/3] bg-black" : "w-full aspect-[16/9] bg-black"}>
+    <img
+      src={build.image_url}
+      alt={`${build.year} ${build.make} ${build.model}`}
+      className="h-full w-full object-contain"
+    />
+  </div>
+)}
 
       <div className="p-4">
         {build.is_primary && (
