@@ -176,14 +176,13 @@ export default function MemberProfilePage() {
             )}
           </div>
 
-          {/* BADGES */}
           <section className="mt-6">
             <h2 className="text-xl font-semibold text-[#F28C52]">Badges</h2>
 
             {badges.length === 0 ? (
               <p className="mt-2 text-white/60">No badges yet.</p>
             ) : (
-              <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+              <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
                 {badges.map((badge) => (
                   <div
                     key={badge.id}
@@ -193,10 +192,10 @@ export default function MemberProfilePage() {
                       <img
                         src={badge.image_url}
                         alt={badge.name}
-                        className="mx-auto mb-2 h-28 w-28 object-contain"
+                        className="mx-auto mb-2 h-56 w-56 object-contain"
                       />
                     ) : (
-                      <div className="mx-auto mb-2 flex h-28 w-28 items-center justify-center rounded-full border border-[#F28C52]/40 text-3xl font-bold text-[#F28C52]">
+                      <div className="mx-auto mb-2 flex h-56 w-56 items-center justify-center rounded-full border border-[#F28C52]/40 text-5xl font-bold text-[#F28C52]">
                         ★
                       </div>
                     )}
