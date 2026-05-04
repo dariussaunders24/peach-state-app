@@ -249,8 +249,8 @@ function MemberBuildCard({ build, compact = false }: any) {
           alt={`${build.year} ${build.make} ${build.model}`}
           className={
             compact
-              ? "h-40 w-full object-cover"
-              : "h-64 w-full object-cover"
+               ? "h-40 w-full object-contain bg-black"
+        : "h-64 w-full object-contain bg-black"
           }
         />
       )}
