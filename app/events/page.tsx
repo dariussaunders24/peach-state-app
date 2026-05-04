@@ -1047,13 +1047,15 @@ function EventCard({
 
   return (
     <div className="overflow-hidden rounded-xl border border-[#F28C52]/20 bg-black/40">
-      {event.cover_photo_url && (
-        <img
-          src={event.cover_photo_url}
-          alt={event.title}
-          className="h-56 w-full object-cover"
-        />
-      )}
+    {event.cover_photo_url && (
+  <div className="w-full aspect-[4/5] bg-black">
+    <img
+      src={event.cover_photo_url}
+      alt={event.title || "Event cover"}
+      className="h-full w-full object-contain"
+    />
+  </div>
+)}
 
       <div className="p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
