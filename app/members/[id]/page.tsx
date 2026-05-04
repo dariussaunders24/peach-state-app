@@ -183,20 +183,20 @@ export default function MemberProfilePage() {
             {badges.length === 0 ? (
               <p className="mt-2 text-white/60">No badges yet.</p>
             ) : (
-              <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-2">
+              <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
                 {badges.map((badge) => (
                   <div
                     key={badge.id}
-                    className="rounded-xl border border-[#F28C52]/30 bg-black/30 p-5 text-center"
+                    className="rounded-xl border border-[#F28C52]/30 bg-black/30 p-3 text-center"
                   >
                     {badge.image_url ? (
                       <img
                         src={badge.image_url}
                         alt={badge.name}
-                        className="mx-auto mb-3 h-36 w-36 object-contain"
+                        className="mx-auto mb-2 h-28 w-28 object-contain"
                       />
                     ) : (
-                      <div className="mx-auto mb-3 flex h-36 w-36 items-center justify-center rounded-full border border-[#F28C52]/40 text-4xl font-bold text-[#F28C52]">
+                      <div className="mx-auto mb-2 flex h-28 w-28 items-center justify-center rounded-full border border-[#F28C52]/40 text-3xl font-bold text-[#F28C52]">
                         ★
                       </div>
                     )}
