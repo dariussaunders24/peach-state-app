@@ -1047,8 +1047,9 @@ function EventCard({
 
   return (
     <div className="overflow-hidden rounded-xl border border-[#F28C52]/20 bg-black/40">
-    {event.cover_photo_url && (
-  <div className="w-full max-w-[320px] aspect-[4/5] bg-black mx-auto rounded-lg overflow-hidden">
+{event.cover_photo_url && (
+  <div className="w-full max-w-[320px] aspect-[4/5] bg-black mx-auto rounded-lg overflow-hidden border border-white/10 shadow-lg">
+    <img
       src={event.cover_photo_url}
       alt={event.title || "Event cover"}
       className="h-full w-full object-contain"
