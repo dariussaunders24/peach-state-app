@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "../lib/supabase";
 
 type Status = "good" | "caution" | "not_recommended";
 
@@ -152,6 +153,10 @@ export default function CanIRunThis({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [showResult, setShowResult] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [setupLoaded, setSetupLoaded] = useState(false);
+  const [savingSetup, setSavingSetup] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
 
   const [tireDiameter, setTireDiameter] = useState<number | null>(null);
   const [liftLevel, setLiftLevel] = useState<number | null>(null);
@@ -165,6 +170,95 @@ export default function CanIRunThis({
   const [waterComfort, setWaterComfort] = useState<boolean | null>(null);
   const [pinstripingOk, setPinstripingOk] = useState<boolean | null>(null);
   const [experience, setExperience] = useState<Experience | null>(null);
+
+  useEffect(() => {
+    async function loadSavedSetup() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setSetupLoaded(true);
+        return;
+      }
+
+      setCurrentUserId(user.id);
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select(
+          "tire_size,lift_height,has_skids,has_rock_sliders,front_recovery,rear_recovery,has_recovery,has_winch,traction_aid,water_comfort,pinstriping_ok,offroad_experience"
+        )
+        .eq("user_id", user.id)
+        .single();
+
+      if (!error && data) {
+        if (data.tire_size) {
+          const parsedTire = parseInt(String(data.tire_size), 10);
+          if (!Number.isNaN(parsedTire)) setTireDiameter(parsedTire);
+        }
+
+        if (data.lift_height !== null && data.lift_height !== undefined) {
+          const parsedLift = parseInt(String(data.lift_height), 10);
+          if (!Number.isNaN(parsedLift)) setLiftLevel(parsedLift);
+        }
+
+        if (typeof data.has_skids === "boolean") {
+          setHasSkidPlates(data.has_skids);
+        }
+
+        if (typeof data.has_rock_sliders === "boolean") {
+          setHasRockSliders(data.has_rock_sliders);
+        }
+
+        if (typeof data.front_recovery === "boolean") {
+          setFrontRecovery(data.front_recovery);
+        }
+
+        if (typeof data.rear_recovery === "boolean") {
+          setRearRecovery(data.rear_recovery);
+        }
+
+        if (typeof data.has_recovery === "boolean") {
+          setHasRecoveryGear(data.has_recovery);
+        }
+
+        if (typeof data.has_winch === "boolean") {
+          setHasWinch(data.has_winch);
+        }
+
+        if (
+          data.traction_aid === "none" ||
+          data.traction_aid === "factory" ||
+          data.traction_aid === "rear_locker" ||
+          data.traction_aid === "front_locker" ||
+          data.traction_aid === "front_rear_lockers"
+        ) {
+          setTractionAid(data.traction_aid);
+        }
+
+        if (typeof data.water_comfort === "boolean") {
+          setWaterComfort(data.water_comfort);
+        }
+
+        if (typeof data.pinstriping_ok === "boolean") {
+          setPinstripingOk(data.pinstriping_ok);
+        }
+
+        if (
+          data.offroad_experience === "beginner" ||
+          data.offroad_experience === "intermediate" ||
+          data.offroad_experience === "advanced"
+        ) {
+          setExperience(data.offroad_experience);
+        }
+      }
+
+      setSetupLoaded(true);
+    }
+
+    loadSavedSetup();
+  }, []);
 
   const isComplete =
     tireDiameter !== null &&
@@ -425,10 +519,7 @@ export default function CanIRunThis({
       status = "not_recommended";
     }
 
-    if (
-      requirements.difficulty === "advanced" &&
-      experience === "beginner"
-    ) {
+    if (requirements.difficulty === "advanced" && experience === "beginner") {
       status = "not_recommended";
     }
 
@@ -436,10 +527,7 @@ export default function CanIRunThis({
       status = "not_recommended";
     }
 
-    if (
-      status === "good" &&
-      (warnings.length > 0 || critical.length > 0)
-    ) {
+    if (status === "good" && (warnings.length > 0 || critical.length > 0)) {
       status = "caution";
     }
 
@@ -465,6 +553,47 @@ export default function CanIRunThis({
     requirements,
   ]);
 
+  async function saveSetup() {
+    if (!currentUserId) {
+      setSaveMessage("Please log in to save your setup.");
+      return;
+    }
+
+    if (!isComplete) {
+      setSaveMessage("Finish the setup form before saving.");
+      return;
+    }
+
+    setSavingSetup(true);
+    setSaveMessage("");
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        tire_size: String(tireDiameter),
+        lift_height: String(liftLevel),
+        has_skids: hasSkidPlates,
+        has_rock_sliders: hasRockSliders,
+        front_recovery: frontRecovery,
+        rear_recovery: rearRecovery,
+        has_recovery: hasRecoveryGear,
+        has_winch: hasWinch,
+        traction_aid: tractionAid,
+        water_comfort: waterComfort,
+        pinstriping_ok: pinstripingOk,
+        offroad_experience: experience,
+      })
+      .eq("user_id", currentUserId);
+
+    if (error) {
+      setSaveMessage("Setup could not be saved. Check profile table policies.");
+    } else {
+      setSaveMessage("Setup saved.");
+    }
+
+    setSavingSetup(false);
+  }
+
   function resetForm() {
     setShowResult(false);
     setTireDiameter(null);
@@ -479,6 +608,7 @@ export default function CanIRunThis({
     setWaterComfort(null);
     setPinstripingOk(null);
     setExperience(null);
+    setSaveMessage("");
   }
 
   return (
@@ -502,6 +632,12 @@ export default function CanIRunThis({
                 <p className="mt-1 text-sm text-white/70">
                   Quick compatibility check for {eventTitle}
                 </p>
+
+                {setupLoaded && (
+                  <p className="mt-2 text-xs text-[#F28C52]">
+                    Saved setup loaded when available.
+                  </p>
+                )}
               </div>
 
               <button
@@ -633,14 +769,31 @@ export default function CanIRunThis({
                   </div>
                 </Section>
 
-                <button
-                  type="button"
-                  disabled={!isComplete}
-                  onClick={() => setShowResult(true)}
-                  className="w-full rounded-xl bg-[#F28C52] px-5 py-3 text-sm font-bold text-black transition hover:bg-[#e57c3f] disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  Check Trail Compatibility
-                </button>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    disabled={!isComplete || savingSetup}
+                    onClick={saveSetup}
+                    className="rounded-xl border border-[#F28C52]/50 bg-[#F28C52]/10 px-5 py-3 text-sm font-bold text-[#F28C52] transition hover:bg-[#F28C52]/20 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {savingSetup ? "Saving..." : "Save / Update My Setup"}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={!isComplete}
+                    onClick={() => setShowResult(true)}
+                    className="rounded-xl bg-[#F28C52] px-5 py-3 text-sm font-bold text-black transition hover:bg-[#e57c3f] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Check Trail Compatibility
+                  </button>
+                </div>
+
+                {saveMessage && (
+                  <p className="rounded-xl border border-white/10 bg-black/25 p-3 text-sm text-white/75">
+                    {saveMessage}
+                  </p>
+                )}
               </div>
             )}
 
