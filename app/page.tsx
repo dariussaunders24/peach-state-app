@@ -249,7 +249,7 @@ export default function Home() {
               )}
 
               <a
-                href={`/events/${nextEvent.id}`}
+                href="/events"
                 className="mt-5 inline-block rounded-lg border border-[#F28C52] px-5 py-3 font-semibold text-[#F28C52] hover:bg-[#F28C52] hover:text-black"
               >
                 View Event Details
@@ -271,7 +271,7 @@ export default function Home() {
             {upcomingEvents.map((event) => (
               <a
                 key={event.id}
-                href={`/events/${event.id}`}
+                href="/events"
                 className="rounded-xl border border-[#F28C52]/20 bg-black/40 p-4 hover:border-[#F28C52]"
               >
                 <h3 className="font-bold text-white">{event.title}</h3>
