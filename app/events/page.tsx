@@ -610,15 +610,33 @@ async function adminUpdateRsvpStatus(
   await loadEvents();
 }
 
-async function adminRemoveRsvp(rsvpId: string) {
+async function adminRemoveRsvp(
+  rsvpId: string,
+  eventId: string,
+  currentStatus: string
+) {
   if (!confirm("Remove this member from the RSVP list?")) return;
 
-  const { error } = await supabase
-    .from("rsvps")
-    .delete()
-    .eq("id", rsvpId);
+  const { error } = await supabase.from("rsvps").delete().eq("id", rsvpId);
 
   if (error) return alert(error.message);
+
+  if (currentStatus === "going") {
+    const { data: nextWaitlist } = await supabase
+      .from("rsvps")
+      .select("*")
+      .eq("event_id", eventId)
+      .eq("status", "waitlist")
+      .order("created_at", { ascending: true })
+      .limit(1);
+
+    if (nextWaitlist && nextWaitlist.length > 0) {
+      await supabase
+        .from("rsvps")
+        .update({ status: "going" })
+        .eq("id", nextWaitlist[0].id);
+    }
+  }
 
   await loadEvents();
 }
@@ -1617,7 +1635,7 @@ function EventCard({
                     </button>
 
                     <button
-                      onClick={() => adminRemoveRsvp(attendee.id)}
+                      onClick={() => adminRemoveRsvp(attendee.id, event.id, attendee.status)}
                       className="rounded border border-red-400/40 px-2 py-1 text-xs text-red-300"
                     >
                       Remove
@@ -1661,7 +1679,7 @@ function EventCard({
                     </button>
 
                     <button
-                      onClick={() => adminRemoveRsvp(attendee.id)}
+                      onClick={() => adminRemoveRsvp(attendee.id, event.id, attendee.status)}
                       className="rounded border border-red-400/40 px-2 py-1 text-xs text-red-300"
                     >
                       Remove
