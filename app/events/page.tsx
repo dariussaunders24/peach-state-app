@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
-
+import CanIRunThis from "../components/CanIRunThis";
 const adminEmails = ["dariussaunders24@gmail.com"];
 
 const bringOptions = [
@@ -28,8 +28,34 @@ const bringOptions = [
   "Skid plates recommended",
 ];
 
+const terrainOptions = [
+  "Gravel",
+  "Ruts",
+  "Rocks",
+  "Technical",
+  "Mud / Clay",
+  "Sand",
+  "Water Crossings",
+];
+
 const defaultDisclaimer =
   "By RSVP’ing to this event, you accept any and all risk for vehicle damage, personal injury, recovery needs, or liability. Peach State Off-Road and Overlanding and its organizers are not liable. No-shows without canceling your RSVP at least 24 hours before the event will result in a (1) ride ban. This is so we can ensure maximum enjoyment and available spots for all members who want to attend.";
+
+const defaultTrailFields = {
+  trail_difficulty: "moderate",
+  min_tire_diameter: "31",
+  recommended_lift_level: "1",
+  stock_friendly: false,
+  skid_plates_requirement: "recommended",
+  rock_sliders_requirement: "not_needed",
+  recovery_points_required: true,
+  recovery_gear_required: true,
+  winch_requirement: "recommended",
+  traction_requirement: "factory_ok",
+  water_crossings: "moderate",
+  pinstriping_risk: "medium",
+  trail_terrain: ["Ruts", "Mud / Clay", "Water Crossings"] as string[],
+};
 
 function formatDateForInput(dateValue: string) {
   if (!dateValue) return "";
@@ -60,6 +86,7 @@ export default function EventsPage() {
     difficulty: "",
     bring_items: [] as string[],
     rsvp_disclaimer: defaultDisclaimer,
+    ...defaultTrailFields,
   });
 
   const [editForm, setEditForm] = useState({
@@ -73,6 +100,7 @@ export default function EventsPage() {
     difficulty: "",
     bring_items: [] as string[],
     rsvp_disclaimer: defaultDisclaimer,
+    ...defaultTrailFields,
   });
 
   useEffect(() => {
@@ -122,6 +150,32 @@ export default function EventsPage() {
     });
   }
 
+  function toggleTrailTerrain(item: string) {
+    setNewEvent((prev) => {
+      const exists = prev.trail_terrain.includes(item);
+
+      return {
+        ...prev,
+        trail_terrain: exists
+          ? prev.trail_terrain.filter((i) => i !== item)
+          : [...prev.trail_terrain, item],
+      };
+    });
+  }
+
+  function toggleEditTrailTerrain(item: string) {
+    setEditForm((prev) => {
+      const exists = prev.trail_terrain.includes(item);
+
+      return {
+        ...prev,
+        trail_terrain: exists
+          ? prev.trail_terrain.filter((i) => i !== item)
+          : [...prev.trail_terrain, item],
+      };
+    });
+  }
+
   function openEditEvent(event: any) {
     setEditingEvent(event);
 
@@ -136,6 +190,29 @@ export default function EventsPage() {
       difficulty: event.difficulty || "",
       bring_items: event.bring_items || [],
       rsvp_disclaimer: event.rsvp_disclaimer || defaultDisclaimer,
+      trail_difficulty: event.trail_difficulty || "moderate",
+      min_tire_diameter: event.min_tire_diameter
+        ? String(event.min_tire_diameter)
+        : "31",
+      recommended_lift_level:
+        event.recommended_lift_level !== null &&
+        event.recommended_lift_level !== undefined
+          ? String(event.recommended_lift_level)
+          : "1",
+      stock_friendly: event.stock_friendly || false,
+      skid_plates_requirement: event.skid_plates_requirement || "recommended",
+      rock_sliders_requirement: event.rock_sliders_requirement || "not_needed",
+      recovery_points_required: event.recovery_points_required ?? true,
+      recovery_gear_required: event.recovery_gear_required ?? true,
+      winch_requirement: event.winch_requirement || "recommended",
+      traction_requirement: event.traction_requirement || "factory_ok",
+      water_crossings: event.water_crossings || "moderate",
+      pinstriping_risk: event.pinstriping_risk || "medium",
+      trail_terrain: event.trail_terrain || [
+        "Ruts",
+        "Mud / Clay",
+        "Water Crossings",
+      ],
     });
   }
 
@@ -169,6 +246,19 @@ export default function EventsPage() {
         difficulty,
         bring_items: editForm.bring_items,
         rsvp_disclaimer: editForm.rsvp_disclaimer.trim() || defaultDisclaimer,
+        trail_difficulty: editForm.trail_difficulty,
+        min_tire_diameter: Number(editForm.min_tire_diameter),
+        recommended_lift_level: Number(editForm.recommended_lift_level),
+        stock_friendly: editForm.stock_friendly,
+        skid_plates_requirement: editForm.skid_plates_requirement,
+        rock_sliders_requirement: editForm.rock_sliders_requirement,
+        recovery_points_required: editForm.recovery_points_required,
+        recovery_gear_required: editForm.recovery_gear_required,
+        winch_requirement: editForm.winch_requirement,
+        traction_requirement: editForm.traction_requirement,
+        water_crossings: editForm.water_crossings,
+        pinstriping_risk: editForm.pinstriping_risk,
+        trail_terrain: editForm.trail_terrain,
       })
       .eq("id", editingEvent.id);
 
@@ -204,6 +294,19 @@ export default function EventsPage() {
       difficulty,
       bring_items: newEvent.bring_items,
       rsvp_disclaimer: newEvent.rsvp_disclaimer.trim() || defaultDisclaimer,
+      trail_difficulty: newEvent.trail_difficulty,
+      min_tire_diameter: Number(newEvent.min_tire_diameter),
+      recommended_lift_level: Number(newEvent.recommended_lift_level),
+      stock_friendly: newEvent.stock_friendly,
+      skid_plates_requirement: newEvent.skid_plates_requirement,
+      rock_sliders_requirement: newEvent.rock_sliders_requirement,
+      recovery_points_required: newEvent.recovery_points_required,
+      recovery_gear_required: newEvent.recovery_gear_required,
+      winch_requirement: newEvent.winch_requirement,
+      traction_requirement: newEvent.traction_requirement,
+      water_crossings: newEvent.water_crossings,
+      pinstriping_risk: newEvent.pinstriping_risk,
+      trail_terrain: newEvent.trail_terrain,
     });
 
     if (error) return alert(error.message);
@@ -219,6 +322,7 @@ export default function EventsPage() {
       difficulty: "",
       bring_items: [],
       rsvp_disclaimer: defaultDisclaimer,
+      ...defaultTrailFields,
     });
 
     await loadEvents();
@@ -604,7 +708,7 @@ export default function EventsPage() {
 
               <input
                 type="text"
-                placeholder="Difficulty"
+                placeholder="Difficulty Label, example: Easy / Moderate"
                 value={editForm.difficulty}
                 onChange={(e) =>
                   setEditForm((prev) => ({
@@ -641,30 +745,16 @@ export default function EventsPage() {
                 className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
               />
 
-              <div className="rounded-lg border border-white/10 bg-black/30 p-4">
-                <h3 className="font-semibold text-white">What to Bring</h3>
-                <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                  {bringOptions.map((item) => {
-                    const selected = editForm.bring_items.includes(item);
+              <TrailRequirementsFields
+                form={editForm}
+                setForm={setEditForm}
+                toggleTerrain={toggleEditTrailTerrain}
+              />
 
-                    return (
-                      <button
-                        key={item}
-                        type="button"
-                        onClick={() => toggleEditBringItem(item)}
-                        className={`rounded-lg border px-3 py-2 text-left text-sm transition ${
-                          selected
-                            ? "border-[#F28C52] bg-[#F28C52] font-semibold text-black"
-                            : "border-white/10 bg-black/30 text-white hover:border-[#F28C52] hover:text-[#F28C52]"
-                        }`}
-                      >
-                        {selected ? "✓ " : "+ "}
-                        {item}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              <BringItemsBlock
+                selectedItems={editForm.bring_items}
+                toggleItem={toggleEditBringItem}
+              />
 
               <textarea
                 placeholder="RSVP Disclaimer"
@@ -764,7 +854,7 @@ export default function EventsPage() {
 
           <input
             type="text"
-            placeholder="Difficulty"
+            placeholder="Difficulty Label, example: Easy / Moderate"
             value={newEvent.difficulty}
             onChange={(e) =>
               setNewEvent((prev) => ({ ...prev, difficulty: e.target.value }))
@@ -795,34 +885,16 @@ export default function EventsPage() {
             className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
           />
 
-          <div className="rounded-lg border border-white/10 bg-black/30 p-4">
-            <h3 className="font-semibold text-white">What to Bring</h3>
-            <p className="mt-1 text-sm text-gray-400">
-              Tap items to include them on this event.
-            </p>
+          <TrailRequirementsFields
+            form={newEvent}
+            setForm={setNewEvent}
+            toggleTerrain={toggleTrailTerrain}
+          />
 
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {bringOptions.map((item) => {
-                const selected = newEvent.bring_items.includes(item);
-
-                return (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => toggleBringItem(item)}
-                    className={`rounded-lg border px-3 py-2 text-left text-sm transition ${
-                      selected
-                        ? "border-[#F28C52] bg-[#F28C52] font-semibold text-black"
-                        : "border-white/10 bg-black/30 text-white hover:border-[#F28C52] hover:text-[#F28C52]"
-                    }`}
-                  >
-                    {selected ? "✓ " : "+ "}
-                    {item}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <BringItemsBlock
+            selectedItems={newEvent.bring_items}
+            toggleItem={toggleBringItem}
+          />
 
           <textarea
             placeholder="RSVP Disclaimer"
@@ -890,6 +962,332 @@ export default function EventsPage() {
           ))
         )}
       </section>
+    </div>
+  );
+}
+
+function TrailRequirementsFields({
+  form,
+  setForm,
+  toggleTerrain,
+}: {
+  form: any;
+  setForm: any;
+  toggleTerrain: (item: string) => void;
+}) {
+  return (
+    <div className="rounded-xl border border-[#F28C52]/30 bg-black/30 p-4">
+      <h3 className="font-semibold text-[#F28C52]">Trail Requirements</h3>
+      <p className="mt-1 text-sm text-gray-400">
+        These settings power the Can I Run This trail checker.
+      </p>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <SelectField
+          label="Trail Difficulty"
+          value={form.trail_difficulty}
+          onChange={(value) =>
+            setForm((prev: any) => ({ ...prev, trail_difficulty: value }))
+          }
+          options={[
+            ["easy", "Easy"],
+            ["moderate", "Moderate"],
+            ["difficult", "Difficult"],
+            ["advanced", "Advanced"],
+          ]}
+        />
+
+        <SelectField
+          label="Minimum Tire Diameter"
+          value={form.min_tire_diameter}
+          onChange={(value) =>
+            setForm((prev: any) => ({ ...prev, min_tire_diameter: value }))
+          }
+          options={[
+            ["29", '29" or smaller'],
+            ["30", '30"'],
+            ["31", '31"'],
+            ["32", '32"'],
+            ["33", '33"'],
+            ["34", '34"'],
+            ["35", '35"'],
+            ["36", '36"'],
+            ["37", '37"+'],
+          ]}
+        />
+
+        <SelectField
+          label="Recommended Lift"
+          value={form.recommended_lift_level}
+          onChange={(value) =>
+            setForm((prev: any) => ({
+              ...prev,
+              recommended_lift_level: value,
+            }))
+          }
+          options={[
+            ["0", "Stock"],
+            ["1", "1 to 2 in"],
+            ["2", "2 to 3 in"],
+            ["3", "3 in+"],
+          ]}
+        />
+
+        <SelectField
+          label="Skid Plates"
+          value={form.skid_plates_requirement}
+          onChange={(value) =>
+            setForm((prev: any) => ({
+              ...prev,
+              skid_plates_requirement: value,
+            }))
+          }
+          options={[
+            ["not_needed", "Not needed"],
+            ["recommended", "Recommended"],
+            ["required", "Required"],
+          ]}
+        />
+
+        <SelectField
+          label="Rock Sliders"
+          value={form.rock_sliders_requirement}
+          onChange={(value) =>
+            setForm((prev: any) => ({
+              ...prev,
+              rock_sliders_requirement: value,
+            }))
+          }
+          options={[
+            ["not_needed", "Not needed"],
+            ["recommended", "Recommended"],
+            ["required", "Required"],
+          ]}
+        />
+
+        <SelectField
+          label="Winch"
+          value={form.winch_requirement}
+          onChange={(value) =>
+            setForm((prev: any) => ({ ...prev, winch_requirement: value }))
+          }
+          options={[
+            ["not_needed", "Not needed"],
+            ["recommended", "Recommended"],
+            ["required", "Required"],
+          ]}
+        />
+
+        <SelectField
+          label="Traction / Lockers"
+          value={form.traction_requirement}
+          onChange={(value) =>
+            setForm((prev: any) => ({
+              ...prev,
+              traction_requirement: value,
+            }))
+          }
+          options={[
+            ["not_needed", "Not needed"],
+            ["factory_ok", "Factory traction okay"],
+            ["locker_recommended", "Locker recommended"],
+            ["locker_required", "Locker required"],
+          ]}
+        />
+
+        <SelectField
+          label="Water Crossings"
+          value={form.water_crossings}
+          onChange={(value) =>
+            setForm((prev: any) => ({ ...prev, water_crossings: value }))
+          }
+          options={[
+            ["none", "None"],
+            ["light", "Light"],
+            ["moderate", "Moderate"],
+            ["deep", "Deep"],
+          ]}
+        />
+
+        <SelectField
+          label="Pinstriping Risk"
+          value={form.pinstriping_risk}
+          onChange={(value) =>
+            setForm((prev: any) => ({ ...prev, pinstriping_risk: value }))
+          }
+          options={[
+            ["low", "Low"],
+            ["medium", "Medium"],
+            ["high", "High"],
+          ]}
+        />
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <BooleanButton
+          label="Stock Friendly"
+          value={form.stock_friendly}
+          onChange={(value) =>
+            setForm((prev: any) => ({ ...prev, stock_friendly: value }))
+          }
+        />
+
+        <BooleanButton
+          label="Recovery Points Required"
+          value={form.recovery_points_required}
+          onChange={(value) =>
+            setForm((prev: any) => ({
+              ...prev,
+              recovery_points_required: value,
+            }))
+          }
+        />
+
+        <BooleanButton
+          label="Recovery Gear Required"
+          value={form.recovery_gear_required}
+          onChange={(value) =>
+            setForm((prev: any) => ({
+              ...prev,
+              recovery_gear_required: value,
+            }))
+          }
+        />
+      </div>
+
+      <div className="mt-4">
+        <p className="font-semibold text-white">Trail Conditions</p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          {terrainOptions.map((item) => {
+            const selected = form.trail_terrain.includes(item);
+
+            return (
+              <button
+                key={item}
+                type="button"
+                onClick={() => toggleTerrain(item)}
+                className={`rounded-lg border px-3 py-2 text-left text-sm transition ${
+                  selected
+                    ? "border-[#F28C52] bg-[#F28C52] font-semibold text-black"
+                    : "border-white/10 bg-black/30 text-white hover:border-[#F28C52] hover:text-[#F28C52]"
+                }`}
+              >
+                {selected ? "✓ " : "+ "}
+                {item}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BringItemsBlock({
+  selectedItems,
+  toggleItem,
+}: {
+  selectedItems: string[];
+  toggleItem: (item: string) => void;
+}) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-black/30 p-4">
+      <h3 className="font-semibold text-white">What to Bring</h3>
+      <p className="mt-1 text-sm text-gray-400">
+        Tap items to include them on this event.
+      </p>
+
+      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        {bringOptions.map((item) => {
+          const selected = selectedItems.includes(item);
+
+          return (
+            <button
+              key={item}
+              type="button"
+              onClick={() => toggleItem(item)}
+              className={`rounded-lg border px-3 py-2 text-left text-sm transition ${
+                selected
+                  ? "border-[#F28C52] bg-[#F28C52] font-semibold text-black"
+                  : "border-white/10 bg-black/30 text-white hover:border-[#F28C52] hover:text-[#F28C52]"
+              }`}
+            >
+              {selected ? "✓ " : "+ "}
+              {item}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: string[][];
+}) {
+  return (
+    <label className="block">
+      <span className="text-sm font-semibold text-white">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-2 w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black"
+      >
+        {options.map(([optionValue, optionLabel]) => (
+          <option key={optionValue} value={optionValue}>
+            {optionLabel}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function BooleanButton({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-black/30 p-3">
+      <p className="text-sm font-semibold text-white">{label}</p>
+      <div className="mt-2 flex gap-2">
+        <button
+          type="button"
+          onClick={() => onChange(true)}
+          className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold ${
+            value
+              ? "bg-[#F28C52] text-black"
+              : "bg-white/10 text-white hover:bg-white/20"
+          }`}
+        >
+          Yes
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onChange(false)}
+          className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold ${
+            !value
+              ? "bg-[#F28C52] text-black"
+              : "bg-white/10 text-white hover:bg-white/20"
+          }`}
+        >
+          No
+        </button>
+      </div>
     </div>
   );
 }
@@ -1048,11 +1446,11 @@ function EventCard({
   return (
     <div className="overflow-hidden rounded-xl border border-[#F28C52]/20 bg-black/40">
 {event.cover_photo_url && (
-  <div className="w-full max-w-[460px] aspect-[4/5] bg-black mx-auto rounded-lg overflow-hidden border border-white/10 shadow-lg">
+  <div className="flex justify-center border-b border-[#F28C52]/20 bg-black/40 p-3 sm:p-4">
     <img
       src={event.cover_photo_url}
-      alt={event.title || "Event cover"}
-      className="h-full w-full object-contain"
+      alt={event.title}
+      className="max-h-[105vh] w-full max-w-lg rounded-xl object-contain"
     />
   </div>
 )}
@@ -1143,7 +1541,9 @@ function EventCard({
                 </p>
 
                 <p className="mt-1 text-sm leading-6 text-gray-400">
-                  Exact meetup location, Route Hub links, and event instructions are visible after RSVP to help manage space, safety, and group size.
+                  Exact meetup location, Route Hub links, and event instructions
+                  are visible after RSVP to help manage space, safety, and group
+                  size.
                 </p>
               </div>
             </div>
@@ -1197,12 +1597,25 @@ function EventCard({
         </div>
 
         <div className="mt-4 flex flex-col gap-3">
-          <a
-            href={`/events/${event.id}`}
-            className="rounded-lg border border-[#F28C52] px-4 py-2 text-center font-semibold text-[#F28C52]"
-          >
-            View Details
-          </a>
+      <CanIRunThis
+  eventTitle={event.title}
+  requirements={{
+    difficulty: event.trail_difficulty || "moderate",
+    minTireDiameter: event.min_tire_diameter || 31,
+    recommendedLiftLevel: event.recommended_lift_level ?? 1,
+    stockFriendly: event.stock_friendly || false,
+    skidPlates: event.skid_plates_requirement || "recommended",
+    rockSliders: event.rock_sliders_requirement || "not_needed",
+    recoveryPointsRequired: event.recovery_points_required ?? true,
+    recoveryGearRequired: event.recovery_gear_required ?? true,
+    winch: event.winch_requirement || "recommended",
+    traction: event.traction_requirement || "factory_ok",
+    waterCrossings: event.water_crossings || "moderate",
+    pinstripingRisk: event.pinstriping_risk || "medium",
+    terrain: event.trail_terrain || ["Ruts", "Mud / Clay", "Water Crossings"],
+  }}
+/>
+
 
           {currentUserId &&
             (userStatus ? (
