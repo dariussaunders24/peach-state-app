@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import CanIRunThis from "../components/CanIRunThis";
@@ -1782,152 +1782,86 @@ function PastEventCard({
   isAdmin,
   updateEvent,
   deleteEvent,
-  addRouteToEvent,
-  deleteRoute,
 }: any) {
-  const [newRoute, setNewRoute] = useState({
-    title: "",
-    difficulty: "",
-    onx_url: "",
-    gpx_url: "",
-    google_maps_url: "",
-    notes: "",
-  });
+  const firstRoute = event.routes?.[0];
 
-  async function handleAddRoute() {
-    await addRouteToEvent(event.id, newRoute);
+ const gpxLink =
+  event.route_link ||
+  event.gpx_url ||
+  event.gpx_link ||
+  event.gpx ||
+  event.gpx_file ||
+  event.gpx_file_url ||
+  event.route_gpx_url ||
+  event.route_url ||
+  event.onx_url ||
+  firstRoute?.gpx_url ||
+  firstRoute?.route_link ||
+  firstRoute?.onx_url ||
+  "";
 
-    setNewRoute({
-      title: "",
-      difficulty: "",
-      onx_url: "",
-      gpx_url: "",
-      google_maps_url: "",
-      notes: "",
-    });
-  }
+  const difficulty =
+    event.difficulty ||
+    firstRoute?.difficulty ||
+    "Not listed";
 
   return (
-    <div className="rounded-xl border border-[#F28C52]/20 bg-black/40 p-5">
-      <h3 className="text-xl font-bold text-white">{event.title}</h3>
+    <div className="rounded-xl border border-[#F28C52]/20 bg-black/40 px-4 py-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <h3 className="font-bold text-white">{event.title}</h3>
 
-      <div className="mt-3 space-y-2">
-        <p className="text-sm font-semibold text-[#F28C52]">
-          Difficulty: {event.difficulty || "Not listed"}
-        </p>
+          {event.event_date && (
+            <p className="text-sm text-gray-400">
+              {new Date(event.event_date).toLocaleDateString()}
+            </p>
+          )}
 
-        {event.event_date && (
-          <p className="text-sm text-gray-400">
-            Date: {new Date(event.event_date).toLocaleString()}
+          <p className="text-sm font-semibold text-[#F28C52]">
+            {difficulty}
           </p>
-        )}
-
-        <RouteHub event={event} />
-      </div>
-
-      {isAdmin && (
-        <div className="mt-5 space-y-3 border-t border-white/10 pt-4">
-          <h4 className="font-semibold text-white">Add Route Hub Link</h4>
-
-          <input
-            type="text"
-            placeholder="Route Name"
-            value={newRoute.title}
-            onChange={(e) =>
-              setNewRoute((prev) => ({ ...prev, title: e.target.value }))
-            }
-            className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
-          />
-
-          <input
-            type="text"
-            placeholder="Difficulty"
-            value={newRoute.difficulty}
-            onChange={(e) =>
-              setNewRoute((prev) => ({
-                ...prev,
-                difficulty: e.target.value,
-              }))
-            }
-            className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
-          />
-
-          <input
-            type="url"
-            placeholder="onX Link"
-            value={newRoute.onx_url}
-            onChange={(e) =>
-              setNewRoute((prev) => ({ ...prev, onx_url: e.target.value }))
-            }
-            className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
-          />
-
-          <input
-            type="url"
-            placeholder="GPX File Link"
-            value={newRoute.gpx_url}
-            onChange={(e) =>
-              setNewRoute((prev) => ({ ...prev, gpx_url: e.target.value }))
-            }
-            className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
-          />
-
-          <input
-            type="url"
-            placeholder="Google Maps Meetup Pin"
-            value={newRoute.google_maps_url}
-            onChange={(e) =>
-              setNewRoute((prev) => ({
-                ...prev,
-                google_maps_url: e.target.value,
-              }))
-            }
-            className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
-          />
-
-          <textarea
-            placeholder="Route Notes"
-            value={newRoute.notes}
-            onChange={(e) =>
-              setNewRoute((prev) => ({ ...prev, notes: e.target.value }))
-            }
-            className="min-h-24 w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
-          />
-
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={handleAddRoute}
-              className="rounded bg-[#F28C52] px-4 py-2 font-semibold text-black hover:bg-[#C96A2C]"
-            >
-              Save Route
-            </button>
-
-            {event.routes?.map((route: any) => (
-              <button
-                key={route.id}
-                onClick={() => deleteRoute(route.id)}
-                className="rounded bg-red-500 px-4 py-2 font-semibold text-white hover:bg-red-600"
-              >
-                Delete {route.title}
-              </button>
-            ))}
-
-            <button
-              onClick={() => updateEvent(event)}
-              className="rounded bg-yellow-400 px-4 py-2 font-semibold text-black"
-            >
-              Edit Event
-            </button>
-
-            <button
-              onClick={() => deleteEvent(event.id)}
-              className="rounded bg-red-500 px-4 py-2 font-semibold text-white"
-            >
-              Delete Event
-            </button>
-          </div>
         </div>
-      )}
+
+        <div className="flex flex-wrap items-center gap-3">
+          {gpxLink ? (
+            <a
+              href={gpxLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-semibold text-[#F28C52] underline underline-offset-4"
+            >
+              Route Link
+            </a>
+         ) : (
+  <p className="text-sm text-gray-500">No GPX link</p>
+)}
+
+<Link
+  href={`/gallery?eventId=${event.id}`}
+  className="rounded bg-[#F28C52] px-3 py-1 text-xs font-semibold text-black"
+>
+  Add Photos / Videos
+</Link>
+
+{isAdmin && (
+            <>
+              <button
+                onClick={() => updateEvent(event)}
+                className="rounded bg-yellow-400 px-3 py-1 text-xs font-semibold text-black"
+              >
+                Edit
+              </button>
+
+              <button
+                onClick={() => deleteEvent(event.id)}
+                className="rounded bg-red-500 px-3 py-1 text-xs font-semibold text-white"
+              >
+                Delete
+              </button>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
