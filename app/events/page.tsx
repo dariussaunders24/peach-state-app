@@ -558,45 +558,72 @@ export default function EventsPage() {
     }
   }
 
-  async function cancelRsvp(event: any) {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return;
+ async function cancelRsvp(event: any) {
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) return;
 
-    const { data: existing } = await supabase
+  const { data: existing } = await supabase
+    .from("rsvps")
+    .select("*")
+    .eq("user_id", userData.user.id)
+    .eq("event_id", event.id)
+    .limit(1);
+
+  if (!existing || existing.length === 0) return;
+
+  const currentRsvp = existing[0];
+
+  await supabase.from("rsvps").delete().eq("id", currentRsvp.id);
+
+  if (currentRsvp.status === "going") {
+    const { data: nextWaitlist } = await supabase
       .from("rsvps")
       .select("*")
-      .eq("user_id", userData.user.id)
       .eq("event_id", event.id)
+      .eq("status", "waitlist")
+      .order("created_at", { ascending: true })
       .limit(1);
 
-    if (!existing || existing.length === 0) return;
-
-    const currentRsvp = existing[0];
-
-    await supabase.from("rsvps").delete().eq("id", currentRsvp.id);
-
-    if (currentRsvp.status === "going") {
-      const { data: nextWaitlist } = await supabase
+    if (nextWaitlist && nextWaitlist.length > 0) {
+      await supabase
         .from("rsvps")
-        .select("*")
-        .eq("event_id", event.id)
-        .eq("status", "waitlist")
-        .order("created_at", { ascending: true })
-        .limit(1);
-
-      if (nextWaitlist && nextWaitlist.length > 0) {
-        await supabase
-          .from("rsvps")
-          .update({ status: "going" })
-          .eq("id", nextWaitlist[0].id);
-      }
+        .update({ status: "going" })
+        .eq("id", nextWaitlist[0].id);
     }
-
-    await loadEvents();
-    showConfirmation("Your RSVP has been canceled.");
   }
 
-  return (
+  await loadEvents();
+  showConfirmation("Your RSVP has been canceled.");
+}
+
+async function adminUpdateRsvpStatus(
+  rsvpId: string,
+  status: "going" | "waitlist"
+) {
+  const { error } = await supabase
+    .from("rsvps")
+    .update({ status })
+    .eq("id", rsvpId);
+
+  if (error) return alert(error.message);
+
+  await loadEvents();
+}
+
+async function adminRemoveRsvp(rsvpId: string) {
+  if (!confirm("Remove this member from the RSVP list?")) return;
+
+  const { error } = await supabase
+    .from("rsvps")
+    .delete()
+    .eq("id", rsvpId);
+
+  if (error) return alert(error.message);
+
+  await loadEvents();
+}
+
+return (
     <div className="space-y-8">
       {confirmationMessage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
@@ -926,17 +953,19 @@ export default function EventsPage() {
           </div>
         ) : (
           events.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              rsvp={rsvp}
-              cancelRsvp={cancelRsvp}
-              currentUserId={currentUserId}
-              isAdmin={isAdmin}
-              updateEvent={openEditEvent}
-              deleteEvent={deleteEvent}
-              uploadCoverPhoto={uploadCoverPhoto}
-            />
+         <EventCard
+  key={event.id}
+  event={event}
+  rsvp={rsvp}
+  cancelRsvp={cancelRsvp}
+  currentUserId={currentUserId}
+  isAdmin={isAdmin}
+  updateEvent={openEditEvent}
+  deleteEvent={deleteEvent}
+  uploadCoverPhoto={uploadCoverPhoto}
+  adminUpdateRsvpStatus={adminUpdateRsvpStatus}
+  adminRemoveRsvp={adminRemoveRsvp}
+/>
           ))
         )}
       </section>
@@ -1407,6 +1436,8 @@ function EventCard({
   updateEvent,
   deleteEvent,
   uploadCoverPhoto,
+  adminUpdateRsvpStatus,
+  adminRemoveRsvp,
 }: any) {
   const [userStatus, setUserStatus] = useState("");
 
@@ -1550,51 +1581,101 @@ function EventCard({
           )}
         </div>
 
-        <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-4">
-          <h4 className="font-semibold text-white">Attendees</h4>
+      <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-4">
+  <h4 className="font-semibold text-white">Attendees</h4>
 
-          {goingAttendees.length === 0 && waitlistAttendees.length === 0 ? (
-            <p className="mt-2 text-sm text-gray-400">No RSVPs yet.</p>
-          ) : (
-            <div className="mt-3 space-y-3">
-              {goingAttendees.length > 0 && (
-                <div>
-                  <p className="text-sm font-semibold text-green-300">Going</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {goingAttendees.map((attendee: any) => (
-                      <a
-                        key={`${event.id}-${attendee.user_id}`}
-                        href={`/members/${attendee.user_id}`}
-                        className="rounded-full border border-green-400/20 bg-green-500/10 px-3 py-1 text-sm text-green-200 hover:border-green-300"
-                      >
-                        {attendee.profiles?.name || "Member"}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
+  {goingAttendees.length === 0 && waitlistAttendees.length === 0 ? (
+    <p className="mt-2 text-sm text-gray-400">No RSVPs yet.</p>
+  ) : (
+    <div className="mt-3 space-y-4">
+      {goingAttendees.length > 0 && (
+        <div>
+          <p className="text-sm font-semibold text-green-300">Going</p>
 
-              {waitlistAttendees.length > 0 && (
-                <div>
-                  <p className="text-sm font-semibold text-yellow-300">
-                    Waitlist
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {waitlistAttendees.map((attendee: any) => (
-                      <a
-                        key={`${event.id}-${attendee.user_id}`}
-                        href={`/members/${attendee.user_id}`}
-                        className="rounded-full border border-yellow-300/20 bg-yellow-300/10 px-3 py-1 text-sm text-yellow-200 hover:border-yellow-300"
-                      >
-                        {attendee.profiles?.name || "Member"}
-                      </a>
-                    ))}
+          <div className="mt-2 flex flex-col gap-2">
+            {goingAttendees.map((attendee: any) => (
+              <div
+                key={`${event.id}-${attendee.user_id}`}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-green-400/20 bg-green-500/10 px-3 py-2"
+              >
+                <a
+                  href={`/members/${attendee.user_id}`}
+                  className="text-sm text-green-200 hover:text-green-100"
+                >
+                  {attendee.profiles?.name || "Member"}
+                </a>
+
+                {isAdmin && (
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() =>
+                        adminUpdateRsvpStatus(attendee.id, "waitlist")
+                      }
+                      className="rounded border border-yellow-300/40 px-2 py-1 text-xs text-yellow-200"
+                    >
+                      Move to Waitlist
+                    </button>
+
+                    <button
+                      onClick={() => adminRemoveRsvp(attendee.id)}
+                      className="rounded border border-red-400/40 px-2 py-1 text-xs text-red-300"
+                    >
+                      Remove
+                    </button>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            ))}
+          </div>
         </div>
+      )}
+
+      {waitlistAttendees.length > 0 && (
+        <div>
+          <p className="text-sm font-semibold text-yellow-300">
+            Waitlist
+          </p>
+
+          <div className="mt-2 flex flex-col gap-2">
+            {waitlistAttendees.map((attendee: any) => (
+              <div
+                key={`${event.id}-${attendee.user_id}`}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-yellow-300/20 bg-yellow-300/10 px-3 py-2"
+              >
+                <a
+                  href={`/members/${attendee.user_id}`}
+                  className="text-sm text-yellow-200 hover:text-yellow-100"
+                >
+                  {attendee.profiles?.name || "Member"}
+                </a>
+
+                {isAdmin && (
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() =>
+                        adminUpdateRsvpStatus(attendee.id, "going")
+                      }
+                      className="rounded border border-green-400/40 px-2 py-1 text-xs text-green-300"
+                    >
+                      Move to Going
+                    </button>
+
+                    <button
+                      onClick={() => adminRemoveRsvp(attendee.id)}
+                      className="rounded border border-red-400/40 px-2 py-1 text-xs text-red-300"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )}
+</div>
 
         <div className="mt-4 flex flex-col gap-3">
       <CanIRunThis
