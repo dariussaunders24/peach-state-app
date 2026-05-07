@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import CanIRunThis from "../components/CanIRunThis";
+import DownloadGalleryButton from "../components/DownloadGalleryButton";
 const adminEmails = ["dariussaunders24@gmail.com"];
 
 const bringOptions = [
@@ -1785,20 +1786,20 @@ function PastEventCard({
 }: any) {
   const firstRoute = event.routes?.[0];
 
- const gpxLink =
-  event.route_link ||
-  event.gpx_url ||
-  event.gpx_link ||
-  event.gpx ||
-  event.gpx_file ||
-  event.gpx_file_url ||
-  event.route_gpx_url ||
-  event.route_url ||
-  event.onx_url ||
-  firstRoute?.gpx_url ||
-  firstRoute?.route_link ||
-  firstRoute?.onx_url ||
-  "";
+  const gpxLink =
+    event.route_link ||
+    event.gpx_url ||
+    event.gpx_link ||
+    event.gpx ||
+    event.gpx_file ||
+    event.gpx_file_url ||
+    event.route_gpx_url ||
+    event.route_url ||
+    event.onx_url ||
+    firstRoute?.gpx_url ||
+    firstRoute?.route_link ||
+    firstRoute?.onx_url ||
+    "";
 
   const difficulty =
     event.difficulty ||
@@ -1832,19 +1833,25 @@ function PastEventCard({
             >
               Route Link
             </a>
-         ) : (
-  <p className="text-sm text-gray-500">No GPX link</p>
-)}
+          ) : (
+            <p className="text-sm text-gray-500">No GPX link</p>
+          )}
 
-<Link
-  href={`/gallery?eventId=${event.id}`}
-  className="rounded bg-[#F28C52] px-3 py-1 text-xs font-semibold text-black"
->
-  Add Photos / Videos
-</Link>
+          <Link
+            href={`/gallery?eventId=${event.id}`}
+            className="rounded bg-[#F28C52] px-3 py-1 text-xs font-semibold text-black"
+          >
+            Add Photos / Videos
+          </Link>
 
-{isAdmin && (
+          {isAdmin && (
             <>
+              <DownloadGalleryButton
+                eventId={event.id}
+                eventTitle={event.title}
+                isAdmin={isAdmin}
+              />
+
               <button
                 onClick={() => updateEvent(event)}
                 className="rounded bg-yellow-400 px-3 py-1 text-xs font-semibold text-black"
