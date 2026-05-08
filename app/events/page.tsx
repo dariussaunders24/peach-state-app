@@ -765,6 +765,10 @@ return (
                 className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
               />
 
+<label className="text-sm font-semibold text-white">
+  Date / Time
+</label>
+
               <input
                 type="datetime-local"
                 value={editForm.event_date}
@@ -1365,8 +1369,9 @@ function StatusBadge({ status }: { status: string }) {
 
 function RouteHub({ event }: any) {
   const routes = event.routes || [];
+  const legacyRouteLink = event.route_link || "";
 
-  if (routes.length === 0) {
+  if (routes.length === 0 && !legacyRouteLink) {
     return (
       <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-4">
         <h4 className="font-semibold text-[#F28C52]">Route Hub</h4>
@@ -1385,63 +1390,82 @@ function RouteHub({ event }: any) {
         Route links, meetup pins, GPX files, and trail notes live here.
       </p>
 
-      <div className="mt-4 space-y-4">
-        {routes.map((route: any) => (
-          <div
-            key={route.id}
-            className="rounded-lg border border-white/10 bg-black/20 p-3"
-          >
-            <p className="font-semibold text-white">{route.title}</p>
+      {legacyRouteLink && (
+        <div className="mt-4 rounded-lg border border-white/10 bg-black/20 p-3">
+          <p className="font-semibold text-white">Event Route</p>
 
-            {route.difficulty && (
-              <p className="mt-1 text-sm text-[#F28C52]">
-                Difficulty: {route.difficulty}
-              </p>
-            )}
+          <div className="mt-3">
+            <a
+              href={legacyRouteLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-lg border border-[#F28C52] px-3 py-2 text-sm font-semibold text-[#F28C52] hover:bg-[#F28C52] hover:text-black"
+            >
+              Open Route Link
+            </a>
+          </div>
+        </div>
+      )}
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              {route.onx_url && (
-                <a
-                  href={route.onx_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-lg border border-[#F28C52] px-3 py-2 text-sm font-semibold text-[#F28C52] hover:bg-[#F28C52] hover:text-black"
-                >
-                  Open in onX
-                </a>
+      {routes.length > 0 && (
+        <div className="mt-4 space-y-4">
+          {routes.map((route: any) => (
+            <div
+              key={route.id}
+              className="rounded-lg border border-white/10 bg-black/20 p-3"
+            >
+              <p className="font-semibold text-white">{route.title}</p>
+
+              {route.difficulty && (
+                <p className="mt-1 text-sm text-[#F28C52]">
+                  Difficulty: {route.difficulty}
+                </p>
               )}
 
-              {route.gpx_url && (
-                <a
-                  href={route.gpx_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-lg border border-white/20 px-3 py-2 text-sm font-semibold text-white hover:border-[#F28C52] hover:text-[#F28C52]"
-                >
-                  Download GPX
-                </a>
-              )}
+              <div className="mt-3 flex flex-wrap gap-2">
+                {route.onx_url && (
+                  <a
+                    href={route.onx_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg border border-[#F28C52] px-3 py-2 text-sm font-semibold text-[#F28C52] hover:bg-[#F28C52] hover:text-black"
+                  >
+                    Open in onX
+                  </a>
+                )}
 
-              {route.google_maps_url && (
-                <a
-                  href={route.google_maps_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-lg border border-white/20 px-3 py-2 text-sm font-semibold text-white hover:border-[#F28C52] hover:text-[#F28C52]"
-                >
-                  Open Meetup Pin
-                </a>
+                {route.gpx_url && (
+                  <a
+                    href={route.gpx_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg border border-white/20 px-3 py-2 text-sm font-semibold text-white hover:border-[#F28C52] hover:text-[#F28C52]"
+                  >
+                    Download GPX
+                  </a>
+                )}
+
+                {route.google_maps_url && (
+                  <a
+                    href={route.google_maps_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg border border-white/20 px-3 py-2 text-sm font-semibold text-white hover:border-[#F28C52] hover:text-[#F28C52]"
+                  >
+                    Open Meetup Pin
+                  </a>
+                )}
+              </div>
+
+              {route.notes && (
+                <p className="mt-3 whitespace-pre-line text-sm leading-6 text-gray-300">
+                  {route.notes}
+                </p>
               )}
             </div>
-
-            {route.notes && (
-              <p className="mt-3 whitespace-pre-line text-sm leading-6 text-gray-300">
-                {route.notes}
-              </p>
-            )}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
