@@ -65,7 +65,7 @@ export default function RootLayout({
                 </a>
 
                 {/* DESKTOP NAV */}
-                <nav className="hidden items-center gap-3 md:flex">
+                <nav className="flex items-center gap-2 md:gap-3">
                   {links.map((link) => (
                     <a
                       key={link.href}
