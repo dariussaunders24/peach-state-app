@@ -11,6 +11,7 @@ type Profile = {
   location: string | null;
   image_url: string | null;
   is_banned?: boolean | null;
+  public_role?: string | null;
 };
 
 export default function MembersPage() {
@@ -26,8 +27,8 @@ export default function MembersPage() {
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("user_id, name, vehicle, location, image_url, is_banned")
-      .eq("is_banned", false) // 🔥 hide banned users
+      .select("user_id, name, vehicle, location, image_url, is_banned, public_role")
+      .eq("is_banned", false)
       .order("name", { ascending: true });
 
     if (error) {
@@ -41,7 +42,6 @@ export default function MembersPage() {
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-10 text-white">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl md:text-4xl font-bold text-[#F28C52]">
           Members
@@ -51,17 +51,14 @@ export default function MembersPage() {
         </p>
       </div>
 
-      {/* Loading */}
       {loading && <p className="text-white/70">Loading members...</p>}
 
-      {/* Empty */}
       {!loading && profiles.length === 0 && (
         <div className="rounded-2xl border border-[#F28C52]/20 bg-black/30 p-6">
           <p className="text-white/70">No active members found.</p>
         </div>
       )}
 
-      {/* Grid */}
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {profiles.map((profile) => (
           <Link
@@ -69,7 +66,6 @@ export default function MembersPage() {
             href={`/members/${profile.user_id}`}
             className="rounded-2xl border border-[#F28C52]/20 bg-black/35 p-5 shadow-lg transition hover:border-[#F28C52]/60 hover:bg-black/50"
           >
-            {/* Avatar */}
             <div className="flex items-center gap-4">
               <div className="h-16 w-16 overflow-hidden rounded-full border border-[#F28C52]/40 bg-black/50">
                 {profile.image_url ? (
@@ -89,13 +85,21 @@ export default function MembersPage() {
                 <h2 className="text-lg font-semibold text-white">
                   {profile.name || "Unnamed Member"}
                 </h2>
-                <p className="text-sm text-white/60">
+
+                {profile.public_role && (
+                  <div className="mt-2 inline-flex items-center rounded-full border border-[#F28C52]/40 bg-[#F28C52]/10 px-3 py-1">
+                    <span className="text-[10px] font-semibold tracking-wide text-[#F28C52]">
+                      {profile.public_role}
+                    </span>
+                  </div>
+                )}
+
+                <p className="mt-2 text-sm text-white/60">
                   {profile.location || "Location not added"}
                 </p>
               </div>
             </div>
 
-            {/* Vehicle */}
             <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
               <p className="text-xs uppercase tracking-wide text-[#F28C52]">
                 Vehicle
