@@ -10,6 +10,7 @@ export default function Home() {
   const [welcomeStorageKey, setWelcomeStorageKey] = useState("");
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   useEffect(() => {
     checkUserAndLoadHome();
@@ -34,6 +35,14 @@ export default function Home() {
     }
 
     const userId = userData.user.id;
+    const { data: notificationData } = await supabase
+  .from("notifications")
+  .select("*")
+  .eq("user_id", userId)
+  .order("created_at", { ascending: false })
+  .limit(5);
+
+setNotifications(notificationData || []);
     const storageKey = `welcomePanelDismissed:${userId}`;
     setWelcomeStorageKey(storageKey);
 
@@ -101,6 +110,48 @@ export default function Home() {
 
   return (
     <div className="space-y-8">
+      {notifications.length > 0 && (
+  <section className="rounded-2xl border border-[#F28C52]/30 bg-black/40 p-5">
+    <h2 className="text-xl font-bold text-white">Notifications</h2>
+
+    <div className="mt-4 space-y-3">
+      {notifications.map((notification: any) => (
+  <div
+    key={notification.id}
+    className="rounded-xl border border-white/10 bg-black/40 p-4"
+  >
+    <div className="flex items-start justify-between gap-3">
+      <div>
+        <p className="font-semibold text-[#F28C52]">
+          {notification.title}
+        </p>
+
+        <p className="mt-1 text-sm text-gray-300">
+          {notification.message}
+        </p>
+      </div>
+
+      <button
+        onClick={async () => {
+          await supabase
+            .from("notifications")
+            .delete()
+            .eq("id", notification.id);
+
+          setNotifications((prev) =>
+            prev.filter((n) => n.id !== notification.id)
+          );
+        }}
+        className="text-xs text-gray-400 hover:text-red-400"
+      >
+        Dismiss
+      </button>
+    </div>
+  </div>
+))}
+    </div>
+  </section>
+)}
       {showInstallBanner && (
         <section className="relative rounded-xl border border-[#F28C52]/30 bg-black/40 p-4">
           <button

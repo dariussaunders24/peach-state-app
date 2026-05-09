@@ -586,10 +586,30 @@ export default function EventsPage() {
       .limit(1);
 
     if (nextWaitlist && nextWaitlist.length > 0) {
-      await supabase
+      const promotedUser = nextWaitlist[0];
+
+      const { error: promoteError } = await supabase
         .from("rsvps")
         .update({ status: "going" })
-        .eq("id", nextWaitlist[0].id);
+        .eq("id", promotedUser.id);
+
+      if (promoteError) {
+        alert(promoteError.message);
+        return;
+      }
+
+  const { error: notificationError } = await supabase
+  .from("notifications")
+  .insert({
+    user_id: promotedUser.user_id,
+    title: "You're In!",
+    message: `A spot opened up for ${event.title}. You've been moved from the waitlist to Going.`,
+  });
+
+if (notificationError) {
+  alert(notificationError.message);
+  return;
+}
     }
   }
 
