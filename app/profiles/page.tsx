@@ -11,6 +11,7 @@ type Profile = {
   image_url?: string | null;
   bio?: string | null;
   instagram?: string | null;
+  public_role?: string | null;
 };
 
 type Badge = {
@@ -203,6 +204,14 @@ export default function MyProfilePage() {
               <h2 className="font-cinzel text-3xl font-bold text-[#F28C52] md:text-4xl">
                 {profile.name || "Member"}
               </h2>
+
+              {profile.public_role && (
+  <div className="mt-3 inline-flex items-center rounded-full border border-[#F28C52]/40 bg-[#F28C52]/10 px-4 py-1 shadow-[0_0_18px_rgba(242,140,82,0.18)]">
+    <span className="text-xs font-semibold tracking-wide text-[#F28C52]">
+      {profile.public_role}
+    </span>
+  </div>
+)}
 
               {profile.bio && (
                 <p className="mt-3 max-w-2xl whitespace-pre-line text-sm leading-6 text-white/75">
