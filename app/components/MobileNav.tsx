@@ -6,8 +6,8 @@ import { supabase } from "../lib/supabase";
 
 const adminEmails = ["dariussaunders24@gmail.com"];
 
-const facebookUrl = "https://www.facebook.com/groups/YOURGROUPLINK";
-const instagramUrl = "https://www.instagram.com/mtnroo_ascent24/";
+const facebookUrl = "https://www.facebook.com/groups/peachstateoffroad";
+const instagramUrl = "https://www.instagram.com/peachstate_offroad_overlanding/";
 
 export default function MobileNav() {
   const [open, setOpen] = useState(false);
