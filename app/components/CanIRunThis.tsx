@@ -119,7 +119,7 @@ function requiredTractionLevel(value: TractionRequirement) {
   if (value === "not_needed") return 0;
   if (value === "factory_ok") return 1;
   if (value === "locker_recommended") return 2;
-  return 3;
+  return 4;
 }
 
 function experienceLevel(value: Experience) {
