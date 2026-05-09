@@ -12,6 +12,7 @@ type Profile = {
   image_url: string | null;
   bio?: string | null;
   instagram?: string | null;
+  public_role?: string | null;
 };
 
 type Badge = {
@@ -50,7 +51,7 @@ export default function MemberProfilePage() {
 
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
-      .select("user_id, name, location, image_url, bio, instagram")
+      .select("user_id, name, location, image_url, bio, instagram, public_role")
       .eq("user_id", id)
       .single();
 
@@ -145,18 +146,26 @@ export default function MemberProfilePage() {
           )}
         </div>
 
-        <div className="p-6">
-          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-[#F28C52] md:text-4xl">
-                {profile.name || "Member"}
-              </h1>
+     <div className="p-6">
+  <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+    <div>
+      <h1 className="text-3xl font-bold text-[#F28C52] md:text-4xl">
+        {profile.name || "Member"}
+      </h1>
 
-              {profile.bio && (
-                <p className="mt-3 max-w-2xl whitespace-pre-line text-sm leading-6 text-white/75">
-                  {profile.bio}
-                </p>
-              )}
+      {profile.public_role && (
+        <div className="mt-3 inline-flex items-center rounded-full border border-[#F28C52]/40 bg-[#F28C52]/10 px-4 py-1 shadow-[0_0_18px_rgba(242,140,82,0.18)]">
+          <span className="text-xs font-semibold tracking-wide text-[#F28C52]">
+            {profile.public_role}
+          </span>
+        </div>
+      )}
+
+      {profile.bio && (
+        <p className="mt-3 max-w-2xl whitespace-pre-line text-sm leading-6 text-white/75">
+          {profile.bio}
+        </p>
+      )}
 
               {profile.instagram && (
                 <a
