@@ -661,6 +661,42 @@ async function adminRemoveRsvp(
 
   await loadEvents();
 }
+async function copyEventEmails(
+  eventId: string,
+  status: "going" | "waitlist" | "all"
+) {
+  const { data } = await supabase.auth.getSession();
+
+  const token = data.session?.access_token;
+
+  if (!token) {
+    alert("You must be logged in.");
+    return;
+  }
+
+  const response = await fetch("/api/admin/event-emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      eventId,
+      status,
+    }),
+  });
+
+  const result = await response.json();
+
+ if (!response.ok) {
+  alert(JSON.stringify(result, null, 2));
+  return;
+}
+
+  await navigator.clipboard.writeText(result.emailText);
+
+  alert(`Copied ${result.count} email(s).`);
+}
 
 return (
     <div className="space-y-8">
@@ -1008,6 +1044,7 @@ return (
   uploadCoverPhoto={uploadCoverPhoto}
   adminUpdateRsvpStatus={adminUpdateRsvpStatus}
   adminRemoveRsvp={adminRemoveRsvp}
+  copyEventEmails={copyEventEmails}
 />
           ))
         )}
@@ -1501,6 +1538,7 @@ function EventCard({
   uploadCoverPhoto,
   adminUpdateRsvpStatus,
   adminRemoveRsvp,
+  copyEventEmails,
 }: any) {
   const [userStatus, setUserStatus] = useState("");
 
@@ -1799,23 +1837,44 @@ function EventCard({
             </label>
           )}
 
-          {isAdmin && (
-            <div className="flex gap-2">
-              <button
-                onClick={() => updateEvent(event)}
-                className="rounded bg-yellow-400 px-3 py-1 text-black"
-              >
-                Edit
-              </button>
+{isAdmin && (
+  <div className="flex flex-wrap gap-2">
+    <button
+      onClick={() => updateEvent(event)}
+      className="rounded bg-yellow-400 px-3 py-1 text-black"
+    >
+      Edit
+    </button>
 
-              <button
-                onClick={() => deleteEvent(event.id)}
-                className="rounded bg-red-500 px-3 py-1 text-white"
-              >
-                Delete
-              </button>
-            </div>
-          )}
+    <button
+      onClick={() => deleteEvent(event.id)}
+      className="rounded bg-red-500 px-3 py-1 text-white"
+    >
+      Delete
+    </button>
+
+    <button
+      onClick={() => copyEventEmails(event.id, "going")}
+      className="rounded bg-blue-500 px-3 py-1 text-white"
+    >
+      Copy Going Emails
+    </button>
+
+    <button
+      onClick={() => copyEventEmails(event.id, "waitlist")}
+      className="rounded bg-purple-500 px-3 py-1 text-white"
+    >
+      Copy Waitlist Emails
+    </button>
+
+    <button
+      onClick={() => copyEventEmails(event.id, "all")}
+      className="rounded bg-[#F28C52] px-3 py-1 text-black"
+    >
+      Copy All Emails
+    </button>
+  </div>
+)}
         </div>
       </div>
     </div>
