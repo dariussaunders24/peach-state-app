@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { supabase } from "../lib/supabase";
 
 export default function LoginPage() {
@@ -37,6 +38,7 @@ export default function LoginPage() {
   return (
     <div className="mx-auto max-w-md rounded-2xl border border-[#F28C52]/30 bg-black/40 p-6">
       <h1 className="text-3xl font-bold text-[#F28C52]">Member Login</h1>
+
       <p className="mt-2 text-gray-300">
         Sign in or create an account to access Peach State member features.
       </p>
@@ -57,6 +59,13 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+
+        <Link
+          href="/forgot-password"
+          className="block text-right text-sm text-[#F28C52] underline underline-offset-4"
+        >
+          Forgot your password?
+        </Link>
 
         <div className="flex gap-3">
           <button
