@@ -39,9 +39,13 @@ export default function LoginPage() {
     <div className="mx-auto max-w-md rounded-2xl border border-[#F28C52]/30 bg-black/40 p-6">
       <h1 className="text-3xl font-bold text-[#F28C52]">Member Login</h1>
 
-      <p className="mt-2 text-gray-300">
-        Sign in or create an account to access Peach State member features.
-      </p>
+     <p className="mt-2 text-sm text-gray-300">
+  Sign in or create an account to access Peach State member features.
+
+  <span className="mt-2 block text-[#F28C52]">
+    Please enter a real, personal email you have access to.
+  </span>
+</p>
 
       <div className="mt-6 space-y-4">
         <input
@@ -59,6 +63,9 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+        <p className="text-xs text-gray-400">
+  Please use a real email address you have access to.
+</p>
 
         <Link
           href="/forgot-password"
