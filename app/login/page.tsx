@@ -8,6 +8,8 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [successMessage, setSuccessMessage] = useState("");
+
   async function handleRegister() {
     const { error } = await supabase.auth.signUp({
       email,
@@ -19,7 +21,9 @@ export default function LoginPage() {
       return;
     }
 
-    alert("Registration complete. You may now log in.");
+    setSuccessMessage(
+  "SUCCESS! Registration complete. You can now click Login using the same email and password you just entered."
+);
   }
 
   async function signIn() {
@@ -73,6 +77,12 @@ export default function LoginPage() {
         >
           Forgot your password?
         </Link>
+
+        {successMessage && (
+  <div className="rounded-lg border border-green-400/40 bg-green-500/10 p-3 text-sm text-green-200">
+    {successMessage}
+  </div>
+)}
 
         <div className="flex gap-3">
           <button
