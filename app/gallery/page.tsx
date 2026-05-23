@@ -8,6 +8,7 @@ export default function GalleryPage() {
   const [currentUserId, setCurrentUserId] = useState("");
   const [selectedEventId, setSelectedEventId] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState<any | null>(null);
 
   useEffect(() => {
     loadGallery();
@@ -228,11 +229,12 @@ export default function GalleryPage() {
                           className="h-64 w-full bg-black object-cover"
                         />
                       ) : (
-                        <img
-                          src={media.media_url}
-                          alt={event.title}
-                          className="h-64 w-full object-cover"
-                        />
+                       <img
+  src={media.media_url}
+  alt={event.title}
+  onClick={() => setSelectedMedia(media)}
+  className="h-64 w-full cursor-pointer object-cover transition hover:opacity-80"
+/>
                       )}
 
                       {media.user_id === currentUserId && (
@@ -249,6 +251,38 @@ export default function GalleryPage() {
               )}
             </section>
           ))}
+        </div>
+      )}
+        
+
+      {selectedMedia && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+          onClick={() => setSelectedMedia(null)}
+        >
+          <button
+            onClick={() => setSelectedMedia(null)}
+            className="absolute right-5 top-5 z-50 rounded-full bg-black/70 px-4 py-2 text-xl font-bold text-white hover:bg-[#F28C52] hover:text-black"
+          >
+            ×
+          </button>
+
+          {selectedMedia.media_type === "video" ? (
+            <video
+              src={selectedMedia.media_url}
+              controls
+              autoPlay
+              className="max-h-[90vh] max-w-[90vw] rounded-2xl bg-black object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <img
+              src={selectedMedia.media_url}
+              alt="Expanded gallery media"
+              className="max-h-[90vh] max-w-[90vw] rounded-2xl object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          )}
         </div>
       )}
     </div>
