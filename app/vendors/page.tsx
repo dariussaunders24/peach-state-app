@@ -51,6 +51,13 @@ const vendors = [
     logo: "/vendors/warrior.png",
     url: "https://www.warriorwinches.com/",
   },
+    {
+    name: "BougeRV",
+    discount: "7% Off",
+    description: "Portable fridges, camping gear, power stations, and off-grid overlanding equipment.",
+    logo: "/vendors/bouge.png",
+    url: "https://www.bougerv.com",
+  },
 ];
 
 export default function VendorsPage() {
