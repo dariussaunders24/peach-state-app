@@ -34,6 +34,7 @@ export default function MobileNav() {
     { href: "/profiles", label: "My Profile" },
     { href: "/builds", label: "My Builds" },
     { href: "/events", label: "Events" },
+    { href: "/past-events", label: "Past Events" },
     { href: "/gallery", label: "Gallery" },
     { href: "/members", label: "Members" },
     { href: "/vendors", label: "Vendors" },
