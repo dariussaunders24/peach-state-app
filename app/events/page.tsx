@@ -70,7 +70,6 @@ function formatDateForInput(dateValue: string) {
 
 export default function EventsPage() {
   const [events, setEvents] = useState<any[]>([]);
-  const [pastEvents, setPastEvents] = useState<any[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [currentUserId, setCurrentUserId] = useState("");
   const [confirmationMessage, setConfirmationMessage] = useState("");
@@ -338,12 +337,7 @@ export default function EventsPage() {
       .gte("event_date", now)
       .order("event_date", { ascending: true });
 
-    const { data: pastData } = await supabase
-      .from("events")
-      .select("*")
-      .lt("event_date", now)
-      .order("event_date", { ascending: false });
-
+    
     async function attachCounts(eventsList: any[]) {
       return Promise.all(
         (eventsList || []).map(async (event) => {
@@ -427,10 +421,10 @@ export default function EventsPage() {
 
     const upcomingWithCounts = await attachCounts(upcomingData || []);
     const upcomingWithRoutes = await attachRoutes(upcomingWithCounts);
-    const pastWithRoutes = await attachRoutes(pastData || []);
+    
 
     setEvents(upcomingWithRoutes);
-    setPastEvents(pastWithRoutes);
+    
   }
 
   async function deleteEvent(eventId: string) {
@@ -1050,27 +1044,7 @@ return (
         )}
       </section>
 
-      <section className="space-y-4 border-t border-white/10 pt-8">
-        <h2 className="text-2xl font-bold text-[#F28C52]">Past Events</h2>
-
-        {pastEvents.length === 0 ? (
-          <div className="rounded-xl border border-white/10 bg-black/30 p-5">
-            <p className="text-gray-400">No past events yet.</p>
-          </div>
-        ) : (
-          pastEvents.map((event) => (
-            <PastEventCard
-              key={event.id}
-              event={event}
-              isAdmin={isAdmin}
-              updateEvent={openEditEvent}
-              deleteEvent={deleteEvent}
-              addRouteToEvent={addRouteToEvent}
-              deleteRoute={deleteRoute}
-            />
-          ))
-        )}
-      </section>
+     
     </div>
   );
 }
@@ -1881,97 +1855,3 @@ function EventCard({
   );
 }
 
-function PastEventCard({
-  event,
-  isAdmin,
-  updateEvent,
-  deleteEvent,
-}: any) {
-  const firstRoute = event.routes?.[0];
-
-  const gpxLink =
-    event.route_link ||
-    event.gpx_url ||
-    event.gpx_link ||
-    event.gpx ||
-    event.gpx_file ||
-    event.gpx_file_url ||
-    event.route_gpx_url ||
-    event.route_url ||
-    event.onx_url ||
-    firstRoute?.gpx_url ||
-    firstRoute?.route_link ||
-    firstRoute?.onx_url ||
-    "";
-
-  const difficulty =
-    event.difficulty ||
-    firstRoute?.difficulty ||
-    "Not listed";
-
-  return (
-    <div className="rounded-xl border border-[#F28C52]/20 bg-black/40 px-4 py-3">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <h3 className="font-bold text-white">{event.title}</h3>
-
-          {event.event_date && (
-            <p className="text-sm text-gray-400">
-              {new Date(event.event_date).toLocaleDateString()}
-            </p>
-          )}
-
-          <p className="text-sm font-semibold text-[#F28C52]">
-            {difficulty}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          {gpxLink ? (
-            <a
-              href={gpxLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-semibold text-[#F28C52] underline underline-offset-4"
-            >
-              Route Link
-            </a>
-          ) : (
-            <p className="text-sm text-gray-500">No GPX link</p>
-          )}
-
-          <Link
-            href={`/gallery?eventId=${event.id}`}
-            className="rounded bg-[#F28C52] px-3 py-1 text-xs font-semibold text-black"
-          >
-            Add Photos / Videos
-          </Link>
-
-          {isAdmin && (
-            <>
-              <DownloadGalleryButton
-                eventId={event.id}
-                eventTitle={event.title}
-                isAdmin={isAdmin}
-              />
-
-              <button
-                onClick={() => updateEvent(event)}
-                className="rounded bg-yellow-400 px-3 py-1 text-xs font-semibold text-black"
-              >
-                Edit
-              </button>
-
-              <button
-                onClick={() => deleteEvent(event.id)}
-                className="rounded bg-red-500 px-3 py-1 text-xs font-semibold text-white"
-              >
-                Delete
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
