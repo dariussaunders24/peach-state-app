@@ -74,7 +74,7 @@ export default function VendorsPage() {
           automotive partners. Click any vendor name below to visit their website.
         </p>
 
-        <p className="mt-4 text-sm text-gray-400">
+        <p className="mt-4 text-md text-gray-400">
           For discount codes and details, email{" "}
           <a
             href="mailto:dariussaunders24@gmail.com"
