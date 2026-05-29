@@ -427,6 +427,33 @@ export default function EventsPage() {
     
   }
 
+  async function promoteRsvpToGoing(rsvp: any, event: any) {
+    const { error: promoteError } = await supabase
+      .from("rsvps")
+      .update({ status: "going" })
+      .eq("id", rsvp.id);
+
+    if (promoteError) {
+      alert(promoteError.message);
+      return false;
+    }
+
+    const { error: notificationError } = await supabase
+      .from("notifications")
+      .insert({
+        user_id: rsvp.user_id,
+        title: "You're In!",
+        message: `A spot opened up for ${event.title}. You've been moved from the waitlist to Going.`,
+      });
+
+    if (notificationError) {
+      alert(notificationError.message);
+      return false;
+    }
+
+    return true;
+  }
+
   async function deleteEvent(eventId: string) {
     if (!confirm("Delete this event?")) return;
 
@@ -613,26 +640,40 @@ if (notificationError) {
 
 async function adminUpdateRsvpStatus(
   rsvpId: string,
-  status: "going" | "waitlist"
+  status: "going" | "waitlist",
+  userId: string,
+  event: any
 ) {
-  const { error } = await supabase
-    .from("rsvps")
-    .update({ status })
-    .eq("id", rsvpId);
+  if (status === "going") {
+    const promoted = await promoteRsvpToGoing(
+      { id: rsvpId, user_id: userId },
+      event
+    );
 
-  if (error) return alert(error.message);
+    if (!promoted) return;
+  } else {
+    const { error } = await supabase
+      .from("rsvps")
+      .update({ status })
+      .eq("id", rsvpId);
+
+    if (error) return alert(error.message);
+  }
 
   await loadEvents();
 }
 
 async function adminRemoveRsvp(
   rsvpId: string,
-  eventId: string,
+  event: any,
   currentStatus: string
 ) {
   if (!confirm("Remove this member from the RSVP list?")) return;
 
-  const { error } = await supabase.from("rsvps").delete().eq("id", rsvpId);
+  const { error } = await supabase
+    .from("rsvps")
+    .delete()
+    .eq("id", rsvpId);
 
   if (error) return alert(error.message);
 
@@ -640,16 +681,18 @@ async function adminRemoveRsvp(
     const { data: nextWaitlist } = await supabase
       .from("rsvps")
       .select("*")
-      .eq("event_id", eventId)
+      .eq("event_id", event.id)
       .eq("status", "waitlist")
       .order("created_at", { ascending: true })
       .limit(1);
 
     if (nextWaitlist && nextWaitlist.length > 0) {
-      await supabase
-        .from("rsvps")
-        .update({ status: "going" })
-        .eq("id", nextWaitlist[0].id);
+      const promoted = await promoteRsvpToGoing(
+        nextWaitlist[0],
+        event
+      );
+
+      if (!promoted) return;
     }
   }
 
@@ -1683,16 +1726,21 @@ function EventCard({
                 {isAdmin && (
                   <div className="flex flex-wrap gap-2">
                     <button
-                      onClick={() =>
-                        adminUpdateRsvpStatus(attendee.id, "waitlist")
-                      }
+                     onClick={() =>
+  adminUpdateRsvpStatus(
+    attendee.id,
+    "waitlist",
+    attendee.user_id,
+    event
+  )
+}
                       className="rounded border border-yellow-300/40 px-2 py-1 text-xs text-yellow-200"
                     >
                       Move to Waitlist
                     </button>
 
                     <button
-                      onClick={() => adminRemoveRsvp(attendee.id, event.id, attendee.status)}
+                      onClick={() => adminRemoveRsvp(attendee.id, event, attendee.status)}
                       className="rounded border border-red-400/40 px-2 py-1 text-xs text-red-300"
                     >
                       Remove
@@ -1727,16 +1775,21 @@ function EventCard({
                 {isAdmin && (
                   <div className="flex flex-wrap gap-2">
                     <button
-                      onClick={() =>
-                        adminUpdateRsvpStatus(attendee.id, "going")
-                      }
+                     onClick={() =>
+  adminUpdateRsvpStatus(
+    attendee.id,
+    "going",
+    attendee.user_id,
+    event
+  )
+}
                       className="rounded border border-green-400/40 px-2 py-1 text-xs text-green-300"
                     >
                       Move to Going
                     </button>
 
                     <button
-                      onClick={() => adminRemoveRsvp(attendee.id, event.id, attendee.status)}
+                      onClick={() => adminRemoveRsvp(attendee.id, event, attendee.status)}
                       className="rounded border border-red-400/40 px-2 py-1 text-xs text-red-300"
                     >
                       Remove
