@@ -60,9 +60,9 @@ export default function GalleryPage() {
   }
 
   async function uploadMedia(e: any) {
-    const file = e.target.files?.[0];
+    const files = Array.from(e.target.files || []) as File[];
 
-    if (!file) return;
+    if (files.length === 0) return;
 
     if (!selectedEventId) {
       alert("Choose a past ride first.");
@@ -74,52 +74,51 @@ export default function GalleryPage() {
       return;
     }
 
-    const isImage = file.type.startsWith("image/");
-    const isVideo = file.type.startsWith("video/");
-
-    if (!isImage && !isVideo) {
-      alert("Only photos and videos are allowed.");
-      return;
-    }
-
     setUploading(true);
 
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${Date.now()}-${Math.random()
-      .toString(36)
-      .substring(2)}.${fileExt}`;
+    for (const file of files) {
+      const isImage = file.type.startsWith("image/");
+      const isVideo = file.type.startsWith("video/");
 
-    const filePath = `${selectedEventId}/${fileName}`;
+      if (!isImage && !isVideo) continue;
 
-    const { error: uploadError } = await supabase.storage
-      .from("gallery-media")
-      .upload(filePath, file);
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2)}.${fileExt}`;
 
-    if (uploadError) {
-      alert(uploadError.message);
-      setUploading(false);
-      return;
-    }
+      const filePath = `${selectedEventId}/${fileName}`;
 
-    const { data: publicUrlData } = supabase.storage
-      .from("gallery-media")
-      .getPublicUrl(filePath);
+      const { error: uploadError } = await supabase.storage
+        .from("gallery-media")
+        .upload(filePath, file);
 
-    const { error: insertError } = await supabase.from("gallery_media").insert({
-      event_id: selectedEventId,
-      user_id: currentUserId,
-      media_url: publicUrlData.publicUrl,
-      file_path: filePath,
-      media_type: isImage ? "image" : "video",
-    });
+      if (uploadError) {
+        alert(uploadError.message);
+        continue;
+      }
 
-    if (insertError) {
-      alert(insertError.message);
-      setUploading(false);
-      return;
+      const { data: publicUrlData } = supabase.storage
+        .from("gallery-media")
+        .getPublicUrl(filePath);
+
+      const { error: insertError } = await supabase
+        .from("gallery_media")
+        .insert({
+          event_id: selectedEventId,
+          user_id: currentUserId,
+          media_url: publicUrlData.publicUrl,
+          file_path: filePath,
+          media_type: isImage ? "image" : "video",
+        });
+
+      if (insertError) {
+        alert(insertError.message);
+      }
     }
 
     setUploading(false);
+    e.target.value = "";
     await loadGallery();
   }
 
@@ -144,9 +143,7 @@ export default function GalleryPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-[#F28C52]">
-          Event Gallery
-        </h1>
+        <h1 className="text-3xl font-bold text-[#F28C52]">Event Gallery</h1>
         <p className="mt-3 text-gray-300">
           View and upload photos or videos from previous Peach State rides.
         </p>
@@ -175,10 +172,11 @@ export default function GalleryPage() {
             </select>
 
             <label className="inline-block cursor-pointer rounded-lg bg-[#F28C52] px-5 py-3 font-semibold text-black hover:bg-[#C96A2C]">
-              {uploading ? "Uploading..." : "Upload Photo or Video"}
+              {uploading ? "Uploading..." : "Upload Photos or Videos"}
               <input
                 type="file"
                 accept="image/*,video/*"
+                multiple={true}
                 onChange={uploadMedia}
                 disabled={uploading}
                 className="hidden"
@@ -229,12 +227,12 @@ export default function GalleryPage() {
                           className="h-64 w-full bg-black object-cover"
                         />
                       ) : (
-                       <img
-  src={media.media_url}
-  alt={event.title}
-  onClick={() => setSelectedMedia(media)}
-  className="h-64 w-full cursor-pointer object-cover transition hover:opacity-80"
-/>
+                        <img
+                          src={media.media_url}
+                          alt={event.title}
+                          onClick={() => setSelectedMedia(media)}
+                          className="h-64 w-full cursor-pointer object-cover transition hover:opacity-80"
+                        />
                       )}
 
                       {media.user_id === currentUserId && (
@@ -253,7 +251,6 @@ export default function GalleryPage() {
           ))}
         </div>
       )}
-        
 
       {selectedMedia && (
         <div
