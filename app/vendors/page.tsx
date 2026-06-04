@@ -3,58 +3,58 @@
 const vendors = [
   {
     name: "Morrflate",
-    discount: "10% Off",
-    description: "Multi-tire inflation and deflation kits.",
+    discount: "Discount Code: peachstate",
+    description: "10% Off. Multi-tire inflation and deflation kits.",
     logo: "/vendors/morrflate.png",
     url: "https://morrflate.com",
   },
   {
     name: "OnX Offroad",
-    discount: "50% Off All Memberships",
-    description: "Trail maps and navigation.",
+    discount: "Discount Code: Club50",
+    description: "50% Off All Memberships. Trail maps and navigation.",
     logo: "/vendors/onx.png",
     url: "https://www.onxmaps.com/offroad",
   },
   {
     name: "Bulletpoint Mounting Solutions",
-    discount: "10% Off",
-    description: "Mounting systems for devices.",
+    discount: "Discount Code: PeachState",
+    description: "10% Off. Mounting systems for devices.",
     logo: "/vendors/bulletpoint.png",
     url: "https://www.bulletpointmountingsolutions.com",
   },
   {
     name: "Novsight",
-    discount: "20% Off",
-    description: "Off-road lighting.",
+    discount: "Discount Code: dariussaunders",
+    description: "20% Off. Off-road lighting.",
     logo: "/vendors/novsight.png",
     url: "https://www.novsights.com",
   },
   {
     name: "Retevis",
-    discount: "$5 off $50 • $10 off $200 • $20 off $500",
-    description: "GMRS radios and communication gear.",
+    discount: "Discount Code: ZRTSAVE5, ZRTSAVE10, Hazel62",
+    description: "$5 off $50 • $10 off $200 • $20 off $500. GMRS radios and communication gear.",
     logo: "/vendors/retevis.png",
     url: "https://www.retevis.com",
   },
   {
     name: "Allsouth Autosports",
-    discount: "Shop Labor Discount",
-    description: "Off-road installs and upgrades.",
+    discount: "Discount Code: Mention You Are A Peach State Member.",
+    description: "Shop Labor Discount. Off-road installs and upgrades.",
     logo: "/vendors/allsouth.png",
     url: "https://www.allsouthautosports.com",
   },
   {
     name: "Warrior Winches",
-    discount: "10% Off",
+    discount: "Discount Code: peachstate10",
     description:
-      "High-quality winches and recovery gear built for demanding off-road conditions.",
+      "10% Off. High-quality winches and recovery gear built for demanding off-road conditions.",
     logo: "/vendors/warrior.png",
     url: "https://www.warriorwinches.com/",
   },
     {
     name: "BougeRV",
-    discount: "7% Off",
-    description: "Portable fridges, camping gear, power stations, and off-grid overlanding equipment.",
+    discount: "Discount Code: WEVALUEYOU",
+    description: "7% Off. Portable fridges, camping gear, power stations, and off-grid overlanding equipment.",
     logo: "/vendors/bouge.png",
     url: "https://www.bougerv.com",
   },
@@ -74,16 +74,26 @@ export default function VendorsPage() {
           automotive partners. Click any vendor name below to visit their website.
         </p>
 
-        <p className="mt-4 text-lg text-gray-400">
-          For discount codes and details, email{" "}
-          <a
-            href="mailto:dariussaunders24@gmail.com"
-            className="font-semibold text-[#F28C52] hover:underline"
-          >
-            dariussaunders24@gmail.com
-          </a>
-          .
+     
+      </section>
+
+   <section className="rounded-2xl border border-[#F28C52]/30 bg-black/40 p-6">
+        <h2 className="text-2xl font-bold text-[#F28C52]">
+          Interested in Becoming a Vendor Partner?
+        </h2>
+
+        <p className="mt-3 max-w-3xl text-gray-300">
+          We are always looking to partner with quality brands, shops, and
+          service providers that bring real value to the Peach State Off-Road
+          and Overlanding community.
         </p>
+
+        <a
+          href="mailto:dariussaunders24@gmail.com?subject=Peach State Vendor Partnership"
+          className="mt-5 inline-block rounded-lg bg-[#F28C52] px-5 py-3 font-semibold text-black hover:bg-[#C96A2C]"
+        >
+          Email About Partnership
+        </a>
       </section>
 
       <section className="grid gap-5 md:grid-cols-2">
@@ -113,29 +123,12 @@ export default function VendorsPage() {
               {vendor.discount}
             </p>
 
-            <p className="mt-3 text-gray-300">{vendor.description}</p>
+            <p className="mt-2 text-lg text-gray-200">{vendor.description}</p>
           </div>
         ))}
       </section>
 
-      <section className="rounded-2xl border border-[#F28C52]/30 bg-black/40 p-6">
-        <h2 className="text-2xl font-bold text-[#F28C52]">
-          Interested in Becoming a Vendor Partner?
-        </h2>
-
-        <p className="mt-3 max-w-3xl text-gray-300">
-          We are always looking to partner with quality brands, shops, and
-          service providers that bring real value to the Peach State Off-Road
-          and Overlanding community.
-        </p>
-
-        <a
-          href="mailto:dariussaunders24@gmail.com?subject=Peach State Vendor Partnership"
-          className="mt-5 inline-block rounded-lg bg-[#F28C52] px-5 py-3 font-semibold text-black hover:bg-[#C96A2C]"
-        >
-          Email About Partnership
-        </a>
-      </section>
+     
     </div>
   );
 }
