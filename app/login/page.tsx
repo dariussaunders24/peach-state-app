@@ -47,7 +47,7 @@ export default function LoginPage() {
   Sign in or create an account to access Peach State member features.
 
   <span className="mt-2 block text-[#F28C52]">
-    Please enter a real, personal email you have access to.
+    First time user? Enter an email address and password, then click the register button.
   </span>
 </p>
 
