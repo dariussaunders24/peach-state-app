@@ -68,7 +68,7 @@ export default function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
         />
         <p className="text-xs text-gray-400">
-  Please use a real email address you have access to.
+  
 </p>
 
         <Link
