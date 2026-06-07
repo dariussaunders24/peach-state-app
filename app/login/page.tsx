@@ -43,10 +43,10 @@ export default function LoginPage() {
     <div className="mx-auto max-w-md rounded-2xl border border-[#F28C52]/30 bg-black/40 p-6">
       <h1 className="text-3xl font-bold text-[#F28C52]">Member Login</h1>
 
-     <p className="mt-2 text-sm text-gray-300">
+     <p className="mt-2 text-md text-gray-300">
   Sign in or create an account to access Peach State member features.
 
-  <span className="mt-2 block text-[#F28C52]">
+  <span className="mt-2 block font-bold text-md text-[#F28C52]">
     First time user? Enter an email address and password, then click the register button.
   </span>
 </p>
