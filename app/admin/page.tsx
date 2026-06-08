@@ -165,6 +165,21 @@ export default function AdminPage() {
         />
       </div>
 
+      <div className="grid gap-4 sm:grid-cols-2">
+  <a
+    href="/admin/resources"
+    className="rounded-xl border border-white/10 bg-black/30 p-5 transition hover:border-[#F28C52]/60"
+  >
+    <h2 className="text-xl font-bold text-white">
+      Training Resources
+    </h2>
+
+    <p className="mt-2 text-sm text-white/60">
+      Create and manage blogs, videos, guides, and beginner training content.
+    </p>
+  </a>
+</div>
+
       <div className="rounded-xl border border-white/10 bg-black/30 p-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
