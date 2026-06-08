@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type Resource = {
@@ -12,15 +15,26 @@ type Resource = {
   created_at: string;
 };
 
-export default async function ResourcesPage() {
-  const { data: resources, error } = await supabase
-    .from("resources")
-    .select("id, title, slug, description, thumbnail_url, category, type, created_at")
-    .eq("published", true)
-    .order("created_at", { ascending: false });
+export default function ResourcesPage() {
+  const [resources, setResources] = useState<Resource[]>([]);
 
-  if (error) {
-    console.error(error);
+  useEffect(() => {
+    loadResources();
+  }, []);
+
+  async function loadResources() {
+    const { data, error } = await supabase
+      .from("resources")
+      .select("id, title, slug, description, thumbnail_url, category, type, created_at")
+      .eq("published", true)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    setResources(data || []);
   }
 
   return (
@@ -36,7 +50,7 @@ export default async function ResourcesPage() {
         </p>
       </section>
 
-      {!resources || resources.length === 0 ? (
+      {resources.length === 0 ? (
         <p className="text-neutral-400">No resources have been published yet.</p>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
