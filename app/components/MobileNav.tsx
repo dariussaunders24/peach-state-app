@@ -39,7 +39,7 @@ export default function MobileNav() {
      { href: "/resources", label: "Resources" },
     { href: "/members", label: "Members" },
     { href: "/vendors", label: "Vendors" },
-    { href: "/faq", label: "FAQ" },
+    
     { href: "/store", label: "Store" },
   ];
 
