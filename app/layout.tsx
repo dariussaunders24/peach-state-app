@@ -37,8 +37,8 @@ export default function RootLayout({
   const links = [
     { href: "/", label: "Home" },
     ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
-    { href: "/profiles", label: "My Profile" },
-    { href: "/builds", label: "My Builds" },
+    { href: "/profiles", label: "Profile" },
+    
     { href: "/events", label: "Events" },
     { href: "/past-events", label: "Past Events" },
     { href: "/gallery", label: "Gallery" },
