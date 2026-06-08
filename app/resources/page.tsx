@@ -41,11 +41,11 @@ export default function ResourcesPage() {
     <main className="mx-auto max-w-6xl px-4 py-10 text-white">
       <section className="mb-10">
         <p className="mb-2 text-sm uppercase tracking-[0.3em] text-orange-400">
-          Peach State Off-Road
+          
         </p>
         <h1 className="text-4xl font-bold">Training & Resources</h1>
         <p className="mt-3 max-w-2xl text-neutral-300">
-          Learn off-roading, overlanding, recovery, trail etiquette, gear basics,
+          Learn about off-roading, overlanding, recovery, trail etiquette, gear basics,
           navigation, and more.
         </p>
       </section>
