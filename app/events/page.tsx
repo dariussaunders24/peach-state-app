@@ -764,7 +764,7 @@ return (
 
       {editingEvent && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 px-4 py-8">
-          <div className="mx-auto max-w-3xl rounded-2xl border border-[#F28C52]/40 bg-[#100B08] p-6 shadow-2xl">
+          <div className="h-fit rounded-2xl border border-white/10 bg-neutral-900 p-4">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-[#F28C52]/80">
@@ -1067,24 +1067,26 @@ return (
           <div className="rounded-xl border border-white/10 bg-black/30 p-5">
             <p className="text-gray-400">No upcoming events yet.</p>
           </div>
-        ) : (
-          events.map((event) => (
-         <EventCard
-  key={event.id}
-  event={event}
-  rsvp={rsvp}
-  cancelRsvp={cancelRsvp}
-  currentUserId={currentUserId}
-  isAdmin={isAdmin}
-  updateEvent={openEditEvent}
-  deleteEvent={deleteEvent}
-  uploadCoverPhoto={uploadCoverPhoto}
-  adminUpdateRsvpStatus={adminUpdateRsvpStatus}
-  adminRemoveRsvp={adminRemoveRsvp}
-  copyEventEmails={copyEventEmails}
-/>
-          ))
-        )}
+   ) : (
+  <div className="grid gap-5 lg:grid-cols-2">
+    {events.map((event) => (
+      <EventCard
+        key={event.id}
+        event={event}
+        rsvp={rsvp}
+        cancelRsvp={cancelRsvp}
+        currentUserId={currentUserId}
+        isAdmin={isAdmin}
+        updateEvent={openEditEvent}
+        deleteEvent={deleteEvent}
+        uploadCoverPhoto={uploadCoverPhoto}
+        adminUpdateRsvpStatus={adminUpdateRsvpStatus}
+        adminRemoveRsvp={adminRemoveRsvp}
+        copyEventEmails={copyEventEmails}
+      />
+    ))}
+  </div>
+)}
       </section>
 
      
@@ -1558,6 +1560,7 @@ function EventCard({
   copyEventEmails,
 }: any) {
   const [userStatus, setUserStatus] = useState("");
+  const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
     if (currentUserId) {
@@ -1639,21 +1642,22 @@ function EventCard({
           </p>
         )}
 
-        {bringItems.length > 0 && (
-          <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-4">
-            <h4 className="font-semibold text-white">What to Bring</h4>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {bringItems.map((item: string) => (
-                <div key={item} className="text-sm text-gray-300">
-                  ✓ {item}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+      {showDetails && bringItems.length > 0 && (
+  <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-4">
+    <h4 className="font-semibold text-white">What to Bring</h4>
+    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+      {bringItems.map((item: string) => (
+        <div key={item} className="text-sm text-gray-300">
+          ✓ {item}
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
-        <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-4">
-          {canViewPrivateDetails ? (
+        {showDetails && (
+  <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-4">
+    {canViewPrivateDetails ? (
             <div className="space-y-3">
               <p className="text-sm font-semibold text-[#F28C52]">
                 RSVP Details
@@ -1698,9 +1702,11 @@ function EventCard({
             </div>
           )}
         </div>
+        )}
 
-      <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-4">
-  <h4 className="font-semibold text-white">Attendees</h4>
+      {showDetails && (
+  <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-4">
+    <h4 className="font-semibold text-white">Attendees</h4>
 
   {goingAttendees.length === 0 && waitlistAttendees.length === 0 ? (
     <p className="mt-2 text-sm text-gray-400">No RSVPs yet.</p>
@@ -1804,6 +1810,13 @@ function EventCard({
     </div>
   )}
 </div>
+)}
+<button
+  onClick={() => setShowDetails((prev) => !prev)}
+  className="mt-4 w-full rounded-xl border-2 border-[#F28C52]/70 bg-[#F28C52]/10 px-4 py-3 text-sm font-bold uppercase tracking-wide text-[#F28C52] transition hover:bg-[#F28C52] hover:text-black"
+>
+  {showDetails ? "Hide Event Details" : "View Event Details"}
+</button>
 
         <div className="mt-4 flex flex-col gap-3">
       <CanIRunThis

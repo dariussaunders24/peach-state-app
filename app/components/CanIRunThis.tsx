@@ -135,6 +135,24 @@ function difficultyLevel(value: TrailDifficulty) {
   return 3;
 }
 
+function hasTerrain(requirements: TrailRequirements, terrain: string) {
+  return requirements.terrain.includes(terrain);
+}
+
+function isRockyOrTechnical(requirements: TrailRequirements) {
+  return (
+    hasTerrain(requirements, "Rocks") ||
+    hasTerrain(requirements, "Technical")
+  );
+}
+
+function isMudSandOrClay(requirements: TrailRequirements) {
+  return (
+    hasTerrain(requirements, "Mud / Clay") ||
+    hasTerrain(requirements, "Sand")
+  );
+}
+
 function penaltyForRequirement(
   requirement: RequirementLevel,
   hasItem: boolean,
@@ -298,20 +316,30 @@ export default function CanIRunThis({
       return null;
     }
 
-    const tireDifference = requirements.minTireDiameter - tireDiameter;
+  const tireDifference = requirements.minTireDiameter - tireDiameter;
 
-    if (tireDifference <= 0) {
-      strengths.push("Tire size meets the trail recommendation.");
-    } else if (tireDifference === 1) {
-      score -= 10;
-      warnings.push("Tire size is slightly below the trail recommendation.");
-    } else if (tireDifference === 2) {
-      score -= 20;
-      warnings.push("Tire size is below the trail recommendation.");
-    } else {
-      score -= 30;
-      critical.push("Tire size is significantly below the trail recommendation.");
-    }
+let tirePenaltyMultiplier = 1;
+
+if (isRockyOrTechnical(requirements)) {
+  tirePenaltyMultiplier = 1.2;
+}
+
+if (hasTerrain(requirements, "Sand")) {
+  tirePenaltyMultiplier = 0.75;
+}
+
+if (tireDifference <= 0) {
+  strengths.push("Tire size meets the trail recommendation.");
+} else if (tireDifference === 1) {
+  score -= Math.round(10 * tirePenaltyMultiplier);
+  warnings.push("Tire size is slightly below the trail recommendation.");
+} else if (tireDifference === 2) {
+  score -= Math.round(20 * tirePenaltyMultiplier);
+  warnings.push("Tire size is below the trail recommendation.");
+} else {
+  score -= Math.round(30 * tirePenaltyMultiplier);
+  critical.push("Tire size is significantly below the trail recommendation.");
+}
 
     if (!requirements.stockFriendly) {
       const liftDifference = requirements.recommendedLiftLevel - liftLevel;
@@ -347,14 +375,10 @@ export default function CanIRunThis({
       strengths.push("Skid plates improve underbody protection.");
     }
 
-    if (
-      !hasSkidPlates &&
-      (requirements.terrain.includes("Rocks") ||
-        requirements.terrain.includes("Technical"))
-    ) {
-      score -= 5;
-      warnings.push("Rocky or technical terrain increases underbody risk.");
-    }
+if (!hasSkidPlates && isRockyOrTechnical(requirements)) {
+  score -= 10;
+  warnings.push("Rocky or technical terrain increases underbody risk.");
+}
 
     const sliderPenalty = penaltyForRequirement(
       requirements.rockSliders,
@@ -400,14 +424,10 @@ export default function CanIRunThis({
       }
     }
 
-    if (
-      !hasRecoveryGear &&
-      (requirements.terrain.includes("Mud / Clay") ||
-        requirements.terrain.includes("Sand"))
-    ) {
-      score -= 5;
-      warnings.push("Mud, clay, or sand can increase recovery risk.");
-    }
+ if (!hasRecoveryGear && isMudSandOrClay(requirements)) {
+  score -= 10;
+  warnings.push("Mud, clay, or sand can increase recovery risk.");
+}
 
     const winchPenalty = penaltyForRequirement(
       requirements.winch,
@@ -431,30 +451,31 @@ export default function CanIRunThis({
     const requiredTraction = requiredTractionLevel(requirements.traction);
     const tractionDifference = requiredTraction - userTraction;
 
-    if (tractionDifference <= 0) {
-      strengths.push("Traction setup is suitable for this trail.");
-    } else {
-      let tractionPenalty = tractionDifference * 10;
+   if (tractionDifference <= 0) {
+  strengths.push("Traction setup is suitable for this trail.");
+} else {
+  let tractionPenalty = tractionDifference * 8;
 
-      if (requirements.terrain.includes("Sand")) {
-        tractionPenalty = Math.round(tractionPenalty / 2);
-      }
+  if (hasTerrain(requirements, "Sand")) {
+    tractionPenalty = Math.round(tractionPenalty * 0.5);
+  }
 
-      if (
-        requirements.terrain.includes("Gravel") &&
-        requirements.traction !== "locker_required"
-      ) {
-        tractionPenalty = 0;
-      }
+  if (hasTerrain(requirements, "Gravel") && requirements.traction !== "locker_required") {
+    tractionPenalty = 0;
+  }
 
-      score -= tractionPenalty;
+  if (isRockyOrTechnical(requirements)) {
+    tractionPenalty = Math.round(tractionPenalty * 1.25);
+  }
 
-      if (requirements.traction === "locker_required") {
-        critical.push("Lockers are required for this trail.");
-      } else {
-        warnings.push("More traction capability may be helpful.");
-      }
-    }
+  score -= tractionPenalty;
+
+  if (requirements.traction === "locker_required") {
+    critical.push("Lockers are required for this trail.");
+  } else {
+    warnings.push("More traction capability may be helpful.");
+  }
+}
 
     if (!waterComfort) {
       if (requirements.waterCrossings === "light") {
@@ -475,30 +496,28 @@ export default function CanIRunThis({
       strengths.push("You indicated you are comfortable with water crossings.");
     }
 
-    if (!pinstripingOk) {
-      if (requirements.pinstripingRisk === "medium") {
-        score -= 10;
-        warnings.push("Pinstriping or trail scratches are possible.");
-      }
+  if (requirements.pinstripingRisk === "medium") {
+  score -= 5;
+  warnings.push("Pinstriping or trail scratches are possible.");
+}
 
-      if (requirements.pinstripingRisk === "high") {
-        score -= 20;
-        warnings.push("Pinstriping risk is high on this trail.");
-      }
-    }
+if (requirements.pinstripingRisk === "high") {
+  score -= 10;
+  warnings.push("Pinstriping risk is high on this trail.");
+}
 
     const expDifference =
       difficultyLevel(requirements.difficulty) - experienceLevel(experience);
 
     if (expDifference <= 1) {
       strengths.push("Experience level is reasonably matched to the trail.");
-    } else if (expDifference === 2) {
-      score -= 25;
-      warnings.push("This trail may be above your current experience level.");
-    } else {
-      score -= 40;
-      critical.push("This trail is well above your current experience level.");
-    }
+ } else if (expDifference === 2) {
+  score -= 20;
+  warnings.push("This trail may be above your current experience level.");
+} else {
+  score -= 30;
+  critical.push("This trail is well above your current experience level.");
+}
 
     let status: Status =
       score >= 80 ? "good" : score >= 55 ? "caution" : "not_recommended";
@@ -515,9 +534,12 @@ export default function CanIRunThis({
       status = "not_recommended";
     }
 
-    if (requirements.traction === "locker_required" && tractionAid === "none") {
-      status = "not_recommended";
-    }
+if (
+  requirements.traction === "locker_required" &&
+  tractionLevel(tractionAid) < requiredTractionLevel(requirements.traction)
+) {
+  status = "not_recommended";
+}
 
     if (requirements.difficulty === "advanced" && experience === "beginner") {
       status = "not_recommended";
@@ -616,7 +638,7 @@ export default function CanIRunThis({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-xl border border-[#F28C52]/50 bg-[#F28C52]/10 px-4 py-2 text-sm font-semibold text-[#F28C52] transition hover:bg-[#F28C52]/20"
+        className="rounded-lg border border-red-400 bg-red-500/20 px-4 py-2 font-semibold text-red-200 hover:bg-red-500 hover:text-white"
       >
         Can I Run This?
       </button>
