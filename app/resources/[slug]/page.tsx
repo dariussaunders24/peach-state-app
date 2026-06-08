@@ -12,6 +12,7 @@ type Resource = {
   thumbnail_url: string | null;
   category: string | null;
   type: "video" | "blog";
+  views: number | null;
 };
 
 export default function ResourceDetailPage() {
@@ -40,8 +41,19 @@ export default function ResourceDetailPage() {
       return;
     }
 
-    setResource(data);
-    setLoading(false);
+    await supabase
+  .from("resources")
+  .update({
+    views: (data.views ?? 0) + 1,
+  })
+  .eq("id", data.id);
+
+setResource({
+  ...data,
+  views: (data.views ?? 0) + 1,
+});
+
+setLoading(false);
   }
 
   if (loading) {
@@ -76,7 +88,10 @@ export default function ResourceDetailPage() {
           {resource.description}
         </p>
       )}
-
+<div className="mt-3 flex items-center gap-1 text-sm text-neutral-400">
+  <span>👁</span>
+  <span>{resource.views ?? 0} views</span>
+</div>
       {resource.video_url && (
         <div className="mt-8 overflow-hidden rounded-2xl border border-white/10 bg-black">
           <iframe

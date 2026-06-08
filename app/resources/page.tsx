@@ -13,6 +13,7 @@ type Resource = {
   category: string | null;
   type: "video" | "blog";
   created_at: string;
+  views: number | null;
 };
 
 export default function ResourcesPage() {
@@ -25,8 +26,7 @@ export default function ResourcesPage() {
   async function loadResources() {
     const { data, error } = await supabase
       .from("resources")
-      .select("id, title, slug, description, thumbnail_url, category, type, created_at")
-      .eq("published", true)
+.select("id, title, slug, description, thumbnail_url, category, type, created_at, views")      .eq("published", true)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -92,6 +92,10 @@ export default function ResourcesPage() {
                     {resource.description}
                   </p>
                 )}
+                <div className="mt-2 flex items-center gap-1 text-xs text-zinc-400">
+  <span>👁</span>
+  <span>{resource.views ?? 0} views</span>
+</div>
               </div>
             </Link>
           ))}
