@@ -16,6 +16,36 @@ type Resource = {
   published: boolean;
 };
 
+function generateSlug(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-");
+}
+
+function convertYouTubeUrl(value: string) {
+  let url = value.trim();
+
+  if (url.includes("youtube.com/watch?v=")) {
+    const videoId = url.split("v=")[1]?.split("&")[0];
+
+    if (videoId) {
+      url = `https://www.youtube.com/embed/${videoId}`;
+    }
+  }
+
+  if (url.includes("youtu.be/")) {
+    const videoId = url.split("youtu.be/")[1]?.split("?")[0];
+
+    if (videoId) {
+      url = `https://www.youtube.com/embed/${videoId}`;
+    }
+  }
+
+  return url;
+}
+
 export default function AdminResourcesPage() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -63,8 +93,10 @@ export default function AdminResourcesPage() {
   }
 
   async function saveResource() {
-    if (!title || !slug) {
-      alert("Title and slug are required.");
+    const finalSlug = slug || generateSlug(title);
+
+    if (!title || !finalSlug) {
+      alert("Title is required.");
       return;
     }
 
@@ -73,7 +105,7 @@ export default function AdminResourcesPage() {
         .from("resources")
         .update({
           title,
-          slug,
+          slug: finalSlug,
           description,
           content,
           video_url: videoUrl,
@@ -91,7 +123,7 @@ export default function AdminResourcesPage() {
     } else {
       const { error } = await supabase.from("resources").insert({
         title,
-        slug,
+        slug: finalSlug,
         description,
         content,
         video_url: videoUrl,
@@ -161,15 +193,13 @@ export default function AdminResourcesPage() {
         <div className="grid gap-4">
           <input
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Title"
-            className="rounded-lg bg-neutral-800 p-3"
-          />
+            onChange={(e) => {
+              const value = e.target.value;
 
-          <input
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-            placeholder="slug-example"
+              setTitle(value);
+              setSlug(generateSlug(value));
+            }}
+            placeholder="Title"
             className="rounded-lg bg-neutral-800 p-3"
           />
 
@@ -218,32 +248,13 @@ export default function AdminResourcesPage() {
             )}
           </div>
 
-         <input
-  value={videoUrl}
-  onChange={(e) => {
-    let url = e.target.value.trim();
+          <input
+            value={videoUrl}
+            onChange={(e) => setVideoUrl(convertYouTubeUrl(e.target.value))}
+            placeholder="YouTube URL"
+            className="rounded-lg bg-neutral-800 p-3"
+          />
 
-    if (url.includes("youtube.com/watch?v=")) {
-      const videoId = url.split("v=")[1]?.split("&")[0];
-
-      if (videoId) {
-        url = `https://www.youtube.com/embed/${videoId}`;
-      }
-    }
-
-    if (url.includes("youtu.be/")) {
-      const videoId = url.split("youtu.be/")[1]?.split("?")[0];
-
-      if (videoId) {
-        url = `https://www.youtube.com/embed/${videoId}`;
-      }
-    }
-
-    setVideoUrl(url);
-  }}
-  placeholder="YouTube URL"
-  className="rounded-lg bg-neutral-800 p-3"
-/>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -291,6 +302,10 @@ export default function AdminResourcesPage() {
 
               <p className="text-sm text-neutral-400">
                 {resource.type} • {resource.category || "No category"}
+              </p>
+
+              <p className="mt-1 text-xs text-neutral-500">
+                /resources/{resource.slug}
               </p>
             </div>
 
