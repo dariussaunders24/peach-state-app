@@ -255,14 +255,14 @@ export default function GalleryPage() {
                             <video
                               src={media.media_url}
                               controls
-                              className="h-40 w-full bg-black object-cover"
+                              className="h-36 w-full bg-black object-cover"
                             />
                           ) : (
                             <img
                               src={media.media_url}
                               alt={event.title}
                               onClick={() => setSelectedMedia(media)}
-                              className="h-40 w-full cursor-pointer object-cover transition hover:opacity-80"
+                              className="h-36 w-full cursor-pointer object-cover transition hover:opacity-80"
                             />
                           )}
 
