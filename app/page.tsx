@@ -241,71 +241,91 @@ setNotifications(notificationData || []);
 
         <p className="mt-4 max-w-3xl text-gray-300">
           Your home base for Peach State Off-Road and Overlanding. Jump into
-          events, manage your profile, browse member rigs, view ride media, and
+          events, manage your profile & rig build, browse member rigs, view ride media, and
           find vendor discounts from one place.
         </p>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <a
-            href="/events"
-            className="rounded-xl border border-[#F28C52]/40 bg-[#F28C52] p-5 text-black transition hover:bg-[#C96A2C]"
-          >
-            <h3 className="text-lg font-bold">Events</h3>
-            <p className="mt-2 text-sm">
-              RSVP for rides, view upcoming plans, and check event details.
-            </p>
-          </a>
+       <div className="mt-6 grid gap-4 md:grid-cols-3">
+  <a
+    href="/profiles"
+    className="rounded-xl border border-[#F28C52]/40 bg-[#F28C52] p-5 text-black transition hover:bg-[#C96A2C]"
+  >
+    <h3 className="text-lg font-bold">My Profile</h3>
+    <p className="mt-2 text-sm">
+      Manage your profile, rig setup, badges, and account info.
+    </p>
+  </a>
 
-          <a
-            href="/profiles"
-            className="rounded-xl border border-white/10 bg-black/40 p-5 transition hover:border-[#F28C52]"
-          >
-            <h3 className="text-lg font-bold text-[#F28C52]">My Profile</h3>
-            <p className="mt-2 text-sm text-gray-400">
-              Update your rig, profile photo, location, and build info.
-            </p>
-          </a>
+  <a
+    href="/events"
+    className="rounded-xl border border-white/10 bg-black/40 p-5 transition hover:border-[#F28C52]"
+  >
+    <h3 className="text-lg font-bold text-[#F28C52]">Events</h3>
+    <p className="mt-2 text-sm text-gray-400">
+      RSVP for rides, view upcoming events, and trail details.
+    </p>
+  </a>
 
-          <a
-            href="/members"
-            className="rounded-xl border border-white/10 bg-black/40 p-5 transition hover:border-[#F28C52]"
-          >
-            <h3 className="text-lg font-bold text-[#F28C52]">Members</h3>
-            <p className="mt-2 text-sm text-gray-400">
-              Browse other members, rigs, badges, and trail setups.
-            </p>
-          </a>
+  <a
+    href="/past-events"
+    className="rounded-xl border border-white/10 bg-black/40 p-5 transition hover:border-[#F28C52]"
+  >
+    <h3 className="text-lg font-bold text-[#F28C52]">Past Events</h3>
+    <p className="mt-2 text-sm text-gray-400">
+      Browse previous rides, attendance, galleries, and routes.
+    </p>
+  </a>
 
-          <a
-            href="/gallery"
-            className="rounded-xl border border-white/10 bg-black/40 p-5 transition hover:border-[#F28C52]"
-          >
-            <h3 className="text-lg font-bold text-[#F28C52]">Gallery</h3>
-            <p className="mt-2 text-sm text-gray-400">
-              View photos and videos from past rides and events.
-            </p>
-          </a>
+  <a
+    href="/gallery"
+    className="rounded-xl border border-white/10 bg-black/40 p-5 transition hover:border-[#F28C52]"
+  >
+    <h3 className="text-lg font-bold text-[#F28C52]">Gallery</h3>
+    <p className="mt-2 text-sm text-gray-400">
+      View photos and videos shared from group rides and events.
+    </p>
+  </a>
 
-          <a
-            href="/vendors"
-            className="rounded-xl border border-white/10 bg-black/40 p-5 transition hover:border-[#F28C52]"
-          >
-            <h3 className="text-lg font-bold text-[#F28C52]">Vendors</h3>
-            <p className="mt-2 text-sm text-gray-400">
-              See partner vendors, group discounts, and member benefits.
-            </p>
-          </a>
+  <a
+    href="/resources"
+    className="rounded-xl border border-white/10 bg-black/40 p-5 transition hover:border-[#F28C52]"
+  >
+    <h3 className="text-lg font-bold text-[#F28C52]">Resources</h3>
+    <p className="mt-2 text-sm text-gray-400">
+      Educational blogs, videos, beginner guides, and trail tips.
+    </p>
+  </a>
 
-          <a
-            href="/faq"
-            className="rounded-xl border border-white/10 bg-black/40 p-5 transition hover:border-[#F28C52]"
-          >
-            <h3 className="text-lg font-bold text-[#F28C52]">FAQ</h3>
-            <p className="mt-2 text-sm text-gray-400">
-              New here? Learn how rides, RSVPs, radios, and trail etiquette work.
-            </p>
-          </a>
-        </div>
+  <a
+    href="/members"
+    className="rounded-xl border border-white/10 bg-black/40 p-5 transition hover:border-[#F28C52]"
+  >
+    <h3 className="text-lg font-bold text-[#F28C52]">Members</h3>
+    <p className="mt-2 text-sm text-gray-400">
+      Browse member profiles, rigs, badges, and builds.
+    </p>
+  </a>
+
+  <a
+    href="/vendors"
+    className="rounded-xl border border-white/10 bg-black/40 p-5 transition hover:border-[#F28C52]"
+  >
+    <h3 className="text-lg font-bold text-[#F28C52]">Vendors</h3>
+    <p className="mt-2 text-sm text-gray-400">
+      Access partner discounts, vendor info, and member perks.
+    </p>
+  </a>
+
+  <a
+    href="/store"
+    className="rounded-xl border border-white/10 bg-black/40 p-5 transition hover:border-[#F28C52]"
+  >
+    <h3 className="text-lg font-bold text-[#F28C52]">Store</h3>
+    <p className="mt-2 text-sm text-gray-400">
+      Shop Peach State Off-Road apparel, decals, and merchandise.
+    </p>
+  </a>
+</div>
       </section>
 
       <section className="space-y-4">
