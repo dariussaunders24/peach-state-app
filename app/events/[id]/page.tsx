@@ -40,7 +40,7 @@ export default function EventDetailPage() {
 
     const { data: rsvps } = await supabase
       .from("rsvps")
-      .select("user_id, status, created_at")
+.select("id, user_id, status, created_at, checked_in")
       .eq("event_id", eventId)
       .order("created_at", { ascending: true });
 
@@ -53,9 +53,11 @@ export default function EventDetailPage() {
           .maybeSingle();
 
         return {
-          user_id: rsvpItem.user_id,
-          status: rsvpItem.status,
-          name: profile?.name || "Member",
+           id: rsvpItem.id,
+  user_id: rsvpItem.user_id,
+  status: rsvpItem.status,
+  checked_in: rsvpItem.checked_in || false,
+  name: profile?.name || "Member",
         };
       })
     );
@@ -153,7 +155,21 @@ export default function EventDetailPage() {
     alert("Your RSVP has been canceled.");
     await loadPage();
   }
+async function toggleAttendance(rsvpId: string, currentValue: boolean) {
+  const { error } = await supabase
+    .from("rsvps")
+    .update({
+      checked_in: !currentValue,
+    })
+    .eq("id", rsvpId);
 
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  await loadPage();
+}
   async function uploadPhoto(e: any) {
     const file = e.target.files?.[0];
 
@@ -299,15 +315,30 @@ export default function EventDetailPage() {
       <div className="grid gap-4 md:grid-cols-2">
         <div className="rounded-xl border border-white/10 bg-black/30 p-4">
           <h2 className="text-xl font-bold text-[#F28C52]">Attendees</h2>
-
+<p className="mt-2 text-xs text-green-400">
+  Attendance checklist loaded
+</p>
           {attendees.length === 0 ? (
             <p className="mt-2 text-gray-400">No one yet.</p>
           ) : (
-            attendees.map((a, i) => (
-              <p key={i} className="mt-2 text-gray-300">
-                {a.name}
-              </p>
-            ))
+          attendees.map((a, i) => (
+  <div
+    key={i}
+    className="mt-2 flex items-center justify-between gap-3 text-gray-300"
+  >
+    <span>{a.name}</span>
+
+    <label className="flex items-center gap-2 text-xs text-neutral-400">
+      <input
+        type="checkbox"
+        checked={a.checked_in || false}
+        onChange={() => toggleAttendance(a.id, a.checked_in)}
+        className="h-5 w-5 accent-[#F28C52]"
+      />
+      Attended
+    </label>
+  </div>
+))
           )}
         </div>
 

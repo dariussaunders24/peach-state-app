@@ -343,7 +343,7 @@ export default function EventsPage() {
         (eventsList || []).map(async (event) => {
           const { data: rsvpData, error: rsvpError } = await supabase
             .from("rsvps")
-            .select("id, user_id, event_id, status, created_at")
+            .select("id, user_id, event_id, status, created_at, checked_in")
             .eq("event_id", event.id)
             .order("created_at", { ascending: true });
 
@@ -695,6 +695,7 @@ async function adminRemoveRsvp(
       if (!promoted) return;
     }
   }
+
 
   await loadEvents();
 }
@@ -1083,6 +1084,7 @@ return (
         adminUpdateRsvpStatus={adminUpdateRsvpStatus}
         adminRemoveRsvp={adminRemoveRsvp}
         copyEventEmails={copyEventEmails}
+        loadEvents={loadEvents}
       />
     ))}
   </div>
@@ -1558,6 +1560,7 @@ function EventCard({
   adminUpdateRsvpStatus,
   adminRemoveRsvp,
   copyEventEmails,
+  loadEvents,
 }: any) {
   const [userStatus, setUserStatus] = useState("");
   const [showDetails, setShowDetails] = useState(false);
@@ -1731,6 +1734,27 @@ function EventCard({
 
                 {isAdmin && (
                   <div className="flex flex-wrap gap-2">
+                    <label className="flex items-center gap-2 rounded border border-[#F28C52]/40 px-2 py-1 text-xs text-[#F28C52]">
+  <input
+    type="checkbox"
+    checked={attendee.checked_in ?? false}
+    onChange={async () => {
+      const { error } = await supabase
+        .from("rsvps")
+        .update({ checked_in: !(attendee.checked_in ?? false) })
+        .eq("id", attendee.id);
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      await loadEvents();
+    }}
+    className="h-4 w-4 accent-[#F28C52]"
+  />
+  Attended
+</label>
                     <button
                      onClick={() =>
   adminUpdateRsvpStatus(
@@ -1740,8 +1764,10 @@ function EventCard({
     event
   )
 }
+
                       className="rounded border border-yellow-300/40 px-2 py-1 text-xs text-yellow-200"
                     >
+                      
                       Move to Waitlist
                     </button>
 
@@ -1879,6 +1905,7 @@ function EventCard({
 
 {isAdmin && (
   <div className="flex flex-wrap gap-2">
+    
     <button
       onClick={() => updateEvent(event)}
       className="rounded bg-yellow-400 px-3 py-1 text-black"

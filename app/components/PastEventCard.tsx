@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-
+import { supabase } from "../lib/supabase";
 
 export default function PastEventCard({
   event,
   isAdmin,
   updateEvent,
   deleteEvent,
+  reloadEvents,
 }: any) {
   const firstRoute = event.routes?.[0];
 
@@ -27,6 +28,8 @@ export default function PastEventCard({
     "";
 
   const difficulty = event.difficulty || firstRoute?.difficulty || "Not listed";
+  const goingAttendees = event.attendees?.filter((a: any) => a.status === "going") || [];
+  const attendedCount = goingAttendees.filter((a: any) => a.checked_in).length;
 
   return (
     <div className="rounded-xl border border-[#F28C52]/20 bg-black/40 px-4 py-3">
@@ -44,6 +47,10 @@ export default function PastEventCard({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          <p className="text-xs font-semibold text-green-300">
+            Attended: {attendedCount} / {goingAttendees.length}
+          </p>
+
           {gpxLink ? (
             <a
               href={gpxLink}
@@ -66,8 +73,6 @@ export default function PastEventCard({
 
           {isAdmin && (
             <>
-             
-
               {updateEvent && (
                 <button
                   onClick={() => updateEvent(event)}
@@ -89,6 +94,51 @@ export default function PastEventCard({
           )}
         </div>
       </div>
+
+      {isAdmin && (
+        <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-4">
+          <p className="text-sm font-semibold text-green-300">
+            Attendance Checklist
+          </p>
+
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {(!event.attendees || event.attendees.length === 0) && (
+  <p className="mt-2 text-sm text-gray-400">
+    No RSVP records found for this event.
+  </p>
+)}
+            {event.attendees?.map((attendee: any) => (
+              <label
+                key={attendee.id}
+                className="flex items-center justify-between gap-3 rounded-lg border border-green-400/20 bg-green-500/10 px-3 py-2 text-sm text-green-100"
+              >
+                <span>{attendee.profiles?.name || "Member"}</span>
+
+                <input
+                  type="checkbox"
+                  checked={attendee.checked_in ?? false}
+                  onChange={async () => {
+                    const { error } = await supabase
+                      .from("rsvps")
+                      .update({
+                        checked_in: !(attendee.checked_in ?? false),
+                      })
+                      .eq("id", attendee.id);
+
+                    if (error) {
+                      alert(error.message);
+                      return;
+                    }
+
+                    await reloadEvents();
+                  }}
+                  className="h-5 w-5 accent-[#F28C52]"
+                />
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

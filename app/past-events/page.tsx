@@ -39,21 +39,61 @@ export default function PastEventsPage() {
   }
 
   async function loadPastEvents() {
-    const now = new Date().toISOString();
+  const now = new Date().toISOString();
 
-    const { data, error } = await supabase
-      .from("events")
-      .select("*")
-      .lt("event_date", now)
-      .order("event_date", { ascending: false });
+  const { data: eventsData, error } = await supabase
+    .from("events")
+    .select("*")
+    .lt("event_date", now)
+    .order("event_date", { ascending: false });
 
-    if (error) {
-      console.error("Error loading past events:", error);
-      return;
-    }
-
-    setPastEvents(data || []);
+  if (error) {
+    console.error("Error loading past events:", error);
+    return;
   }
+
+  const eventsWithRsvps = await Promise.all(
+    (eventsData || []).map(async (event) => {
+      const { data: rsvpData } = await supabase
+        .from("rsvps")
+        .select("id, user_id, event_id, status, created_at, checked_in")
+        .eq("event_id", event.id)
+        .order("created_at", { ascending: true });
+
+      const userIds = (rsvpData || []).map((rsvp) => rsvp.user_id);
+
+      let profiles: any[] = [];
+
+      if (userIds.length > 0) {
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("user_id, name, image_url")
+          .in("user_id", userIds);
+
+        profiles = profileData || [];
+      }
+
+      const attendees = (rsvpData || []).map((rsvp) => {
+        const profile = profiles.find(
+          (profile) => profile.user_id === rsvp.user_id
+        );
+
+        return {
+          ...rsvp,
+          checked_in: rsvp.checked_in ?? false,
+          profiles: profile || null,
+        };
+      });
+
+      return {
+        ...event,
+        attendees,
+      };
+    })
+  );
+
+  setPastEvents(eventsWithRsvps);
+}
 
   function formatDateForInput(dateString: string) {
     if (!dateString) return "";
@@ -138,12 +178,13 @@ export default function PastEventsPage() {
         ) : (
           pastEvents.map((event) => (
             <PastEventCard
-              key={event.id}
-              event={event}
-              isAdmin={isAdmin}
-              updateEvent={openEditEvent}
-              deleteEvent={deleteEvent}
-            />
+  key={event.id}
+  event={event}
+  isAdmin={isAdmin}
+  updateEvent={openEditEvent}
+  deleteEvent={deleteEvent}
+  reloadEvents={loadPastEvents}
+/>
           ))
         )}
       </section>
