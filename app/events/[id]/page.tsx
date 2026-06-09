@@ -12,15 +12,9 @@ export default function EventDetailPage() {
   const [attendees, setAttendees] = useState<any[]>([]);
   const [waitlist, setWaitlist] = useState<any[]>([]);
   const [photos, setPhotos] = useState<any[]>([]);
-  const [comments, setComments] = useState<any[]>([]);
   const [currentUserId, setCurrentUserId] = useState("");
   const [userStatus, setUserStatus] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [newComment, setNewComment] = useState("");
-  const [replyText, setReplyText] = useState("");
-  const [replyingTo, setReplyingTo] = useState("");
-  const [editingCommentId, setEditingCommentId] = useState("");
-  const [editText, setEditText] = useState("");
 
   useEffect(() => {
     if (eventId) {
@@ -90,94 +84,6 @@ export default function EventDetailPage() {
       .order("created_at", { ascending: false });
 
     setPhotos(photoData || []);
-
-    const { data: commentData, error: commentError } = await supabase
-      .from("event_comments")
-      .select("*")
-      .eq("event_id", eventId)
-      .order("created_at", { ascending: true });
-
-    if (commentError) {
-      alert(commentError.message);
-      return;
-    }
-
-    const commentsWithNames = await Promise.all(
-      (commentData || []).map(async (comment) => {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("name")
-          .eq("user_id", comment.user_id)
-          .maybeSingle();
-
-        return {
-          ...comment,
-          name: profile?.name || "Member",
-        };
-      })
-    );
-
-    setComments(commentsWithNames);
-  }
-
-  async function addComment(parentId: string | null = null) {
-    const text = parentId ? replyText.trim() : newComment.trim();
-
-    if (!text || !currentUserId) return;
-
-    const { error } = await supabase.from("event_comments").insert({
-      event_id: eventId,
-      user_id: currentUserId,
-      parent_id: parentId,
-      comment: text,
-    });
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    setNewComment("");
-    setReplyText("");
-    setReplyingTo("");
-    await loadPage();
-  }
-
-  async function updateComment(commentId: string) {
-    if (!editText.trim()) return;
-
-    const { error } = await supabase
-      .from("event_comments")
-      .update({
-        comment: editText.trim(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", commentId);
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    setEditingCommentId("");
-    setEditText("");
-    await loadPage();
-  }
-
-  async function deleteComment(commentId: string) {
-    if (!confirm("Delete this comment?")) return;
-
-    const { error } = await supabase
-      .from("event_comments")
-      .delete()
-      .eq("id", commentId);
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    await loadPage();
   }
 
   async function rsvp() {
@@ -333,8 +239,6 @@ export default function EventDetailPage() {
     return <p className="text-gray-300">Loading event...</p>;
   }
 
-  const topLevelComments = comments.filter((comment) => !comment.parent_id);
-
   return (
     <div className="space-y-6">
       <a href="/events" className="text-sm text-[#F28C52] hover:underline">
@@ -343,8 +247,6 @@ export default function EventDetailPage() {
 
       <div className="rounded-2xl border border-[#F28C52]/30 bg-black/40 p-6">
         <h1 className="text-4xl font-bold text-[#F28C52]">{event.title}</h1>
-
-
 
         <p className="mt-2 text-xl text-gray-200">{event.location}</p>
 
@@ -451,239 +353,6 @@ export default function EventDetailPage() {
                 {i + 1}. {a.name}
               </p>
             ))
-          )}
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-[#F28C52]/30 bg-black/40 p-6">
-        <h2 className="text-2xl font-bold text-[#F28C52]">
-          Event Discussion
-        </h2>
-
-        <p className="mt-2 text-sm text-gray-400">
-          Ask questions, coordinate meetup details, share trail updates, or
-          continue the conversation after the ride.
-        </p>
-
-        <div className="mt-5">
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Write a comment..."
-            className="min-h-[100px] w-full rounded-xl border border-white/10 bg-black/40 p-3 text-white outline-none focus:border-[#F28C52]"
-          />
-
-          <button
-            onClick={() => addComment(null)}
-            className="mt-3 rounded-lg bg-[#F28C52] px-5 py-2 font-semibold text-black hover:bg-[#C96A2C]"
-          >
-            Post Comment
-          </button>
-        </div>
-
-        <div className="mt-6 space-y-5">
-          {topLevelComments.length === 0 ? (
-            <p className="text-gray-400">No comments yet.</p>
-          ) : (
-            topLevelComments.map((comment) => {
-              const replies = comments.filter(
-                (reply) => reply.parent_id === comment.id
-              );
-
-              return (
-                <div
-                  key={comment.id}
-                  className="rounded-xl border border-white/10 bg-black/30 p-4"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <p className="font-semibold text-white">{comment.name}</p>
-
-                      <p className="mt-1 text-xs text-gray-500">
-                        {new Date(comment.created_at).toLocaleString()}
-                        {comment.updated_at !== comment.created_at
-                          ? " • Edited"
-                          : ""}
-                      </p>
-
-                      {editingCommentId === comment.id ? (
-                        <div className="mt-3">
-                          <textarea
-                            value={editText}
-                            onChange={(e) => setEditText(e.target.value)}
-                            className="min-h-[90px] w-full rounded-lg border border-white/10 bg-black/40 p-3 text-white outline-none focus:border-[#F28C52]"
-                          />
-
-                          <div className="mt-2 flex gap-2">
-                            <button
-                              onClick={() => updateComment(comment.id)}
-                              className="rounded-lg bg-[#F28C52] px-4 py-2 text-sm font-semibold text-black hover:bg-[#C96A2C]"
-                            >
-                              Save
-                            </button>
-
-                            <button
-                              onClick={() => {
-                                setEditingCommentId("");
-                                setEditText("");
-                              }}
-                              className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:border-[#F28C52]"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="mt-3 whitespace-pre-wrap text-gray-300">
-                          {comment.comment}
-                        </p>
-                      )}
-
-                      <div className="mt-3 flex flex-wrap gap-3 text-sm">
-                        <button
-                          onClick={() => {
-                            setReplyingTo(comment.id);
-                            setReplyText("");
-                          }}
-                          className="font-semibold text-[#F28C52] hover:underline"
-                        >
-                          Reply
-                        </button>
-
-                        {comment.user_id === currentUserId && (
-                          <>
-                            <button
-                              onClick={() => {
-                                setEditingCommentId(comment.id);
-                                setEditText(comment.comment);
-                              }}
-                              className="font-semibold text-gray-300 hover:text-[#F28C52]"
-                            >
-                              Edit
-                            </button>
-
-                            <button
-                              onClick={() => deleteComment(comment.id)}
-                              className="font-semibold text-red-300 hover:text-red-400"
-                            >
-                              Delete
-                            </button>
-                          </>
-                        )}
-                      </div>
-
-                      {replyingTo === comment.id && (
-                        <div className="mt-4">
-                          <textarea
-                            value={replyText}
-                            onChange={(e) => setReplyText(e.target.value)}
-                            placeholder="Write a reply..."
-                            className="min-h-[80px] w-full rounded-lg border border-white/10 bg-black/40 p-3 text-white outline-none focus:border-[#F28C52]"
-                          />
-
-                          <div className="mt-2 flex gap-2">
-                            <button
-                              onClick={() => addComment(comment.id)}
-                              className="rounded-lg bg-[#F28C52] px-4 py-2 text-sm font-semibold text-black hover:bg-[#C96A2C]"
-                            >
-                              Post Reply
-                            </button>
-
-                            <button
-                              onClick={() => {
-                                setReplyingTo("");
-                                setReplyText("");
-                              }}
-                              className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:border-[#F28C52]"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {replies.length > 0 && (
-                        <div className="mt-5 space-y-3 border-l border-[#F28C52]/40 pl-4">
-                          {replies.map((reply) => (
-                            <div
-                              key={reply.id}
-                              className="rounded-lg border border-white/10 bg-black/40 p-3"
-                            >
-                              <p className="font-semibold text-white">
-                                {reply.name}
-                              </p>
-
-                              <p className="mt-1 text-xs text-gray-500">
-                                {new Date(reply.created_at).toLocaleString()}
-                                {reply.updated_at !== reply.created_at
-                                  ? " • Edited"
-                                  : ""}
-                              </p>
-
-                              {editingCommentId === reply.id ? (
-                                <div className="mt-3">
-                                  <textarea
-                                    value={editText}
-                                    onChange={(e) =>
-                                      setEditText(e.target.value)
-                                    }
-                                    className="min-h-[80px] w-full rounded-lg border border-white/10 bg-black/40 p-3 text-white outline-none focus:border-[#F28C52]"
-                                  />
-
-                                  <div className="mt-2 flex gap-2">
-                                    <button
-                                      onClick={() => updateComment(reply.id)}
-                                      className="rounded-lg bg-[#F28C52] px-4 py-2 text-sm font-semibold text-black hover:bg-[#C96A2C]"
-                                    >
-                                      Save
-                                    </button>
-
-                                    <button
-                                      onClick={() => {
-                                        setEditingCommentId("");
-                                        setEditText("");
-                                      }}
-                                      className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:border-[#F28C52]"
-                                    >
-                                      Cancel
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <p className="mt-3 whitespace-pre-wrap text-gray-300">
-                                  {reply.comment}
-                                </p>
-                              )}
-
-                              {reply.user_id === currentUserId && (
-                                <div className="mt-3 flex gap-3 text-sm">
-                                  <button
-                                    onClick={() => {
-                                      setEditingCommentId(reply.id);
-                                      setEditText(reply.comment);
-                                    }}
-                                    className="font-semibold text-gray-300 hover:text-[#F28C52]"
-                                  >
-                                    Edit
-                                  </button>
-
-                                  <button
-                                    onClick={() => deleteComment(reply.id)}
-                                    className="font-semibold text-red-300 hover:text-red-400"
-                                  >
-                                    Delete
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })
           )}
         </div>
       </div>
