@@ -240,10 +240,11 @@ setNotifications(notificationData || []);
         </h1>
 
         <p className="mt-4 max-w-3xl text-gray-300">
-          Your home base for Peach State Off-Road and Overlanding. Jump into
-          events, manage your profile & rig build, browse member rigs, view ride media, and
-          find vendor discounts from one place.
-        </p>
+  Your home base for Peach State Off-Road and Overlanding. Manage your
+  profile & rig build, explore upcoming and past events, browse event galleries,
+  access educational resources, connect with members, view vendor
+  discounts, and shop official Peach State gear all in one place.
+</p>
 
        <div className="mt-6 grid gap-4 md:grid-cols-3">
   <a
