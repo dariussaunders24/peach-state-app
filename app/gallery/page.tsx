@@ -9,10 +9,19 @@ export default function GalleryPage() {
   const [selectedEventId, setSelectedEventId] = useState("");
   const [uploading, setUploading] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<any | null>(null);
+  const [openEvents, setOpenEvents] = useState<string[]>([]);
 
   useEffect(() => {
     loadGallery();
   }, []);
+
+  const toggleEventGallery = (eventId: string) => {
+    setOpenEvents((prev) =>
+      prev.includes(eventId)
+        ? prev.filter((id) => id !== eventId)
+        : [...prev, eventId]
+    );
+  };
 
   async function loadGallery() {
     const { data: userData } = await supabase.auth.getUser();
@@ -192,63 +201,96 @@ export default function GalleryPage() {
         </div>
       ) : (
         <div className="space-y-8">
-          {pastEvents.map((event) => (
-            <section
-              key={event.id}
-              className="rounded-2xl border border-[#F28C52]/20 bg-black/40 p-5"
-            >
-              <div>
-                <h2 className="text-2xl font-bold text-[#F28C52]">
-                  {event.title}
-                </h2>
+          {pastEvents.map((event) => {
+            const isOpen = openEvents.includes(event.id);
+            const previewMedia = event.media?.slice(0, 3) || [];
+            const mediaToShow = isOpen ? event.media || [] : previewMedia;
 
-                {event.event_date && (
-                  <p className="mt-1 text-sm text-gray-400">
-                    {new Date(event.event_date).toLocaleDateString()}
-                  </p>
-                )}
-              </div>
+            return (
+              <section
+                key={event.id}
+                className="rounded-2xl border border-[#F28C52]/20 bg-black/40 p-5"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-[#F28C52]">
+                      {event.title}
+                    </h2>
 
-              {event.media.length === 0 ? (
-                <p className="mt-4 text-gray-400">
-                  No photos or videos uploaded yet.
-                </p>
-              ) : (
-                <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {event.media.map((media: any) => (
-                    <div
-                      key={media.id}
-                      className="overflow-hidden rounded-xl border border-white/10 bg-black/30"
+                    {event.event_date && (
+                      <p className="mt-1 text-sm text-gray-400">
+                        {new Date(event.event_date).toLocaleDateString()}
+                      </p>
+                    )}
+
+                    <p className="mt-1 text-sm text-gray-500">
+                      {event.media.length} gallery item
+                      {event.media.length === 1 ? "" : "s"}
+                    </p>
+                  </div>
+
+                  {event.media.length > 3 && (
+                    <button
+                      onClick={() => toggleEventGallery(event.id)}
+                      className="rounded-lg border border-[#F28C52] px-4 py-2 text-sm font-semibold text-[#F28C52] hover:bg-[#F28C52] hover:text-black"
                     >
-                      {media.media_type === "video" ? (
-                        <video
-                          src={media.media_url}
-                          controls
-                          className="h-64 w-full bg-black object-cover"
-                        />
-                      ) : (
-                        <img
-                          src={media.media_url}
-                          alt={event.title}
-                          onClick={() => setSelectedMedia(media)}
-                          className="h-64 w-full cursor-pointer object-cover transition hover:opacity-80"
-                        />
-                      )}
-
-                      {media.user_id === currentUserId && (
-                        <button
-                          onClick={() => deleteMedia(media)}
-                          className="w-full bg-red-500 px-3 py-2 text-sm font-semibold text-white hover:bg-red-600"
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                      {isOpen ? "Hide Gallery" : "Show Full Gallery"}
+                    </button>
+                  )}
                 </div>
-              )}
-            </section>
-          ))}
+
+                {event.media.length === 0 ? (
+                  <p className="mt-4 text-gray-400">
+                    No photos or videos uploaded yet.
+                  </p>
+                ) : (
+                  <>
+                    <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {mediaToShow.map((media: any) => (
+                        <div
+                          key={media.id}
+                          className="overflow-hidden rounded-xl border border-white/10 bg-black/30"
+                        >
+                          {media.media_type === "video" ? (
+                            <video
+                              src={media.media_url}
+                              controls
+                              className="h-64 w-full bg-black object-cover"
+                            />
+                          ) : (
+                            <img
+                              src={media.media_url}
+                              alt={event.title}
+                              onClick={() => setSelectedMedia(media)}
+                              className="h-64 w-full cursor-pointer object-cover transition hover:opacity-80"
+                            />
+                          )}
+
+                          {media.user_id === currentUserId && (
+                            <button
+                              onClick={() => deleteMedia(media)}
+                              className="w-full bg-red-500 px-3 py-2 text-sm font-semibold text-white hover:bg-red-600"
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {event.media.length > 3 && !isOpen && (
+                      <button
+                        onClick={() => toggleEventGallery(event.id)}
+                        className="mt-4 w-full rounded-lg border border-white/10 bg-black/30 px-4 py-3 text-sm font-semibold text-gray-300 hover:border-[#F28C52] hover:text-[#F28C52]"
+                      >
+                        Show Full Gallery ({event.media.length} items)
+                      </button>
+                    )}
+                  </>
+                )}
+              </section>
+            );
+          })}
         </div>
       )}
 
