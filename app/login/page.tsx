@@ -22,7 +22,7 @@ export default function LoginPage() {
     }
 
     setSuccessMessage(
-  "SUCCESS! Registration complete. You can now click Login using the same email and password you just entered."
+  "SUCCESS! Sign up complete. You can now click Login using the same email and password you just entered."
 );
   }
 
@@ -44,11 +44,10 @@ export default function LoginPage() {
       <h1 className="text-3xl font-bold text-[#F28C52]">Member Login</h1>
 
      <p className="mt-2 text-md text-gray-300">
-  Sign in or create an account to access Peach State member features.
-
+Sign in or create your free Peach State account to access member features, RSVP for rides, and connect with the community.
   <span className="mt-2 block font-bold text-md text-[#F28C52]">
-    First time user? First enter the email address and password you wish to use, then click the register button. You can then log in. 
-  </span>
+First time here?
+Enter the email address and password you want to use, then click “Sign Up” to create your account.  </span>
 </p>
 
       <div className="mt-6 space-y-4">
@@ -96,7 +95,7 @@ export default function LoginPage() {
             onClick={handleRegister}
             className="flex-1 rounded-lg border border-[#F28C52] px-4 py-3 font-semibold text-[#F28C52]"
           >
-            Register
+            Sign Up
           </button>
         </div>
       </div>
