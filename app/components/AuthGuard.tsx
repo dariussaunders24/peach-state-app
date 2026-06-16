@@ -12,7 +12,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   async function checkAccess() {
     const currentPath = window.location.pathname;
-    const publicPaths = ["/login", "/register", "/signup", "/banned"];
+    const publicPaths = ["/login", "/register", "/signup", "/banned", "/rigs-for-riggs"];
 
     if (publicPaths.includes(currentPath)) {
       setLoading(false);
