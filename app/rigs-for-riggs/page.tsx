@@ -170,7 +170,7 @@ IMPORTANT INFORMATION
             </p>
 
             <p className="mt-4 text-white/75">
-              Please register below if you would like to participate. Registration is per vehicle, not person. 
+              Please register below if you would like to participate. Registration is per individual vehicle, not person or club. 
             </p>
 
             <div className="mt-5 rounded-xl border border-[#F28C52]/25 bg-[#F28C52]/10 p-4">
