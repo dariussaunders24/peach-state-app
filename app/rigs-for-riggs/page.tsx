@@ -281,7 +281,7 @@ IMPORTANT INFORMATION
                 disabled={submitting || loadingCount}
                 className="w-full rounded-lg bg-[#F28C52] px-5 py-3 font-semibold text-black transition hover:bg-[#C96A2C] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {submitting ? "Submitting..." : "Register for Rigs for Riggs"}
+                {submitting ? "Submitting..." : "Register my vehicle for Rigs for Riggs"}
               </button>
             </form>
           )}
