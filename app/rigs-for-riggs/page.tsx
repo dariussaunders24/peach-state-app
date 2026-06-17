@@ -158,6 +158,7 @@ In lieu of gifts, cash donations are preferred. Digital donations are also welco
 
 IMPORTANT INFORMATION
 
+• GMRS radios on channel 4
 • All participating vehicles must be street legal
 • All participating vehicles must carry valid insurance
 • Drivers are responsible for obeying all traffic laws
