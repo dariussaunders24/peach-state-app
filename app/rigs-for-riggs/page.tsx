@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
-const CAPACITY = 250;
+const CAPACITY = 200;
 
 export default function RigsForRiggsPage() {
   const [firstName, setFirstName] = useState("");
