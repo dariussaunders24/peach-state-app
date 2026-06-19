@@ -2105,37 +2105,52 @@ function EventDiscussion({
     (comment: any) => !comment.parent_id
   );
 
+  function formatCommentDate(dateValue: string) {
+    return new Date(dateValue).toLocaleString([], {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+
   function renderComment(comment: any, depth = 0) {
     const replies = comments.filter(
       (reply: any) => reply.parent_id === comment.id
     );
 
+    const canManage = comment.user_id === currentUserId || isAdmin;
+
     return (
       <div
         key={comment.id}
-        className={`rounded-lg border border-white/10 ${
-          depth === 0 ? "bg-black/40 p-4" : "bg-black/50 p-3"
+        className={`rounded-xl border ${
+          depth === 0
+            ? "border-[#F28C52]/25 bg-black/45 p-4 shadow-lg shadow-black/20"
+            : "border-white/10 bg-white/[0.04] p-3"
         }`}
       >
-        <p className="font-semibold text-white">{comment.name}</p>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <p className="font-semibold text-white">{comment.name}</p>
 
-        <p className="mt-1 text-xs text-gray-500">
-          {new Date(comment.created_at).toLocaleString()}
-          {comment.updated_at !== comment.created_at ? " • Edited" : ""}
-        </p>
+          <p className="text-xs text-gray-500">
+            {formatCommentDate(comment.created_at)}
+            {comment.updated_at !== comment.created_at ? " • Edited" : ""}
+          </p>
+        </div>
 
         {editingCommentId === comment.id ? (
           <div className="mt-3">
             <textarea
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
-              className="min-h-[80px] w-full rounded-lg border border-white/10 bg-black/40 p-3 text-white"
+              className="min-h-[90px] w-full rounded-xl border border-white/10 bg-black/50 p-3 text-white outline-none focus:border-[#F28C52]"
             />
 
-            <div className="mt-2 flex gap-2">
+            <div className="mt-2 flex flex-wrap gap-2">
               <button
                 onClick={() => updateComment(comment.id)}
-                className="rounded bg-[#F28C52] px-3 py-2 text-black"
+                className="rounded-lg bg-[#F28C52] px-3 py-2 text-sm font-semibold text-black hover:bg-[#C96A2C]"
               >
                 Save
               </button>
@@ -2145,46 +2160,46 @@ function EventDiscussion({
                   setEditingCommentId("");
                   setEditText("");
                 }}
-                className="rounded border border-white/20 px-3 py-2 text-white"
+                className="rounded-lg border border-white/15 px-3 py-2 text-sm font-semibold text-white/80 hover:border-[#F28C52] hover:text-[#F28C52]"
               >
                 Cancel
               </button>
             </div>
           </div>
         ) : (
-          <p className="mt-3 whitespace-pre-wrap text-gray-300">
+          <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-300">
             {comment.comment}
           </p>
         )}
 
-        <div className="mt-3 flex flex-wrap gap-3 text-sm">
+        <div className="mt-3 flex flex-wrap gap-2 text-sm">
           {currentUserId && (
             <button
               onClick={() => {
                 setReplyingTo(comment.id);
                 setReplyText("");
               }}
-              className="font-semibold text-[#F28C52]"
+              className="rounded-full border border-[#F28C52]/30 px-3 py-1 text-xs font-bold text-[#F28C52] hover:bg-[#F28C52] hover:text-black"
             >
               Reply
             </button>
           )}
 
-          {(comment.user_id === currentUserId || isAdmin) && (
+          {canManage && (
             <>
               <button
                 onClick={() => {
                   setEditingCommentId(comment.id);
                   setEditText(comment.comment);
                 }}
-                className="font-semibold text-gray-300"
+                className="rounded-full border border-white/15 px-3 py-1 text-xs font-bold text-white/60 hover:border-white/40 hover:text-white"
               >
                 Edit
               </button>
 
               <button
                 onClick={() => deleteComment(comment.id)}
-                className="font-semibold text-red-300"
+                className="rounded-full border border-red-400/25 px-3 py-1 text-xs font-bold text-red-300 hover:bg-red-500/10"
               >
                 Delete
               </button>
@@ -2193,18 +2208,22 @@ function EventDiscussion({
         </div>
 
         {replyingTo === comment.id && (
-          <div className="mt-4">
+          <div className="mt-4 rounded-xl border border-[#F28C52]/20 bg-black/35 p-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#F28C52]/80">
+              Replying to {comment.name}
+            </p>
+
             <textarea
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
               placeholder="Write a reply..."
-              className="min-h-[70px] w-full rounded-lg border border-white/10 bg-black/40 p-3 text-white"
+              className="min-h-[75px] w-full rounded-lg border border-white/10 bg-black/45 p-3 text-white outline-none focus:border-[#F28C52]"
             />
 
-            <div className="mt-2 flex gap-2">
+            <div className="mt-2 flex flex-wrap gap-2">
               <button
                 onClick={() => addComment(comment.id)}
-                className="rounded bg-[#F28C52] px-3 py-2 text-black"
+                className="rounded-lg bg-[#F28C52] px-3 py-2 text-sm font-semibold text-black hover:bg-[#C96A2C]"
               >
                 Post Reply
               </button>
@@ -2214,7 +2233,7 @@ function EventDiscussion({
                   setReplyingTo("");
                   setReplyText("");
                 }}
-                className="rounded border border-white/20 px-3 py-2 text-white"
+                className="rounded-lg border border-white/15 px-3 py-2 text-sm font-semibold text-white/80 hover:border-[#F28C52] hover:text-[#F28C52]"
               >
                 Cancel
               </button>
@@ -2222,35 +2241,47 @@ function EventDiscussion({
           </div>
         )}
 
-      {replies.length > 0 && (
-  <div
-    className={`mt-5 space-y-3 border-l border-[#F28C52]/40 pl-4 ${
-      depth >= 1 ? "ml-0" : ""
-    }`}
-  >
-    {replies.map((reply: any) =>
-      renderComment(reply, Math.min(depth + 1, 2))
-    )}
-  </div>
-)}
+        {replies.length > 0 && (
+          <div
+            className={
+              depth === 0
+                ? "mt-5 space-y-3 border-l border-[#F28C52]/35 pl-4"
+                : "mt-4 space-y-3"
+            }
+          >
+            {replies.map((reply: any) =>
+              renderComment(reply, Math.min(depth + 1, 1))
+            )}
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="mt-6 rounded-xl border border-white/10 bg-black/30 p-4">
-      <h4 className="text-lg font-bold text-[#F28C52]">Event Discussion</h4>
+    <div className="mt-6 rounded-2xl border border-[#F28C52]/20 bg-black/35 p-4 shadow-xl shadow-black/20">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h4 className="text-lg font-bold text-[#F28C52]">
+            Event Discussion
+          </h4>
 
-      <p className="mt-1 text-sm text-gray-400">
-        Coordinate meetup details, ask questions, and discuss the ride.
-      </p>
+          <p className="mt-1 text-sm text-gray-400">
+            Coordinate meetup details, ask questions, and discuss the ride.
+          </p>
+        </div>
 
-      <div className="mt-4">
+        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-white/60">
+          {comments.length} {comments.length === 1 ? "Comment" : "Comments"}
+        </span>
+      </div>
+
+      <div className="mt-5 rounded-xl border border-white/10 bg-black/30 p-3">
         <textarea
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           placeholder="Write a comment..."
-          className="min-h-[90px] w-full rounded-lg border border-white/10 bg-black/40 p-3 text-white outline-none focus:border-[#F28C52]"
+          className="min-h-[95px] w-full rounded-xl border border-white/10 bg-black/45 p-3 text-white outline-none placeholder:text-white/30 focus:border-[#F28C52]"
         />
 
         <button
@@ -2263,7 +2294,11 @@ function EventDiscussion({
 
       <div className="mt-6 space-y-4">
         {topLevelComments.length === 0 ? (
-          <p className="text-sm text-gray-400">No comments yet.</p>
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+            <p className="text-sm text-gray-400">
+              No comments yet. Start the discussion.
+            </p>
+          </div>
         ) : (
           topLevelComments.map((comment: any) => renderComment(comment, 0))
         )}
@@ -2271,4 +2306,3 @@ function EventDiscussion({
     </div>
   );
 }
-
