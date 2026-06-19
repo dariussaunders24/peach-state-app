@@ -16,12 +16,10 @@ type Recipient = {
 
 function uniqueRecipients(recipients: Recipient[]) {
   const map = new Map<string, Recipient>();
-
   for (const recipient of recipients) {
     if (!recipient.email) continue;
     map.set(recipient.email.toLowerCase(), recipient);
   }
-
   return Array.from(map.values());
 }
 
@@ -42,6 +40,65 @@ async function getProfileName(userId: string) {
     .maybeSingle();
 
   return profile?.name || "Member";
+}
+
+async function getAuthEmail(userId: string) {
+  const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
+  return data.user?.email || "";
+}
+
+async function getRootComment(comment: any): Promise<any> {
+  let current = comment;
+
+  while (current?.parent_id) {
+    const { data: parent } = await supabaseAdmin
+      .from("event_comments")
+      .select("*")
+      .eq("id", current.parent_id)
+      .single();
+
+    if (!parent) break;
+    current = parent;
+  }
+
+  return current;
+}
+
+function buildEmailHtml({
+  safeEventTitle,
+  introText,
+  replyContextHtml,
+  notificationType,
+  safeCommenterName,
+  safeCommentText,
+  eventUrl,
+}: any) {
+  return `
+    <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #222;">
+      <h2 style="margin-bottom: 8px;">${safeEventTitle}</h2>
+
+      <p style="margin: 0 0 16px; color: #444;">
+        ${introText}
+      </p>
+
+      ${replyContextHtml}
+
+      <div style="margin-top: 18px; padding: 14px; border-left: 4px solid #F28C52; background: #fff7f2;">
+        <p style="margin: 0 0 8px; font-size: 13px; color: #555;">
+          ${notificationType === "reply_notification" ? "Reply" : "Comment"} from ${safeCommenterName}:
+        </p>
+        <p style="margin: 0; white-space: pre-line; color: #222;">
+          ${safeCommentText}
+        </p>
+      </div>
+
+      <p style="margin-top: 22px;">
+        <a href="${eventUrl}" style="color: #C96A2C; font-weight: bold;">
+          View event discussion
+        </a>
+      </p>
+    </div>
+  `;
 }
 
 export async function POST(req: Request) {
@@ -83,6 +140,7 @@ export async function POST(req: Request) {
 
     const commenterId = comment.user_id;
     const commenterName = await getProfileName(commenterId);
+    const commenterEmail = (await getAuthEmail(commenterId)).toLowerCase();
     const isReply = Boolean(comment.parent_id);
 
     let recipients: Recipient[] = [];
@@ -90,27 +148,48 @@ export async function POST(req: Request) {
     let parentCommentText = "";
     let parentCommenterName = "";
 
+    const adminEmails = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
+    const commenterIsAdmin = adminEmails.includes(commenterEmail);
+
     if (isReply) {
       const { data: parentComment } = await supabaseAdmin
         .from("event_comments")
-        .select("user_id, comment")
+        .select("*")
         .eq("id", comment.parent_id)
         .single();
 
       if (parentComment) {
         parentCommentText = parentComment.comment || "";
         parentCommenterName = await getProfileName(parentComment.user_id);
-      }
 
-      if (parentComment?.user_id && parentComment.user_id !== commenterId) {
-        const { data: parentUser } =
-          await supabaseAdmin.auth.admin.getUserById(parentComment.user_id);
+        if (parentComment.user_id !== commenterId) {
+          const parentEmail = await getAuthEmail(parentComment.user_id);
+          if (parentEmail) {
+            recipients.push({
+              user_id: parentComment.user_id,
+              email: parentEmail,
+            });
+          }
+        }
 
-        if (parentUser.user?.email) {
-          recipients.push({
-            user_id: parentComment.user_id,
-            email: parentUser.user.email,
-          });
+        const rootComment = await getRootComment(parentComment);
+
+        if (
+          rootComment?.user_id &&
+          rootComment.user_id !== commenterId &&
+          rootComment.user_id !== parentComment.user_id
+        ) {
+          const rootEmail = await getAuthEmail(rootComment.user_id);
+          if (rootEmail) {
+            recipients.push({
+              user_id: rootComment.user_id,
+              email: rootEmail,
+            });
+          }
         }
       }
 
@@ -118,18 +197,6 @@ export async function POST(req: Request) {
     }
 
     if (!isReply) {
-      const adminEmails = (process.env.ADMIN_EMAILS || "")
-        .split(",")
-        .map((email) => email.trim().toLowerCase())
-        .filter(Boolean);
-
-      const { data: commenterUser } =
-        await supabaseAdmin.auth.admin.getUserById(commenterId);
-
-      const commenterEmail = commenterUser.user?.email?.toLowerCase() || "";
-
-      const commenterIsAdmin = adminEmails.includes(commenterEmail);
-
       if (commenterIsAdmin) {
         const { data: goingRsvps } = await supabaseAdmin
           .from("rsvps")
@@ -140,13 +207,12 @@ export async function POST(req: Request) {
         for (const rsvp of goingRsvps || []) {
           if (!rsvp.user_id || rsvp.user_id === commenterId) continue;
 
-          const { data: userData } =
-            await supabaseAdmin.auth.admin.getUserById(rsvp.user_id);
+          const email = await getAuthEmail(rsvp.user_id);
 
-          if (userData.user?.email) {
+          if (email) {
             recipients.push({
               user_id: rsvp.user_id,
-              email: userData.user.email,
+              email,
             });
           }
         }
@@ -221,6 +287,25 @@ export async function POST(req: Request) {
         `
         : "";
 
+    const subject =
+      notificationType === "admin_event_update"
+        ? `Event update: ${event.title}`
+        : notificationType === "reply_notification"
+        ? `New reply on ${event.title}`
+        : `New comment on ${event.title}`;
+
+    const html = buildEmailHtml({
+      safeEventTitle,
+      introText,
+      replyContextHtml,
+      notificationType,
+      safeCommenterName,
+      safeCommentText,
+      eventUrl,
+    });
+
+    const logs: any[] = [];
+
     for (const recipient of recipients) {
       const { data: log } = await supabaseAdmin
         .from("event_comment_notifications")
@@ -232,82 +317,132 @@ export async function POST(req: Request) {
           notification_type: notificationType,
           status: "pending",
         })
-        .select("id")
+        .select("id, recipient_email")
         .single();
 
+      if (log) logs.push(log);
+    }
+
+    if (notificationType === "admin_event_update") {
+      const batchPayload = logs.map((log) => ({
+        from: "Peach State Off-Road <notifications@peachstateoffroad.com>",
+        to: log.recipient_email,
+        subject,
+        html,
+      }));
+
       try {
-        await resend.emails.send({
-          from: "Peach State Off-Road <notifications@peachstateoffroad.com>",
-          to: recipient.email,
-          subject:
-            notificationType === "admin_event_update"
-              ? `Event update: ${event.title}`
-              : notificationType === "reply_notification"
-              ? `New reply on ${event.title}`
-              : `New comment on ${event.title}`,
-          html: `
-            <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #222;">
-              <h2 style="margin-bottom: 8px;">${safeEventTitle}</h2>
+        const batchResult: any = await resend.batch.send(batchPayload as any);
 
-              <p style="margin: 0 0 16px; color: #444;">
-                ${introText}
-              </p>
-
-              ${replyContextHtml}
-
-              <div style="margin-top: 18px; padding: 14px; border-left: 4px solid #F28C52; background: #fff7f2;">
-                <p style="margin: 0 0 8px; font-size: 13px; color: #555;">
-                  ${notificationType === "reply_notification" ? "Reply" : "Comment"} from ${safeCommenterName}:
-                </p>
-                <p style="margin: 0; white-space: pre-line; color: #222;">
-                  ${safeCommentText}
-                </p>
-              </div>
-
-              <p style="margin-top: 22px;">
-                <a href="${eventUrl}" style="color: #C96A2C; font-weight: bold;">
-                  View event discussion
-                </a>
-              </p>
-            </div>
-          `,
-        });
-
-        if (log?.id) {
-          await supabaseAdmin
-            .from("event_comment_notifications")
-            .update({
-              status: "sent",
-              sent_at: new Date().toISOString(),
-            })
-            .eq("id", log.id);
-        }
-      } catch (emailError) {
-        if (log?.id) {
+        if (batchResult?.error) {
           await supabaseAdmin
             .from("event_comment_notifications")
             .update({
               status: "failed",
-              error_message:
-                emailError instanceof Error
-                  ? emailError.message
-                  : "Unknown email error",
+              error_message: batchResult.error.message || "Batch send failed",
             })
-            .eq("id", log.id);
+            .in(
+              "id",
+              logs.map((log) => log.id)
+            );
+
+          return NextResponse.json(
+            { error: batchResult.error.message || "Batch send failed" },
+            { status: 500 }
+          );
         }
+
+        const sentData = batchResult?.data || [];
+
+        for (let i = 0; i < logs.length; i++) {
+          await supabaseAdmin
+            .from("event_comment_notifications")
+            .update({
+              status: "sent",
+              resend_email_id: sentData[i]?.id || null,
+              sent_at: new Date().toISOString(),
+            })
+            .eq("id", logs[i].id);
+        }
+
+        return NextResponse.json({
+          success: true,
+          sent: logs.length,
+          type: notificationType,
+          batch: true,
+        });
+      } catch (emailError) {
+        await supabaseAdmin
+          .from("event_comment_notifications")
+          .update({
+            status: "failed",
+            error_message:
+              emailError instanceof Error
+                ? emailError.message
+                : "Unknown batch send error",
+          })
+          .in(
+            "id",
+            logs.map((log) => log.id)
+          );
+
+        return NextResponse.json(
+          {
+            error:
+              emailError instanceof Error
+                ? emailError.message
+                : "Unknown batch send error",
+          },
+          { status: 500 }
+        );
+      }
+    }
+
+    for (const log of logs) {
+      try {
+        const sendResult: any = await resend.emails.send({
+          from: "Peach State Off-Road <notifications@peachstateoffroad.com>",
+          to: log.recipient_email,
+          subject,
+          html,
+        });
+
+        if (sendResult?.error) {
+          throw new Error(sendResult.error.message || "Email send failed");
+        }
+
+        await supabaseAdmin
+          .from("event_comment_notifications")
+          .update({
+            status: "sent",
+            resend_email_id: sendResult?.data?.id || null,
+            sent_at: new Date().toISOString(),
+          })
+          .eq("id", log.id);
+      } catch (emailError) {
+        await supabaseAdmin
+          .from("event_comment_notifications")
+          .update({
+            status: "failed",
+            error_message:
+              emailError instanceof Error
+                ? emailError.message
+                : "Unknown email error",
+          })
+          .eq("id", log.id);
       }
     }
 
     return NextResponse.json({
       success: true,
-      sent: recipients.length,
+      sent: logs.length,
       type: notificationType,
+      batch: false,
     });
   } catch (error) {
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Notification failed",
+        error: error instanceof Error ? error.message : "Notification failed",
       },
       { status: 500 }
     );
