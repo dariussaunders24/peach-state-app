@@ -1610,16 +1610,33 @@ async function addComment(parentId: string | null = null) {
 
   if (!text || !currentUserId) return;
 
-  const { error } = await supabase.from("event_comments").insert({
-    event_id: event.id,
-    user_id: currentUserId,
-    parent_id: parentId,
-    comment: text,
-  });
+  const { data: insertedComment, error } = await supabase
+    .from("event_comments")
+    .insert({
+      event_id: event.id,
+      user_id: currentUserId,
+      parent_id: parentId,
+      comment: text,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     alert(error.message);
     return;
+  }
+
+  if (insertedComment?.id) {
+    fetch("/api/event-comment-notifications", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        eventId: event.id,
+        commentId: insertedComment.id,
+      }),
+    });
   }
 
   setNewComment("");
