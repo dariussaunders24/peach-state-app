@@ -2063,6 +2063,7 @@ async function deleteComment(commentId: string) {
 <EventDiscussion
   comments={comments}
   currentUserId={currentUserId}
+  isAdmin={isAdmin}
   newComment={newComment}
   setNewComment={setNewComment}
   addComment={addComment}
@@ -2076,7 +2077,7 @@ async function deleteComment(commentId: string) {
   setEditText={setEditText}
   updateComment={updateComment}
   deleteComment={deleteComment}
-/>
+  />
         </div>
       </div>
     </div>
@@ -2085,6 +2086,7 @@ async function deleteComment(commentId: string) {
 function EventDiscussion({
   comments,
   currentUserId,
+  isAdmin,
   newComment,
   setNewComment,
   addComment,
@@ -2200,7 +2202,7 @@ function EventDiscussion({
                     Reply
                   </button>
 
-                  {comment.user_id === currentUserId && (
+                  {(comment.user_id === currentUserId || isAdmin) && (
                     <>
                       <button
                         onClick={() => {
@@ -2274,7 +2276,7 @@ function EventDiscussion({
                           {reply.comment}
                         </p>
 
-                        {reply.user_id === currentUserId && (
+                        {(reply.user_id === currentUserId || isAdmin) && (
                           <div className="mt-2 flex gap-3 text-sm">
                             <button
                               onClick={() => {
