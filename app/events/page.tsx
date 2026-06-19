@@ -2222,15 +2222,17 @@ function EventDiscussion({
           </div>
         )}
 
-        {replies.length > 0 && (
-          <div
-            className={`mt-5 space-y-3 border-l border-[#F28C52]/40 pl-4 ${
-              depth >= 2 ? "ml-0" : ""
-            }`}
-          >
-            {replies.map((reply: any) => renderComment(reply, depth + 1))}
-          </div>
-        )}
+      {replies.length > 0 && (
+  <div
+    className={`mt-5 space-y-3 border-l border-[#F28C52]/40 pl-4 ${
+      depth >= 1 ? "ml-0" : ""
+    }`}
+  >
+    {replies.map((reply: any) =>
+      renderComment(reply, Math.min(depth + 1, 2))
+    )}
+  </div>
+)}
       </div>
     );
   }
