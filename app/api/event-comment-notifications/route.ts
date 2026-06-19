@@ -34,6 +34,16 @@ function escapeHtml(value: string) {
     .replaceAll("'", "&#039;");
 }
 
+async function getProfileName(userId: string) {
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("name")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  return profile?.name || "Member";
+}
+
 export async function POST(req: Request) {
   try {
     const { eventId, commentId } = await req.json();
@@ -72,17 +82,25 @@ export async function POST(req: Request) {
     }
 
     const commenterId = comment.user_id;
+    const commenterName = await getProfileName(commenterId);
     const isReply = Boolean(comment.parent_id);
 
     let recipients: Recipient[] = [];
     let notificationType = "";
+    let parentCommentText = "";
+    let parentCommenterName = "";
 
     if (isReply) {
       const { data: parentComment } = await supabaseAdmin
         .from("event_comments")
-        .select("user_id")
+        .select("user_id, comment")
         .eq("id", comment.parent_id)
         .single();
+
+      if (parentComment) {
+        parentCommentText = parentComment.comment || "";
+        parentCommenterName = await getProfileName(parentComment.user_id);
+      }
 
       if (parentComment?.user_id && parentComment.user_id !== commenterId) {
         const { data: parentUser } =
@@ -175,8 +193,33 @@ export async function POST(req: Request) {
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
     const eventUrl = `${siteUrl}/events`;
+
     const safeEventTitle = escapeHtml(event.title || "Event");
     const safeCommentText = escapeHtml(comment.comment || "");
+    const safeCommenterName = escapeHtml(commenterName);
+    const safeParentCommentText = escapeHtml(parentCommentText);
+    const safeParentCommenterName = escapeHtml(parentCommenterName);
+
+    const introText =
+      notificationType === "admin_event_update"
+        ? `${safeCommenterName} posted an event update.`
+        : notificationType === "reply_notification"
+        ? `${safeCommenterName} replied to ${safeParentCommenterName}.`
+        : `${safeCommenterName} commented on this event.`;
+
+    const replyContextHtml =
+      notificationType === "reply_notification"
+        ? `
+          <div style="margin-top: 18px; padding: 14px; border-left: 4px solid #999; background: #f5f5f5;">
+            <p style="margin: 0 0 8px; font-size: 13px; color: #555;">
+              Original comment from ${safeParentCommenterName}:
+            </p>
+            <p style="margin: 0; white-space: pre-line; color: #222;">
+              ${safeParentCommentText}
+            </p>
+          </div>
+        `
+        : "";
 
     for (const recipient of recipients) {
       const { data: log } = await supabaseAdmin
@@ -203,11 +246,28 @@ export async function POST(req: Request) {
               ? `New reply on ${event.title}`
               : `New comment on ${event.title}`,
           html: `
-            <div style="font-family: Arial, sans-serif; line-height: 1.5;">
-              <h2>${safeEventTitle}</h2>
-              <p style="white-space: pre-line;">${safeCommentText}</p>
-              <p>
-                <a href="${eventUrl}">View event discussion</a>
+            <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #222;">
+              <h2 style="margin-bottom: 8px;">${safeEventTitle}</h2>
+
+              <p style="margin: 0 0 16px; color: #444;">
+                ${introText}
+              </p>
+
+              ${replyContextHtml}
+
+              <div style="margin-top: 18px; padding: 14px; border-left: 4px solid #F28C52; background: #fff7f2;">
+                <p style="margin: 0 0 8px; font-size: 13px; color: #555;">
+                  ${notificationType === "reply_notification" ? "Reply" : "Comment"} from ${safeCommenterName}:
+                </p>
+                <p style="margin: 0; white-space: pre-line; color: #222;">
+                  ${safeCommentText}
+                </p>
+              </div>
+
+              <p style="margin-top: 22px;">
+                <a href="${eventUrl}" style="color: #C96A2C; font-weight: bold;">
+                  View event discussion
+                </a>
               </p>
             </div>
           `,
