@@ -127,16 +127,8 @@ Overflow parking will be available at the trailer store across from the main par
 
 ABOUT THE EVENT
 
-<p className="mt-3">
-    <a
-    href="https://www.gofundme.com/f/support-riggs-grooms-cancer-battle-97nf7?lang=en_US"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="font-semibold text-orange-500 underline hover:text-orange-400"
-  >
-    Donate to Riggs’ GoFundMe here.
-  </a>
-</p>
+The family has just been approved for a GoFund Me. Please donate whatever you can. Every little bit helps:
+https://www.gofundme.com/f/support-riggs-grooms-cancer-battle-97nf7?lang=en_US
 
 Riggs is a 4-year-old boy who has been diagnosed with terminal cancer, but who also loves big off-road vehicles and all things automotive. Join us as we come together to create a special birthday parade and an unforgettable day for Riggs and his family.
 
