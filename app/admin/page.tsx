@@ -83,13 +83,30 @@ export default function AdminPage() {
       return;
     }
 
-    await supabase.from("notifications").insert({
-      user_id: userId,
-      title: "New Badge Awarded",
-      message: `You earned the ${
-        badge?.name || "new"
-      } badge in Peach State Off-Road and Overlanding!`,
-    });
+ await supabase.from("notifications").insert({
+  user_id: userId,
+  title: "New Badge Awarded",
+  message: `You earned the ${
+    badge?.name || "new"
+  } badge in Peach State Off-Road and Overlanding!`,
+});
+
+const emailResponse = await fetch("/api/badge-awarded-email", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    userId,
+    badgeName: badge?.name || "new",
+  }),
+});
+
+const emailResult = await emailResponse.json();
+
+if (!emailResponse.ok) {
+  console.error("Badge email error:", emailResult);
+}
 
     alert("Badge assigned and member notified.");
     loadData();
