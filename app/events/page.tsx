@@ -329,12 +329,13 @@ export default function EventsPage() {
   }
 
   async function loadEvents() {
-    const now = new Date().toISOString();
+    const cutoff = new Date();
+cutoff.setHours(cutoff.getHours() - 24);
 
     const { data: upcomingData } = await supabase
       .from("events")
       .select("*")
-      .gte("event_date", now)
+      .gte("event_date", cutoff.toISOString())
       .order("event_date", { ascending: true });
 
     

@@ -39,13 +39,14 @@ export default function PastEventsPage() {
   }
 
   async function loadPastEvents() {
-  const now = new Date().toISOString();
+const cutoff = new Date();
+cutoff.setHours(cutoff.getHours() - 24);
 
-  const { data: eventsData, error } = await supabase
-    .from("events")
-    .select("*")
-    .lt("event_date", now)
-    .order("event_date", { ascending: false });
+const { data: eventsData, error } = await supabase
+  .from("events")
+  .select("*")
+  .lt("event_date", cutoff.toISOString())
+  .order("event_date", { ascending: false });
 
   if (error) {
     console.error("Error loading past events:", error);

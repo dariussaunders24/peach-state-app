@@ -154,6 +154,14 @@ export async function POST(req: Request) {
       .filter(Boolean);
 
     const commenterIsAdmin = adminEmails.includes(commenterEmail);
+    const { data: commenterProfile } = await supabaseAdmin
+  .from("profiles")
+  .select("role")
+  .eq("user_id", commenterId)
+  .maybeSingle();
+
+const commenterIsRideCaptain =
+  commenterProfile?.role === "Ride Captain";
 
     if (isReply) {
       const { data: parentComment } = await supabaseAdmin
@@ -197,7 +205,7 @@ export async function POST(req: Request) {
     }
 
     if (!isReply) {
-      if (commenterIsAdmin) {
+      if (commenterIsAdmin || commenterIsRideCaptain) {
         const { data: goingRsvps } = await supabaseAdmin
           .from("rsvps")
           .select("user_id")
