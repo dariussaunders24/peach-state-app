@@ -9,6 +9,7 @@ const adminEmails = ["dariussaunders24@gmail.com"];
 export default function PastEventsPage() {
   const [pastEvents, setPastEvents] = useState<any[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [canManageAttendance, setCanManageAttendance] = useState(false);
   const [editingEvent, setEditingEvent] = useState<any | null>(null);
 
   const [editForm, setEditForm] = useState({
@@ -22,21 +23,32 @@ export default function PastEventsPage() {
     difficulty: "",
   });
 
-  useEffect(() => {
-    checkAdmin();
-    loadPastEvents();
-  }, []);
+ useEffect(() => {
+  checkUserPermissions();
+  loadPastEvents();
+}, []);
 
-  async function checkAdmin() {
-    const { data } = await supabase.auth.getUser();
+  async function checkUserPermissions() {
+  const { data } = await supabase.auth.getUser();
 
-    if (
-      data.user &&
-      adminEmails.includes((data.user.email || "").toLowerCase().trim())
-    ) {
-      setIsAdmin(true);
-    }
-  }
+  if (!data.user) return;
+
+  const userIsAdmin = adminEmails.includes(
+    (data.user.email || "").toLowerCase().trim()
+  );
+
+  setIsAdmin(userIsAdmin);
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("public_role")
+    .eq("user_id", data.user.id)
+    .maybeSingle();
+
+  const userIsRideCaptain = profile?.public_role === "Ride Captain";
+
+  setCanManageAttendance(userIsAdmin || userIsRideCaptain);
+}
 
   async function loadPastEvents() {
 const cutoff = new Date();
@@ -177,16 +189,17 @@ const { data: eventsData, error } = await supabase
             <p className="text-gray-400">No past events yet.</p>
           </div>
         ) : (
-          pastEvents.map((event) => (
-            <PastEventCard
-  key={event.id}
-  event={event}
-  isAdmin={isAdmin}
-  updateEvent={openEditEvent}
-  deleteEvent={deleteEvent}
-  reloadEvents={loadPastEvents}
-/>
-          ))
+        pastEvents.map((event) => (
+  <PastEventCard
+    key={event.id}
+    event={event}
+    isAdmin={isAdmin}
+    canManageAttendance={canManageAttendance}
+    updateEvent={openEditEvent}
+    deleteEvent={deleteEvent}
+    reloadEvents={loadPastEvents}
+  />
+))
         )}
       </section>
 

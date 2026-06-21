@@ -6,6 +6,7 @@ import { supabase } from "../lib/supabase";
 export default function PastEventCard({
   event,
   isAdmin,
+  canManageAttendance,
   updateEvent,
   deleteEvent,
   reloadEvents,
@@ -95,8 +96,8 @@ export default function PastEventCard({
         </div>
       </div>
 
-      {isAdmin && (
-        <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-4">
+      {canManageAttendance && (
+  <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-4">
           <p className="text-sm font-semibold text-green-300">
             Attendance Checklist
           </p>

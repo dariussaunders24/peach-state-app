@@ -71,6 +71,7 @@ function formatDateForInput(dateValue: string) {
 export default function EventsPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
+const [canManageAttendance, setCanManageAttendance] = useState(false);
   const [currentUserId, setCurrentUserId] = useState("");
   const [confirmationMessage, setConfirmationMessage] = useState("");
   const [editingEvent, setEditingEvent] = useState<any | null>(null);
@@ -115,13 +116,25 @@ export default function EventsPage() {
   async function checkUser() {
     const { data } = await supabase.auth.getUser();
 
-    if (data.user) {
-      setCurrentUserId(data.user.id);
+  if (data.user) {
+  setCurrentUserId(data.user.id);
 
-      if (adminEmails.includes((data.user.email || "").toLowerCase().trim())) {
-        setIsAdmin(true);
-      }
-    }
+  const userIsAdmin = adminEmails.includes(
+    (data.user.email || "").toLowerCase().trim()
+  );
+
+  setIsAdmin(userIsAdmin);
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("public_role")
+    .eq("user_id", data.user.id)
+    .maybeSingle();
+
+  const userIsRideCaptain = profile?.public_role === "Ride Captain";
+
+  setCanManageAttendance(userIsAdmin || userIsRideCaptain);
+}
   }
 
   function toggleBringItem(item: string) {
@@ -1106,6 +1119,7 @@ return (
         cancelRsvp={cancelRsvp}
         currentUserId={currentUserId}
         isAdmin={isAdmin}
+        canManageAttendance={canManageAttendance}
         updateEvent={openEditEvent}
         deleteEvent={deleteEvent}
         uploadCoverPhoto={uploadCoverPhoto}
@@ -1582,6 +1596,7 @@ function EventCard({
   cancelRsvp,
   currentUserId,
   isAdmin,
+   canManageAttendance,
   updateEvent,
   deleteEvent,
   uploadCoverPhoto,
@@ -1878,7 +1893,7 @@ async function deleteComment(commentId: string) {
                   {attendee.profiles?.name || "Member"}
                 </a>
 
-                {isAdmin && (
+                {canManageAttendance && (
                   <div className="flex flex-wrap gap-2">
                     <label className="flex items-center gap-2 rounded border border-[#F28C52]/40 px-2 py-1 text-xs text-[#F28C52]">
   <input
@@ -1950,7 +1965,7 @@ async function deleteComment(commentId: string) {
                   {attendee.profiles?.name || "Member"}
                 </a>
 
-                {isAdmin && (
+                {canManageAttendance && (
                   <div className="flex flex-wrap gap-2">
                     <button
                      onClick={() =>
