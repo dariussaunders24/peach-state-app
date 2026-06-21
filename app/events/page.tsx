@@ -282,7 +282,10 @@ export default function EventsPage() {
     if (!eventDate) return alert("Date required");
     if (!capacity || capacity < 1) return alert("Capacity required");
 
-    const { error } = await supabase.from("events").insert({
+   const { data: createdEvent, error } = await supabase
+  .from("events")
+  .insert([
+  {
       title,
       location: publicLocation,
       public_location: publicLocation,
@@ -307,9 +310,33 @@ export default function EventsPage() {
       water_crossings: newEvent.water_crossings,
       pinstriping_risk: newEvent.pinstriping_risk,
       trail_terrain: newEvent.trail_terrain,
-    });
+     },
+])
+.select("id")
+.single();
+console.log("Created event:", createdEvent);
 
-    if (error) return alert(error.message);
+   if (createdEvent?.id) {
+  const notifyResponse = await fetch("/api/notify-new-event", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      eventId: createdEvent.id,
+    }),
+  });
+
+const notifyResult = await notifyResponse.json();
+
+
+
+if (!notifyResponse.ok) {
+  console.error("New event notification failed:", notifyResult);
+} else {
+  console.log("New event notification sent:", notifyResult);
+}
+}
 
     setNewEvent({
       title: "",
