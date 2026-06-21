@@ -31,7 +31,7 @@ export async function POST(req: Request) {
 
     const email = data.user.email;
 
-    await resend.emails.send({
+    const { data: emailData, error: emailError } = await resend.emails.send({
       from: "Peach State Off-Road <notifications@peachstateoffroad.com>",
       to: email,
       subject: "You earned a new badge!",
@@ -47,7 +47,19 @@ export async function POST(req: Request) {
       `,
     });
 
-    return NextResponse.json({ success: true });
+    if (emailError) {
+  console.error("Resend badge email error:", emailError);
+
+  return NextResponse.json(
+    { error: emailError.message || "Resend failed" },
+    { status: 500 }
+  );
+}
+
+return NextResponse.json({
+  success: true,
+  emailId: emailData?.id,
+});
   } catch (error) {
     console.error(error);
     return NextResponse.json(
