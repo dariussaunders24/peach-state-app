@@ -45,7 +45,8 @@ export default function PastEventsPage() {
     .eq("user_id", data.user.id)
     .maybeSingle();
 
-  const userIsRideCaptain = profile?.public_role === "Ride Captain";
+  const userIsRideCaptain =
+  (profile?.public_role || "").trim().toLowerCase() === "ride captain";
 
   setCanManageAttendance(userIsAdmin || userIsRideCaptain);
 }
