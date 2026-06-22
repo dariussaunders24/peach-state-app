@@ -87,12 +87,19 @@ export default function MembersPage() {
                 </h2>
 
                 {profile.public_role && (
-                  <div className="mt-2 inline-flex items-center rounded-full border border-[#F28C52]/40 bg-[#F28C52]/10 px-3 py-1">
-                    <span className="text-[10px] font-semibold tracking-wide text-[#F28C52]">
-                      {profile.public_role}
-                    </span>
-                  </div>
-                )}
+  <div className="mt-2 flex flex-col items-start gap-1">
+    {profile.public_role.split(",").map((role) => (
+      <div
+        key={role.trim()}
+        className="inline-flex items-center rounded-full border border-[#F28C52]/40 bg-[#F28C52]/10 px-3 py-1"
+      >
+        <span className="text-[10px] font-semibold tracking-wide text-[#F28C52]">
+          {role.trim()}
+        </span>
+      </div>
+    ))}
+  </div>
+)}
 
                 <p className="mt-2 text-sm text-white/60">
                   {profile.location || "Location not added"}
