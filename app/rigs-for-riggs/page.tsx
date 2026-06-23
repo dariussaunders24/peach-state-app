@@ -107,15 +107,24 @@ export default function RigsForRiggsPage() {
 
             <p className="mt-4 text-white/75">
               <div className="whitespace-pre-line leading-8 text-white/75">
-{`Date: Saturday, June 27, 2026
+{`EVENT UPDATE: We wanted to share an important update regarding the Rigs for Riggs drive-by event.
+With heavy hearts, we are saddened to share that Riggs recently passed away surrounded by the love of his family. While this is not the outcome any of us hoped for, Riggs' family has asked that we still come together as planned to celebrate his life, support their family, and bring some excitement to his big brother during this difficult time.
 
-Arrival & Check-In: 10:30 AM
+- Donations for the family can be made here, otherwise, you donations (no oversized toys or riding toys), can be donated at the check-in locations. Roy donations will be distributed to various child organizations.
+- Decorations: No birthday decorations, but "In loving memory of Riggs" signage is okay if anyone wants to show support.
+- Noise: We encourage drivers not to use their vehicle volume excessively, but mild honking/revving is now okay.
+- Please contact event coordinators directly if you have any other questions.
 
-Driver Meeting (Required): 11:30 AM
 
-Vehicle Roll-Out: 11:45 AM
+Date: Saturday, June 28, 2026
 
-Parade Start: 12:00 PM
+Arrival & Check-In: 12:30 PM
+
+Driver Meeting (Required): 1:15PM
+
+Vehicle Roll-Out: 1:45PM
+
+Parade Start: 2:00 PM
 
 Meet-Up Location:
 
@@ -128,7 +137,7 @@ Overflow parking will be available at the trailer store across from the main par
 ABOUT THE EVENT
 
 The family has just been approved for a GoFund Me. Please donate whatever you can. Every little bit helps:
-https://www.gofundme.com/f/support-riggs-grooms-cancer-battle-97nf7?lang=en_US
+https://www.gofundme.com/f/remembering-riggs-help-the-grooms-family-heal
 
 Riggs is a 4-year-old boy who has been diagnosed with terminal cancer, but who also loves big off-road vehicles and all things automotive. Join us as we come together to create a special birthday parade and an unforgettable day for Riggs and his family.
 
