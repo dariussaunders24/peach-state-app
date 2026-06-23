@@ -1715,6 +1715,35 @@ async function updateComment(commentId: string) {
 async function deleteComment(commentId: string) {
   if (!confirm("Delete this comment?")) return;
 
+  if (isAdmin) {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+
+    if (!token) {
+      alert("You must be logged in.");
+      return;
+    }
+
+    const response = await fetch("/api/admin/delete-event-comment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ commentId }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      alert(result.error || "Could not delete comment.");
+      return;
+    }
+
+    await loadComments();
+    return;
+  }
+
   const { error } = await supabase
     .from("event_comments")
     .delete()
@@ -2146,10 +2175,18 @@ function EventDiscussion({
   deleteComment,
 }: any) {
   const [expandedThreads, setExpandedThreads] = useState<string[]>([]);
+  const [showAllTopComments, setShowAllTopComments] = useState(false);
 
-  const topLevelComments = comments.filter(
-    (comment: any) => !comment.parent_id
-  );
+  const topLevelComments = comments
+    .filter((comment: any) => !comment.parent_id)
+    .sort(
+      (a: any, b: any) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+
+  const visibleTopLevelComments = showAllTopComments
+    ? topLevelComments
+    : topLevelComments.slice(0, 5);
 
   function isThreadExpanded(commentId: string) {
     return expandedThreads.includes(commentId);
@@ -2183,18 +2220,13 @@ function EventDiscussion({
     ]);
   }
 
-  function renderComment(comment: any, depth = 0) {
-    const replies = comments.filter(
-      (reply: any) => reply.parent_id === comment.id
-    );
-
+  function renderCommentCard(comment: any, isTopLevel = false) {
     const canManage = comment.user_id === currentUserId || isAdmin;
 
     return (
       <div
-        key={comment.id}
         className={`rounded-xl border ${
-          depth === 0
+          isTopLevel
             ? "border-[#F28C52]/25 bg-black/45 p-4 shadow-lg shadow-black/20"
             : "border-white/10 bg-white/[0.04] p-3"
         }`}
@@ -2309,14 +2341,30 @@ function EventDiscussion({
             </div>
           </div>
         )}
+      </div>
+    );
+  }
 
-     {depth > 0 && replies.length > 0 && (
-  <div className="mt-4 space-y-3">
-    {replies.map((reply: any) =>
-      renderComment(reply, 1)
-    )}
-  </div>
-)}
+  function renderReplies(parentId: string) {
+    const directReplies = comments.filter(
+      (reply: any) => reply.parent_id === parentId
+    );
+
+    if (directReplies.length === 0) return null;
+
+    return (
+      <div className="mt-4 space-y-3">
+        {directReplies.map((reply: any) => (
+          <div key={reply.id}>
+            {renderCommentCard(reply, false)}
+
+            {comments.some((child: any) => child.parent_id === reply.id) && (
+              <div className="mt-3 border-l border-white/10 pl-4">
+                {renderReplies(reply.id)}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     );
   }
@@ -2324,193 +2372,31 @@ function EventDiscussion({
   function renderTopLevelComment(comment: any) {
     const allReplies = getAllThreadReplies(comment.id);
     const expanded = isThreadExpanded(comment.id);
-    const visibleReplyIds = expanded
-      ? allReplies.map((reply: any) => reply.id)
-      : allReplies.slice(0, 2).map((reply: any) => reply.id);
-
-    function renderCommentWithCollapse(commentToRender: any, depth = 0) {
-      const replies = comments.filter(
-        (reply: any) => reply.parent_id === commentToRender.id
-      );
-
-      const filteredReplies =
-        depth === 0
-          ? replies.filter((reply: any) => visibleReplyIds.includes(reply.id))
-          : replies.filter((reply: any) => visibleReplyIds.includes(reply.id));
-
-      const originalComments = comments;
-      const scopedComments = [
-        ...comments.filter((c: any) => c.id !== commentToRender.id),
-      ];
-
-      return (
-        <div key={commentToRender.id}>
-          {renderComment({
-            ...commentToRender,
-          }, depth)}
-
-          {filteredReplies.length > 0 && false && (
-            <div>{scopedComments.length}</div>
-          )}
-        </div>
-      );
-    }
-
-    const directReplies = comments.filter(
-      (reply: any) => reply.parent_id === comment.id
-    );
-
-    const repliesToShow = expanded ? directReplies : [];
-const hiddenReplyCount = allReplies.length;
 
     return (
       <div key={comment.id}>
-        <div
-          className={`rounded-xl border border-[#F28C52]/25 bg-black/45 p-4 shadow-lg shadow-black/20`}
-        >
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <p className="font-semibold text-white">{comment.name}</p>
+        {renderCommentCard(comment, true)}
 
-            <p className="text-xs text-gray-500">
-              {formatCommentDate(comment.created_at)}
-              {comment.updated_at !== comment.created_at ? " • Edited" : ""}
-            </p>
+        {allReplies.length > 0 && (
+          <div className="mt-3">
+            <button
+              onClick={() => toggleThread(comment.id)}
+              className="rounded-full border border-white/15 px-3 py-1 text-xs font-bold text-white/70 hover:border-[#F28C52]/50 hover:text-[#F28C52]"
+            >
+              {expanded
+                ? "Hide replies"
+                : `View ${allReplies.length} ${
+                    allReplies.length === 1 ? "reply" : "replies"
+                  }`}
+            </button>
           </div>
-
-          {editingCommentId === comment.id ? (
-            <div className="mt-3">
-              <textarea
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-                className="min-h-[90px] w-full rounded-xl border border-white/10 bg-black/50 p-3 text-white outline-none focus:border-[#F28C52]"
-              />
-
-              <div className="mt-2 flex flex-wrap gap-2">
-                <button
-                  onClick={() => updateComment(comment.id)}
-                  className="rounded-lg bg-[#F28C52] px-3 py-2 text-sm font-semibold text-black hover:bg-[#C96A2C]"
-                >
-                  Save
-                </button>
-
-                <button
-                  onClick={() => {
-                    setEditingCommentId("");
-                    setEditText("");
-                  }}
-                  className="rounded-lg border border-white/15 px-3 py-2 text-sm font-semibold text-white/80 hover:border-[#F28C52] hover:text-[#F28C52]"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-300">
-              {comment.comment}
-            </p>
-          )}
-
-          <div className="mt-3 flex flex-wrap gap-2 text-sm">
-            {currentUserId && (
-              <button
-                onClick={() => {
-                  setReplyingTo(comment.id);
-                  setReplyText("");
-                }}
-                className="rounded-full border border-[#F28C52]/30 px-3 py-1 text-xs font-bold text-[#F28C52] hover:bg-[#F28C52] hover:text-black"
-              >
-                Reply
-              </button>
-            )}
-
-            {(comment.user_id === currentUserId || isAdmin) && (
-              <>
-                <button
-                  onClick={() => {
-                    setEditingCommentId(comment.id);
-                    setEditText(comment.comment);
-                  }}
-                  className="rounded-full border border-white/15 px-3 py-1 text-xs font-bold text-white/60 hover:border-white/40 hover:text-white"
-                >
-                  Edit
-                </button>
-
-                <button
-                  onClick={() => deleteComment(comment.id)}
-                  className="rounded-full border border-red-400/25 px-3 py-1 text-xs font-bold text-red-300 hover:bg-red-500/10"
-                >
-                  Delete
-                </button>
-              </>
-            )}
-          </div>
-
-          {replyingTo === comment.id && (
-            <div className="mt-4 rounded-xl border border-[#F28C52]/20 bg-black/35 p-3">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#F28C52]/80">
-                Replying to {comment.name}
-              </p>
-
-              <textarea
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                placeholder="Write a reply..."
-                className="min-h-[75px] w-full rounded-lg border border-white/10 bg-black/45 p-3 text-white outline-none focus:border-[#F28C52]"
-              />
-
-              <div className="mt-2 flex flex-wrap gap-2">
-                <button
-                  onClick={() => addComment(comment.id)}
-                  className="rounded-lg bg-[#F28C52] px-3 py-2 text-sm font-semibold text-black hover:bg-[#C96A2C]"
-                >
-                  Post Reply
-                </button>
-
-                <button
-                  onClick={() => {
-                    setReplyingTo("");
-                    setReplyText("");
-                  }}
-                  className="rounded-lg border border-white/15 px-3 py-2 text-sm font-semibold text-white/80 hover:border-[#F28C52] hover:text-[#F28C52]"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-
-          {directReplies.length > 0 && (
-            <div className="mt-5 space-y-3 border-l border-[#F28C52]/35 pl-4">
-              {repliesToShow.map((reply: any) => {
-  const nestedReplies = getAllThreadReplies(reply.id);
-
-  return (
-    <div key={reply.id}>
-      {renderComment(reply, 1)}
-
-      {expanded &&
-        nestedReplies.map((nestedReply: any) =>
-          renderComment(nestedReply, 1)
         )}
-    </div>
-  );
-})}
 
-              {hiddenReplyCount > 0 && (
-                <button
-                  onClick={() => toggleThread(comment.id)}
-                  className="rounded-full border border-white/15 px-3 py-1 text-xs font-bold text-white/70 hover:border-[#F28C52]/50 hover:text-[#F28C52]"
-                >
-                 {expanded
-  ? "Hide replies"
-  : `View ${hiddenReplyCount} ${
-      hiddenReplyCount === 1 ? "reply" : "replies"
-    }`}
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+        {expanded && (
+          <div className="mt-5 space-y-3 border-l border-[#F28C52]/35 pl-4">
+            {renderReplies(comment.id)}
+          </div>
+        )}
       </div>
     );
   }
@@ -2557,11 +2443,24 @@ const hiddenReplyCount = allReplies.length;
             </p>
           </div>
         ) : (
-          topLevelComments.map((comment: any) =>
+          visibleTopLevelComments.map((comment: any) =>
             renderTopLevelComment(comment)
           )
         )}
       </div>
+
+      {topLevelComments.length > 5 && (
+        <div className="mt-5 flex justify-center">
+          <button
+            onClick={() => setShowAllTopComments((prev) => !prev)}
+            className="rounded-full border border-[#F28C52]/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[#F28C52] hover:bg-[#F28C52] hover:text-black"
+          >
+            {showAllTopComments
+              ? "Show fewer comments"
+              : `View all ${topLevelComments.length} comments`}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
