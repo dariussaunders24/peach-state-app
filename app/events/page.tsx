@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import CanIRunThis from "../components/CanIRunThis";
+import { getGoogleCalendarUrl } from "../lib/calendar";
 import DownloadGalleryButton from "../components/DownloadGalleryButton";
 const adminEmails = ["dariussaunders24@gmail.com"];
 
@@ -1670,7 +1671,7 @@ function EventCard({
           )}
         </div>
 
-  <div className="flex justify-center">
+ <div className="flex items-center justify-center gap-3">
   <CanIRunThis
     eventTitle={event.title}
     requirements={{
@@ -1693,6 +1694,15 @@ function EventCard({
       ],
     }}
   />
+
+  <a
+    href={getGoogleCalendarUrl(event)}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="rounded-xl border border-green-500/60 bg-green-500/10 px-4 py-3 text-center text-xs font-bold uppercase tracking-wide text-green-300 transition hover:bg-green-500 hover:text-white"
+  >
+    Add Event to Calendar
+  </a>
 </div>
      <div className="flex flex-col gap-3">
   <div className="grid grid-cols-2 gap-3">
