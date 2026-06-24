@@ -1622,7 +1622,7 @@ function EventCard({
   }
 
   const publicLocation = event.public_location || event.location;
-
+const sameButtonSize = "h-12 w-full";
   return (
     <div className="overflow-hidden rounded-xl border border-[#F28C52]/20 bg-black/40">
       {event.cover_photo_url && (
@@ -1699,7 +1699,7 @@ function EventCard({
     href={getGoogleCalendarUrl(event)}
     target="_blank"
     rel="noopener noreferrer"
-    className="rounded-xl border border-green-500/60 bg-green-500/10 px-4 py-3 text-center text-xs font-bold uppercase tracking-wide text-green-300 transition hover:bg-green-500 hover:text-white"
+    className={`${sameButtonSize} rounded-xl border border-green-500/60 bg-green-500/10 px-4 py-3 text-center text-sm font-bold uppercase tracking-wide text-green-300 transition hover:bg-green-500 hover:text-white`}
   >
     Add Event to Calendar
   </a>
@@ -1708,14 +1708,14 @@ function EventCard({
   <div className="grid grid-cols-2 gap-3">
     <Link
       href={`/events/${event.id}`}
-      className="rounded-xl border-2 border-[#F28C52]/70 bg-[#F28C52]/10 px-4 py-3 text-center text-sm font-bold uppercase tracking-wide text-[#F28C52] transition hover:bg-[#F28C52] hover:text-black"
+      className={`${sameButtonSize} rounded-xl border-2 border-[#F28C52]/70 bg-[#F28C52]/10 px-4 py-3 text-center text-sm font-bold uppercase tracking-wide text-[#F28C52] transition hover:bg-[#F28C52] hover:text-black`}
     >
       View Event Details
     </Link>
 
     <Link
       href={`/events/${event.id}`}
-      className="rounded-xl border border-blue-500/60 bg-blue-500/10 px-4 py-3 text-center text-sm font-bold uppercase tracking-wide text-blue-300 transition hover:bg-blue-500 hover:text-white"
+      className={`${sameButtonSize} rounded-xl border border-blue-500/60 bg-blue-500/10 px-4 py-3 text-center text-sm font-bold uppercase tracking-wide text-blue-300 transition hover:bg-blue-500 hover:text-white`}
     >
       View Event Comments
     </Link>
