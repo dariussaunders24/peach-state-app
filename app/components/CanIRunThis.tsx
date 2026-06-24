@@ -638,7 +638,7 @@ if (
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="h-12 w-full rounded-xl border border-red-400 bg-red-500/20 px-4 py-3 text-sm font-bold uppercase tracking-wide text-red-200 transition hover:bg-red-500 hover:text-white"
+        className="flex h-12 w-full items-center justify-center rounded-xl border border-red-400 bg-red-500/20 px-4 py-2 text-center text-sm font-bold uppercase tracking-wide text-red-200 transition hover:bg-red-500 hover:text-white"
       >
         Can I Run This Trail?
       </button>
