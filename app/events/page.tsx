@@ -489,12 +489,29 @@ cutoff.setHours(cutoff.getHours() - 24);
         message: `A spot opened up for ${event.title}. You've been moved from the waitlist to Going.`,
       });
 
-    if (notificationError) {
-      alert(notificationError.message);
-      return false;
-    }
+  if (notificationError) {
+  alert(notificationError.message);
+  return false;
+}
 
-    return true;
+const emailResponse = await fetch("/api/notify-waitlist-promoted", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    userId: rsvp.user_id,
+    eventTitle: event.title,
+    eventId: event.id,
+  }),
+});
+
+if (!emailResponse.ok) {
+  const emailResult = await emailResponse.json();
+  console.error("Waitlist promotion email failed:", emailResult);
+}
+
+return true;
   }
 
   async function deleteEvent(eventId: string) {
@@ -652,28 +669,9 @@ cutoff.setHours(cutoff.getHours() - 24);
     if (nextWaitlist && nextWaitlist.length > 0) {
       const promotedUser = nextWaitlist[0];
 
-      const { error: promoteError } = await supabase
-        .from("rsvps")
-        .update({ status: "going" })
-        .eq("id", promotedUser.id);
+   const promoted = await promoteRsvpToGoing(promotedUser, event);
 
-      if (promoteError) {
-        alert(promoteError.message);
-        return;
-      }
-
-  const { error: notificationError } = await supabase
-  .from("notifications")
-  .insert({
-    user_id: promotedUser.user_id,
-    title: "You're In!",
-    message: `A spot opened up for ${event.title}. You've been moved from the waitlist to Going.`,
-  });
-
-if (notificationError) {
-  alert(notificationError.message);
-  return;
-}
+if (!promoted) return;
     }
   }
 

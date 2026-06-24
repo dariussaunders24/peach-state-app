@@ -372,21 +372,58 @@ export default function EventDetailPage() {
     await loadPage();
   }
 
-  async function moveToGoing(rsvpId: string) {
-    if (!canManageAttendance) return;
+async function moveToGoing(rsvpId: string) {
+  if (!canManageAttendance || !event) return;
 
-    const { error } = await supabase
-      .from("rsvps")
-      .update({ status: "going" })
-      .eq("id", rsvpId);
+  const promotedUser = waitlist.find((person: any) => person.id === rsvpId);
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+  const { error } = await supabase
+    .from("rsvps")
+    .update({ status: "going" })
+    .eq("id", rsvpId);
 
-    await loadPage();
+  if (error) {
+    alert(error.message);
+    return;
   }
+
+  if (!promotedUser?.user_id) {
+    alert("Moved to Going, but user ID was missing so no notification/email was sent.");
+    await loadPage();
+    return;
+  }
+
+  const { error: notificationError } = await supabase
+    .from("notifications")
+    .insert({
+      user_id: promotedUser.user_id,
+      title: "You're In!",
+      message: `A spot opened up for ${event.title}. You've been moved from the waitlist to Going.`,
+    });
+
+  if (notificationError) {
+    alert(notificationError.message);
+  }
+
+  const emailResponse = await fetch("/api/notify-waitlist-promoted", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      userId: promotedUser.user_id,
+      eventTitle: event.title,
+      eventId: event.id,
+    }),
+  });
+
+  if (!emailResponse.ok) {
+    const emailResult = await emailResponse.json();
+    alert(JSON.stringify(emailResult, null, 2));
+  }
+
+  await loadPage();
+}
 
   async function removeRsvp(rsvpId: string) {
     if (!canManageAttendance) return;
