@@ -440,7 +440,7 @@ export default function EventDetailPage() {
     <img
       src={event.cover_photo_url}
       alt={event.title}
-      className="max-h-[350px] w-auto max-w-full rounded-xl bg-black object-contain"
+      className="max-h-[650px] w-auto max-w-full rounded-xl bg-black object-contain"
     />
   </div>
 )}
