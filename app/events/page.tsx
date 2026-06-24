@@ -1113,22 +1113,18 @@ return (
    ) : (
   <div className="grid gap-5 lg:grid-cols-2">
     {events.map((event) => (
-      <EventCard
-        key={event.id}
-        event={event}
-        rsvp={rsvp}
-        cancelRsvp={cancelRsvp}
-        currentUserId={currentUserId}
-        isAdmin={isAdmin}
-        canManageAttendance={canManageAttendance}
-        updateEvent={openEditEvent}
-        deleteEvent={deleteEvent}
-        uploadCoverPhoto={uploadCoverPhoto}
-        adminUpdateRsvpStatus={adminUpdateRsvpStatus}
-        adminRemoveRsvp={adminRemoveRsvp}
-        copyEventEmails={copyEventEmails}
-        loadEvents={loadEvents}
-      />
+ <EventCard
+  key={event.id}
+  event={event}
+  rsvp={rsvp}
+  cancelRsvp={cancelRsvp}
+  currentUserId={currentUserId}
+  isAdmin={isAdmin}
+  updateEvent={openEditEvent}
+  deleteEvent={deleteEvent}
+  uploadCoverPhoto={uploadCoverPhoto}
+  copyEventEmails={copyEventEmails}
+/>
     ))}
   </div>
 )}
@@ -1597,165 +1593,14 @@ function EventCard({
   cancelRsvp,
   currentUserId,
   isAdmin,
-   canManageAttendance,
   updateEvent,
   deleteEvent,
   uploadCoverPhoto,
-  adminUpdateRsvpStatus,
-  adminRemoveRsvp,
   copyEventEmails,
   loadEvents,
 }: any) {
   const [userStatus, setUserStatus] = useState("");
-  const [showDetails, setShowDetails] = useState(false);
-const [comments, setComments] = useState<any[]>([]);
-const [newComment, setNewComment] = useState("");
-const [replyingTo, setReplyingTo] = useState("");
-const [replyText, setReplyText] = useState("");
-const [editingCommentId, setEditingCommentId] = useState("");
-const [editText, setEditText] = useState("");
 
-useEffect(() => {
-  loadComments();
-}, []);
-
-async function loadComments() {
-  const { data, error } = await supabase
-    .from("event_comments")
-    .select("*")
-    .eq("event_id", event.id)
-    .order("created_at", { ascending: true });
-
-  if (error) {
-    console.error(error.message);
-    return;
-  }
-
-  const commentsWithNames = await Promise.all(
-    (data || []).map(async (comment) => {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("name")
-        .eq("user_id", comment.user_id)
-        .maybeSingle();
-
-      return {
-        ...comment,
-        name: profile?.name || "Member",
-      };
-    })
-  );
-
-  setComments(commentsWithNames);
-}
-
-async function addComment(parentId: string | null = null) {
-  const text = parentId ? replyText.trim() : newComment.trim();
-
-  if (!text || !currentUserId) return;
-
-  const { data: insertedComment, error } = await supabase
-    .from("event_comments")
-    .insert({
-      event_id: event.id,
-      user_id: currentUserId,
-      parent_id: parentId,
-      comment: text,
-    })
-    .select("id")
-    .single();
-
-  if (error) {
-    alert(error.message);
-    return;
-  }
-
-  if (insertedComment?.id) {
-    fetch("/api/event-comment-notifications", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        eventId: event.id,
-        commentId: insertedComment.id,
-      }),
-    });
-  }
-
-  setNewComment("");
-  setReplyText("");
-  setReplyingTo("");
-
-  await loadComments();
-}
-
-async function updateComment(commentId: string) {
-  if (!editText.trim()) return;
-
-  const { error } = await supabase
-    .from("event_comments")
-    .update({
-      comment: editText.trim(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", commentId);
-
-  if (error) {
-    alert(error.message);
-    return;
-  }
-
-  setEditingCommentId("");
-  setEditText("");
-
-  await loadComments();
-}
-
-async function deleteComment(commentId: string) {
-  if (!confirm("Delete this comment?")) return;
-
-  if (isAdmin) {
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token;
-
-    if (!token) {
-      alert("You must be logged in.");
-      return;
-    }
-
-    const response = await fetch("/api/admin/delete-event-comment", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ commentId }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      alert(result.error || "Could not delete comment.");
-      return;
-    }
-
-    await loadComments();
-    return;
-  }
-
-  const { error } = await supabase
-    .from("event_comments")
-    .delete()
-    .eq("id", commentId);
-
-  if (error) {
-    alert(error.message);
-    return;
-  }
-
-  await loadComments();
-}
   useEffect(() => {
     if (currentUserId) {
       loadStatus();
@@ -1772,315 +1617,127 @@ async function deleteComment(commentId: string) {
       .eq("user_id", currentUserId)
       .limit(1);
 
-    if (data && data.length > 0) {
-      setUserStatus(data[0].status);
-    } else {
-      setUserStatus("");
-    }
+    setUserStatus(data && data.length > 0 ? data[0].status : "");
   }
 
-  const canViewPrivateDetails =
-    isAdmin || userStatus === "going" || userStatus === "waitlist";
-
   const publicLocation = event.public_location || event.location;
-  const bringItems = event.bring_items || [];
-  const goingAttendees =
-    event.attendees?.filter((a: any) => a.status === "going") || [];
-  const waitlistAttendees =
-    event.attendees?.filter((a: any) => a.status === "waitlist") || [];
 
   return (
     <div className="overflow-hidden rounded-xl border border-[#F28C52]/20 bg-black/40">
-{event.cover_photo_url && (
-  <div className="flex justify-center border-b border-[#F28C52]/20 bg-black/40 p-3 sm:p-4">
-    <img
-      src={event.cover_photo_url}
-      alt={event.title}
-      className="max-h-[105vh] w-full max-w-lg rounded-xl object-contain"
-    />
-  </div>
-)}
+      {event.cover_photo_url && (
+        <img
+  src={event.cover_photo_url}
+  alt={event.title}
+  className="max-h-[420px] w-full bg-black object-contain"
+/>
+      )}
 
-      <div className="p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="space-y-4 p-5">
+        <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-xl font-bold text-white">{event.title}</h3>
+            <h3 className="font-cinzel text-xl font-bold text-white">
+              {event.title}
+            </h3>
 
             {publicLocation && (
-              <p className="text-gray-300">Area: {publicLocation}</p>
+              <p className="mt-1 text-sm text-gray-300">
+                {publicLocation}
+              </p>
+            )}
+
+            {event.event_date && (
+              <p className="mt-1 text-sm text-gray-400">
+                {new Date(event.event_date).toLocaleString()}
+              </p>
             )}
           </div>
 
           <StatusBadge status={userStatus} />
         </div>
 
-        {event.difficulty && (
-          <p className="mt-2 text-sm font-semibold text-[#F28C52]">
-            Difficulty: {event.difficulty}
+        <div className="rounded-lg border border-white/10 bg-black/30 p-3">
+          <p className="text-sm text-gray-300">
+            <span className="font-semibold text-white">
+              {event.goingCount} / {event.capacity}
+            </span>{" "}
+            going
           </p>
-        )}
 
-        {event.event_date && (
-          <p className="mt-2 text-sm text-gray-400">
-            {new Date(event.event_date).toLocaleString()}
-          </p>
-        )}
-
-        <p className="mt-2 text-sm text-gray-400">
-          {event.goingCount} / {event.capacity} going
-        </p>
-
-        {event.waitlistCount > 0 && (
-          <p className="text-sm text-yellow-300">
-            Waitlist: {event.waitlistCount}
-          </p>
-        )}
-
-      {showDetails && bringItems.length > 0 && (
-  <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-4">
-    <h4 className="font-semibold text-white">What to Bring</h4>
-    <div className="mt-3 grid gap-2 sm:grid-cols-2">
-      {bringItems.map((item: string) => (
-        <div key={item} className="text-sm text-gray-300">
-          ✓ {item}
-        </div>
-      ))}
-    </div>
-  </div>
-)}
-
-        {showDetails && (
-  <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-4">
-    {canViewPrivateDetails ? (
-            <div className="space-y-3">
-              <p className="text-sm font-semibold text-[#F28C52]">
-                RSVP Details
-              </p>
-
-              {event.private_location ? (
-                <p className="text-sm text-white">
-                  <span className="text-gray-400">Exact location:</span>{" "}
-                  {event.private_location}
-                </p>
-              ) : (
-                <p className="text-sm text-gray-400">
-                  Exact location has not been added yet.
-                </p>
-              )}
-
-              {event.private_details && (
-                <p className="whitespace-pre-line text-sm text-gray-300">
-                  {event.private_details}
-                </p>
-              )}
-
-              <RouteHub event={event} />
-            </div>
-          ) : (
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg">
-                🔒
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-white">
-                  Details unlock after RSVP
-                </p>
-
-                <p className="mt-1 text-sm leading-6 text-gray-400">
-                  Exact meetup location, Route Hub links, and event instructions
-                  are visible after RSVP to help manage space, safety, and group
-                  size.
-                </p>
-              </div>
-            </div>
+          {event.waitlistCount > 0 && (
+            <p className="mt-1 text-sm text-yellow-300">
+              Waitlist: {event.waitlistCount}
+            </p>
           )}
         </div>
-        )}
 
-      {showDetails && (
-  <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-4">
-    <h4 className="font-semibold text-white">Attendees</h4>
-
-  {goingAttendees.length === 0 && waitlistAttendees.length === 0 ? (
-    <p className="mt-2 text-sm text-gray-400">No RSVPs yet.</p>
-  ) : (
-    <div className="mt-3 space-y-4">
-      {goingAttendees.length > 0 && (
-        <div>
-          <p className="text-sm font-semibold text-green-300">Going</p>
-
-          <div className="mt-2 flex flex-col gap-2">
-            {goingAttendees.map((attendee: any) => (
-              <div
-                key={`${event.id}-${attendee.user_id}`}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-green-400/20 bg-green-500/10 px-3 py-2"
-              >
-                <a
-                  href={`/members/${attendee.user_id}`}
-                  className="text-sm text-green-200 hover:text-green-100"
-                >
-                  {attendee.profiles?.name || "Member"}
-                </a>
-
-                {canManageAttendance && (
-                  <div className="flex flex-wrap gap-2">
-                    <label className="flex items-center gap-2 rounded border border-[#F28C52]/40 px-2 py-1 text-xs text-[#F28C52]">
-  <input
-    type="checkbox"
-    checked={attendee.checked_in ?? false}
-    onChange={async () => {
-      const { error } = await supabase
-        .from("rsvps")
-        .update({ checked_in: !(attendee.checked_in ?? false) })
-        .eq("id", attendee.id);
-
-      if (error) {
-        alert(error.message);
-        return;
-      }
-
-      await loadEvents();
+  <div className="flex justify-center">
+  <CanIRunThis
+    eventTitle={event.title}
+    requirements={{
+      difficulty: event.trail_difficulty || "moderate",
+      minTireDiameter: event.min_tire_diameter || 31,
+      recommendedLiftLevel: event.recommended_lift_level ?? 1,
+      stockFriendly: event.stock_friendly || false,
+      skidPlates: event.skid_plates_requirement || "recommended",
+      rockSliders: event.rock_sliders_requirement || "not_needed",
+      recoveryPointsRequired: event.recovery_points_required ?? true,
+      recoveryGearRequired: event.recovery_gear_required ?? true,
+      winch: event.winch_requirement || "recommended",
+      traction: event.traction_requirement || "factory_ok",
+      waterCrossings: event.water_crossings || "moderate",
+      pinstripingRisk: event.pinstriping_risk || "medium",
+      terrain: event.trail_terrain || [
+        "Ruts",
+        "Mud / Clay",
+        "Water Crossings",
+      ],
     }}
-    className="h-4 w-4 accent-[#F28C52]"
   />
-  Attended
-</label>
-                    <button
-                     onClick={() =>
-  adminUpdateRsvpStatus(
-    attendee.id,
-    "waitlist",
-    attendee.user_id,
-    event
-  )
-}
-
-                      className="rounded border border-yellow-300/40 px-2 py-1 text-xs text-yellow-200"
-                    >
-                      
-                      Move to Waitlist
-                    </button>
-
-                    <button
-                      onClick={() => adminRemoveRsvp(attendee.id, event, attendee.status)}
-                      className="rounded border border-red-400/40 px-2 py-1 text-xs text-red-300"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {waitlistAttendees.length > 0 && (
-        <div>
-          <p className="text-sm font-semibold text-yellow-300">
-            Waitlist
-          </p>
-
-          <div className="mt-2 flex flex-col gap-2">
-            {waitlistAttendees.map((attendee: any) => (
-              <div
-                key={`${event.id}-${attendee.user_id}`}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-yellow-300/20 bg-yellow-300/10 px-3 py-2"
-              >
-                <a
-                  href={`/members/${attendee.user_id}`}
-                  className="text-sm text-yellow-200 hover:text-yellow-100"
-                >
-                  {attendee.profiles?.name || "Member"}
-                </a>
-
-                {canManageAttendance && (
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                     onClick={() =>
-  adminUpdateRsvpStatus(
-    attendee.id,
-    "going",
-    attendee.user_id,
-    event
-  )
-}
-                      className="rounded border border-green-400/40 px-2 py-1 text-xs text-green-300"
-                    >
-                      Move to Going
-                    </button>
-
-                    <button
-                      onClick={() => adminRemoveRsvp(attendee.id, event, attendee.status)}
-                      className="rounded border border-red-400/40 px-2 py-1 text-xs text-red-300"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )}
 </div>
-)}
-<button
-  onClick={() => setShowDetails((prev) => !prev)}
-  className="mt-4 w-full rounded-xl border-2 border-[#F28C52]/70 bg-[#F28C52]/10 px-4 py-3 text-sm font-bold uppercase tracking-wide text-[#F28C52] transition hover:bg-[#F28C52] hover:text-black"
->
-  {showDetails ? "Hide Event Details" : "View Event Details"}
-</button>
+     <div className="flex flex-col gap-3">
+  <div className="grid grid-cols-2 gap-3">
+    <Link
+      href={`/events/${event.id}`}
+      className="rounded-xl border-2 border-[#F28C52]/70 bg-[#F28C52]/10 px-4 py-3 text-center text-sm font-bold uppercase tracking-wide text-[#F28C52] transition hover:bg-[#F28C52] hover:text-black"
+    >
+      View Event Details
+    </Link>
 
-        <div className="mt-4 flex flex-col gap-3">
-      <CanIRunThis
-  eventTitle={event.title}
-  requirements={{
-    difficulty: event.trail_difficulty || "moderate",
-    minTireDiameter: event.min_tire_diameter || 31,
-    recommendedLiftLevel: event.recommended_lift_level ?? 1,
-    stockFriendly: event.stock_friendly || false,
-    skidPlates: event.skid_plates_requirement || "recommended",
-    rockSliders: event.rock_sliders_requirement || "not_needed",
-    recoveryPointsRequired: event.recovery_points_required ?? true,
-    recoveryGearRequired: event.recovery_gear_required ?? true,
-    winch: event.winch_requirement || "recommended",
-    traction: event.traction_requirement || "factory_ok",
-    waterCrossings: event.water_crossings || "moderate",
-    pinstripingRisk: event.pinstriping_risk || "medium",
-    terrain: event.trail_terrain || ["Ruts", "Mud / Clay", "Water Crossings"],
-  }}
-/>
+    <Link
+      href={`/events/${event.id}`}
+      className="rounded-xl border border-blue-500/60 bg-blue-500/10 px-4 py-3 text-center text-sm font-bold uppercase tracking-wide text-blue-300 transition hover:bg-blue-500 hover:text-white"
+    >
+      View Event Comments
+    </Link>
+  </div>
 
+  {currentUserId &&
+    (userStatus ? (
+      <button
+        onClick={async () => {
+          await cancelRsvp(event);
+          await loadStatus();
+        }}
+        className="rounded-lg border border-red-400 px-4 py-2 text-red-300"
+      >
+        Cancel RSVP
+      </button>
+    ) : (
+      <button
+        onClick={async () => {
+          await rsvp(event);
+          await loadStatus();
+        }}
+        className="rounded-lg bg-white px-4 py-2 font-semibold text-black"
+      >
+        {event.goingCount >= event.capacity ? "Join Waitlist" : "RSVP"}
+      </button>
+    ))}
+</div>
 
-          {currentUserId &&
-            (userStatus ? (
-              <button
-                onClick={async () => {
-                  await cancelRsvp(event);
-                  await loadStatus();
-                }}
-                className="rounded-lg border border-red-400 px-4 py-2 text-red-300"
-              >
-                Cancel RSVP
-              </button>
-            ) : (
-              <button
-                onClick={async () => {
-                  await rsvp(event);
-                  await loadStatus();
-                }}
-                className="rounded-lg bg-white px-4 py-2 text-black"
-              >
-                {event.goingCount >= event.capacity ? "Join Waitlist" : "RSVP"}
-              </button>
-            ))}
-
-          {isAdmin && (
-            <label className="cursor-pointer rounded-lg border border-white/20 px-4 py-2 text-center font-semibold text-white hover:border-[#F28C52] hover:text-[#F28C52]">
+        {isAdmin && (
+          <div className="space-y-3 border-t border-white/10 pt-4">
+            <label className="block cursor-pointer rounded-lg border border-white/20 px-4 py-2 text-center font-semibold text-white hover:border-[#F28C52] hover:text-[#F28C52]">
               Upload Cover Photo
               <input
                 type="file"
@@ -2092,66 +1749,45 @@ async function deleteComment(commentId: string) {
                 }}
               />
             </label>
-          )}
 
-{isAdmin && (
-  <div className="flex flex-wrap gap-2">
-    
-    <button
-      onClick={() => updateEvent(event)}
-      className="rounded bg-yellow-400 px-3 py-1 text-black"
-    >
-      Edit
-    </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => updateEvent(event)}
+                className="rounded bg-yellow-400 px-3 py-1 text-black"
+              >
+                Edit
+              </button>
 
-    <button
-      onClick={() => deleteEvent(event.id)}
-      className="rounded bg-red-500 px-3 py-1 text-white"
-    >
-      Delete
-    </button>
+              <button
+                onClick={() => deleteEvent(event.id)}
+                className="rounded bg-red-500 px-3 py-1 text-white"
+              >
+                Delete
+              </button>
 
-    <button
-      onClick={() => copyEventEmails(event.id, "going")}
-      className="rounded bg-blue-500 px-3 py-1 text-white"
-    >
-      Copy Going Emails
-    </button>
+              <button
+                onClick={() => copyEventEmails(event.id, "going")}
+                className="rounded bg-blue-500 px-3 py-1 text-white"
+              >
+                Copy Going Emails
+              </button>
 
-    <button
-      onClick={() => copyEventEmails(event.id, "waitlist")}
-      className="rounded bg-purple-500 px-3 py-1 text-white"
-    >
-      Copy Waitlist Emails
-    </button>
+              <button
+                onClick={() => copyEventEmails(event.id, "waitlist")}
+                className="rounded bg-purple-500 px-3 py-1 text-white"
+              >
+                Copy Waitlist Emails
+              </button>
 
-    <button
-      onClick={() => copyEventEmails(event.id, "all")}
-      className="rounded bg-[#F28C52] px-3 py-1 text-black"
-    >
-      Copy All Emails
-    </button>
-  </div>
-)}
-<EventDiscussion
-  comments={comments}
-  currentUserId={currentUserId}
-  isAdmin={isAdmin}
-  newComment={newComment}
-  setNewComment={setNewComment}
-  addComment={addComment}
-  replyingTo={replyingTo}
-  setReplyingTo={setReplyingTo}
-  replyText={replyText}
-  setReplyText={setReplyText}
-  editingCommentId={editingCommentId}
-  setEditingCommentId={setEditingCommentId}
-  editText={editText}
-  setEditText={setEditText}
-  updateComment={updateComment}
-  deleteComment={deleteComment}
-  />
-        </div>
+              <button
+                onClick={() => copyEventEmails(event.id, "all")}
+                className="rounded bg-[#F28C52] px-3 py-1 text-black"
+              >
+                Copy All Emails
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

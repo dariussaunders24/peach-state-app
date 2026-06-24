@@ -266,7 +266,7 @@ const commenterIsRideCaptain =
     }
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
-    const eventUrl = `${siteUrl}/events`;
+    const eventUrl = `${siteUrl}/events/${eventId}`;
 
     const safeEventTitle = escapeHtml(event.title || "Event");
     const safeCommentText = escapeHtml(comment.comment || "");

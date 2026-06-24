@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "No users to notify" });
     }
 
-    const eventUrl = `https://www.peachstateoffroad.com/events`;
+    const eventUrl = `https://www.peachstateoffroad.com/events/${eventId}`;
 
     const emailBatches = [];
 
