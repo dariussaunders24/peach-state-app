@@ -44,11 +44,21 @@ export async function POST(req: Request) {
     const orderId = session.metadata?.order_id;
 
     if (orderId) {
+      const customerName =
+        session.customer_details?.name ||
+        session.collected_information?.shipping_details?.name ||
+        null;
+
+      const customerEmail =
+        session.customer_details?.email || session.customer_email || null;
+
       await supabaseAdmin
         .from("store_orders")
         .update({
           status: "paid",
           stripe_session_id: session.id,
+          customer_name: customerName,
+          customer_email: customerEmail,
         })
         .eq("id", orderId);
 
@@ -84,7 +94,23 @@ export async function POST(req: Request) {
           })
           .join("") || "";
 
-      await resend.emails.send({
+      const shipping = session.customer_details?.address;
+      const shippingBlock = shipping
+        ? `
+          <h3>Shipping Address</h3>
+          <p>
+            ${session.customer_details?.name || ""}<br />
+            ${shipping.line1 || ""}<br />
+            ${shipping.line2 ? `${shipping.line2}<br />` : ""}
+            ${shipping.city || ""}, ${shipping.state || ""} ${
+            shipping.postal_code || ""
+          }<br />
+            ${shipping.country || ""}
+          </p>
+        `
+        : "";
+
+      const { error: emailError } = await resend.emails.send({
         from: "Peach State Store <onboarding@resend.dev>",
         to: "dariussaunders24@gmail.com",
         subject: "New PSO Merch Order Received",
@@ -100,18 +126,20 @@ export async function POST(req: Request) {
             <strong>Email:</strong> ${order?.customer_email || "N/A"}
           </p>
 
+          ${shippingBlock}
+
           <h3>Items</h3>
           <ul>${itemList}</ul>
 
-          ${
-            order?.notes
-              ? `<h3>Notes</h3><p>${order.notes}</p>`
-              : ""
-          }
+          ${order?.notes ? `<h3>Notes</h3><p>${order.notes}</p>` : ""}
 
           <p><strong>Stripe Session:</strong> ${session.id}</p>
         `,
       });
+
+      if (emailError) {
+        console.error("Store order email failed:", emailError);
+      }
     }
   }
 
