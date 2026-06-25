@@ -61,9 +61,6 @@ export default function StorePage() {
   const [color, setColor] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [cart, setCart] = useState<CartItem[]>([]);
-
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
   const [checkingOut, setCheckingOut] = useState(false);
 
@@ -139,8 +136,6 @@ export default function StorePage() {
   async function submitOrder() {
     if (checkingOut) return;
     if (cart.length === 0) return alert("Please add at least one item.");
-    if (!name.trim()) return alert("Name is required.");
-    if (!email.trim()) return alert("Email is required.");
 
     try {
       setCheckingOut(true);
@@ -152,8 +147,6 @@ export default function StorePage() {
         },
         body: JSON.stringify({
           cart,
-          name,
-          email,
           notes,
         }),
       });
@@ -180,6 +173,7 @@ export default function StorePage() {
         <h1 className="text-3xl font-bold text-[#F28C52]">
           Peach State Merch Store
         </h1>
+        
 
         <p className="mt-3 max-w-3xl text-gray-300">
           Order Peach State shirts, stickers, banners, and vinyl decals. Add
@@ -383,8 +377,8 @@ export default function StorePage() {
               </p>
 
               <p className="mt-2 text-sm text-gray-400">
-                Checkout securely online. Shipping information will be collected
-                during payment.
+                Contact, payment, and shipping details are collected securely by
+                Stripe during checkout.
               </p>
             </div>
           </div>
@@ -394,35 +388,16 @@ export default function StorePage() {
       <section className="rounded-2xl border border-[#F28C52]/30 bg-black/40 p-6">
         <h2 className="text-2xl font-bold text-[#F28C52]">Checkout</h2>
 
-        <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm text-gray-200">Name</label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-lg bg-white p-3 text-black"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm text-gray-200">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg bg-white p-3 text-black"
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="mb-2 block text-sm text-gray-200">Notes</label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Pickup preference, special request, alternate contact info, etc."
-              className="min-h-28 w-full rounded-lg bg-white p-3 text-black placeholder-gray-500"
-            />
-          </div>
+        <div className="mt-5">
+          <label className="mb-2 block text-sm text-gray-200">
+            Order Notes
+          </label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Pickup preference, special request, alternate contact info, etc."
+            className="min-h-28 w-full rounded-lg bg-white p-3 text-black placeholder-gray-500"
+          />
         </div>
 
         <button
