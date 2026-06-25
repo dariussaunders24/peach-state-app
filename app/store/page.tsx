@@ -65,6 +65,7 @@ export default function StorePage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
+  const [checkingOut, setCheckingOut] = useState(false);
 
   const cartTotal = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -82,7 +83,9 @@ export default function StorePage() {
 
     if (!qty || qty < 1) return alert("Quantity must be at least 1.");
     if (selectedProduct.hasSize && !size) return alert("Please select a size.");
-    if (selectedProduct.hasColor && !color) return alert("Please select a color.");
+    if (selectedProduct.hasColor && !color) {
+      return alert("Please select a color.");
+    }
 
     const existingItem = cart.find(
       (item) =>
@@ -133,42 +136,42 @@ export default function StorePage() {
     );
   }
 
-  function submitOrder() {
+  async function submitOrder() {
+    if (checkingOut) return;
     if (cart.length === 0) return alert("Please add at least one item.");
     if (!name.trim()) return alert("Name is required.");
     if (!email.trim()) return alert("Email is required.");
 
-    const subject = encodeURIComponent("Peach State Merch Order Request");
+    try {
+      setCheckingOut(true);
 
-    const orderItems = cart
-      .map(
-        (item, index) => `${index + 1}. ${item.name}
-Price: $${item.price}
-Quantity: ${item.quantity}
-${item.size ? `Size: ${item.size}` : ""}
-${item.color ? `Color: ${item.color}` : ""}
-Line Total: $${item.price * item.quantity}`
-      )
-      .join("\n\n");
+      const res = await fetch("/api/store/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          cart,
+          name,
+          email,
+          notes,
+        }),
+      });
 
-    const body = encodeURIComponent(`
-Peach State Merch Order Request
+      const data = await res.json();
 
-Name: ${name}
-Email: ${email}
+      if (!res.ok) {
+        alert(data.error || "Checkout failed.");
+        setCheckingOut(false);
+        return;
+      }
 
-Order Items:
-${orderItems}
-
-Estimated Total: $${cartTotal}
-
-Notes:
-${notes || "None"}
-
-Please send PayPal invoice details.
-`);
-
-    window.location.href = `mailto:dariussaunders24@gmail.com?subject=${subject}&body=${body}`;
+      window.location.href = data.url;
+    } catch (error) {
+      console.error(error);
+      alert("Checkout failed. Please try again.");
+      setCheckingOut(false);
+    }
   }
 
   return (
@@ -180,7 +183,7 @@ Please send PayPal invoice details.
 
         <p className="mt-3 max-w-3xl text-gray-300">
           Order Peach State shirts, stickers, banners, and vinyl decals. Add
-          multiple items to your cart and submit one order request.
+          multiple items to your cart and checkout securely online.
         </p>
       </section>
 
@@ -380,8 +383,8 @@ Please send PayPal invoice details.
               </p>
 
               <p className="mt-2 text-sm text-gray-400">
-                Payment is not collected on this site. After submitting, an
-                invoice will be sent manually.
+                Checkout securely online. Shipping information will be collected
+                during payment.
               </p>
             </div>
           </div>
@@ -389,9 +392,7 @@ Please send PayPal invoice details.
       </section>
 
       <section className="rounded-2xl border border-[#F28C52]/30 bg-black/40 p-6">
-        <h2 className="text-2xl font-bold text-[#F28C52]">
-          Submit Order Request
-        </h2>
+        <h2 className="text-2xl font-bold text-[#F28C52]">Checkout</h2>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           <div>
@@ -426,9 +427,10 @@ Please send PayPal invoice details.
 
         <button
           onClick={submitOrder}
-          className="mt-5 w-full rounded-lg bg-[#F28C52] px-5 py-3 font-semibold text-black hover:bg-[#C96A2C]"
+          disabled={checkingOut}
+          className="mt-5 w-full rounded-lg bg-[#F28C52] px-5 py-3 font-semibold text-black hover:bg-[#C96A2C] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Submit Order Request
+          {checkingOut ? "Opening Checkout..." : "Checkout"}
         </button>
       </section>
     </div>
