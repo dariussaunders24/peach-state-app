@@ -15,9 +15,10 @@ const productPriceMap: Record<string, number> = {
   "hoodie-2": 7000,
   "hat-1": 3000,
 "hat-2": 3000,
+"can-coozie": 350,
   sticker: 300,
-  banner: 5000,
-  "window-vinyl": 1500,
+  banner: 5500,
+  "window-vinyl": 2000,
 };
 
 export async function POST(req: Request) {
