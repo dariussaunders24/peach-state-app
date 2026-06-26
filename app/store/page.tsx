@@ -68,7 +68,7 @@ const products = [
   {
     id: "banner",
     name: '6" x 36" Windshield Banner Vinyl',
-    price: 50,
+    price: 55,
     image: "/store/windshield-banner.png",
     description: "Large Peach State windshield banner vinyl.",
     hasSize: false,
@@ -77,7 +77,7 @@ const products = [
   {
     id: "window-vinyl",
     name: '6" x 6" Window Vinyl',
-    price: 15,
+    price: 20,
     image: "/store/window-vinyl.png",
     description: 'Peach State 6" x 6" window vinyl.',
     hasSize: false,
