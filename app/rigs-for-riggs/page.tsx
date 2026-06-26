@@ -116,7 +116,7 @@ With heavy hearts, we are saddened to share that Riggs recently passed away surr
 - Please contact event coordinators directly if you have any other questions.
 
 
-Date: Saturday, June 28, 2026
+Date: Sunday, June 28, 2026
 
 Arrival & Check-In: 12:30 PM
 
