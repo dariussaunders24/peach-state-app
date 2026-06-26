@@ -16,6 +16,7 @@ const productPriceMap: Record<string, number> = {
   "hat-1": 3000,
 "hat-2": 3000,
 "can-coozie": 350,
+"water-bottle": 4000,
   sticker: 300,
   banner: 5500,
   "window-vinyl": 2000,
