@@ -65,6 +65,16 @@ const products = [
   hasSize: false,
   hasColor: false,
 },
+{
+  id: "water-bottle",
+  name: "Peach State Engraved 32oz Water Bottle ",
+  price: 40,
+  image: "/store/waterbottle.png",
+  description: "Peach State logo water bottle. Available in multiple colors",
+  hasSize: false,
+  hasColor: true,
+  colors: ["Orange", "Black", "Blue", "White"],
+},
   {
     id: "sticker",
     name: '3" Round Group Sticker',
