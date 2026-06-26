@@ -15,6 +15,48 @@ const products = [
     sizes: ["S", "M", "L", "XL", "2XL", "3XL"],
   },
   {
+  id: "hoodie-1",
+  name: "Classic Logo Peach State Hoodie ",
+  price: 70,
+  image: "/store/hoodie.png",
+  description: "Midweight Unisex Hoodie",
+  hasSize: true,
+  hasColor: true,
+  colors: ["Gray", "Black", "Blue", "Green", "White"],
+  sizes: ["S", "M", "L", "XL", "XXL"],
+},
+{
+  id: "hoodie-2",
+  name: "Peach State Hoodie",
+  price: 70,
+  image: "/store/hoodie2.png",
+  description: "Midweight Unisex Hoodie",
+  hasSize: true,
+  hasColor: true,
+  colors: ["Gray", "Black", "Blue", "Green", "White"],
+  sizes: ["S", "M", "L", "XL", "XXL"],
+},
+{
+  id: "hat-1",
+  name: "Classic Logo Peach State Hat ",
+  price: 30,
+  image: "/store/hat1.png",
+  description: "Classic Peach State logo hat.",
+  hasSize: false,
+  hasColor: true,
+  colors: ["Gray", "Black", "Blue", "White"],
+  },
+{
+  id: "hat-2",
+  name: "Peach State Hat ",
+  price: 30,
+  image: "/store/hat2.png",
+  description: "Peach State logo hat.",
+  hasSize: false,
+  hasColor: true,
+  colors: ["Gray", "Black", "Blue", "White"],
+},
+  {
     id: "sticker",
     name: '3" Round Group Sticker',
     price: 3,
@@ -56,6 +98,7 @@ type CartItem = {
 };
 
 export default function StorePage() {
+  
   const [selectedProduct, setSelectedProduct] = useState<Product>(products[0]);
   const [size, setSize] = useState("");
   const [color, setColor] = useState("");

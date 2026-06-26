@@ -11,6 +11,10 @@ const supabaseAdmin = createClient(
 
 const productPriceMap: Record<string, number> = {
   shirts: 2500,
+  "hoodie-1": 7000,
+  "hoodie-2": 7000,
+  "hat-1": 3000,
+"hat-2": 3000,
   sticker: 300,
   banner: 5000,
   "window-vinyl": 1500,
@@ -18,7 +22,7 @@ const productPriceMap: Record<string, number> = {
 
 export async function POST(req: Request) {
   try {
-    const { cart, name, email, notes } = await req.json();
+    const { cart, notes } = await req.json();
 
     if (!cart || cart.length === 0) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
@@ -26,14 +30,17 @@ export async function POST(req: Request) {
 
     const total = cart.reduce((sum: number, item: any) => {
       const unitAmount = productPriceMap[item.productId];
+
+      if (!unitAmount) {
+        throw new Error(`Invalid product: ${item.productId}`);
+      }
+
       return sum + unitAmount * item.quantity;
     }, 0);
 
     const { data: order, error: orderError } = await supabaseAdmin
       .from("store_orders")
       .insert({
-        customer_name: name,
-        customer_email: email,
         total,
         status: "checkout_started",
         notes: notes || null,
@@ -82,6 +89,10 @@ export async function POST(req: Request) {
     const line_items = cart.map((item: any) => {
       const unitAmount = productPriceMap[item.productId];
 
+      if (!unitAmount) {
+        throw new Error(`Invalid product: ${item.productId}`);
+      }
+
       const details = [
         item.size ? `Size: ${item.size}` : null,
         item.color ? `Color: ${item.color}` : null,
@@ -103,15 +114,12 @@ export async function POST(req: Request) {
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      customer_email: email,
       line_items,
       shipping_address_collection: {
         allowed_countries: ["US"],
       },
       metadata: {
         order_id: order.id,
-        name,
-        email,
         notes: notes || "",
       },
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/store/success?order=${order.id}`,
