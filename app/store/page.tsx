@@ -30,7 +30,7 @@ const products = [
   name: "Peach State Hoodie. Available in multiple sizes and colors.",
   price: 70,
   image: "/store/hoodie2.png",
-  description: "Midweight Unisex Hoodie",
+  description: "Midweight Unisex Hoodie. Available in multiple sizes and colors.",
   hasSize: true,
   hasColor: true,
   colors: ["Gray", "Black", "Blue", "Green", "White"],
