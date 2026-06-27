@@ -319,25 +319,22 @@ export default function EventDetailPage() {
       return;
     }
 
-    if (currentRsvp.status === "going") {
-      const { data: nextWaitlist } = await supabase
-        .from("rsvps")
-        .select("*")
-        .eq("event_id", event.id)
-        .eq("status", "waitlist")
-        .order("created_at", { ascending: true })
-        .limit(1);
+if (currentRsvp.status === "going") {
+  const { data: nextWaitlist } = await supabase
+    .from("rsvps")
+    .select("*")
+    .eq("event_id", event.id)
+    .eq("status", "waitlist")
+    .order("created_at", { ascending: true })
+    .limit(1);
 
-      if (nextWaitlist && nextWaitlist.length > 0) {
-        await supabase
-          .from("rsvps")
-          .update({ status: "going" })
-          .eq("id", nextWaitlist[0].id);
-      }
-    }
+  if (nextWaitlist && nextWaitlist.length > 0) {
+    await moveToGoing(nextWaitlist[0].id, true);
+  }
+}
 
-    alert("Your RSVP has been canceled.");
-    await loadPage();
+alert("Your RSVP has been canceled.");
+await loadPage();
   }
 
   async function toggleAttendance(rsvpId: string, currentValue: boolean) {
@@ -372,10 +369,20 @@ export default function EventDetailPage() {
     await loadPage();
   }
 
-async function moveToGoing(rsvpId: string) {
-  if (!canManageAttendance || !event) return;
+async function moveToGoing(rsvpId: string, bypassPermission = false) {
+  if ((!canManageAttendance && !bypassPermission) || !event) return;
 
-  const promotedUser = waitlist.find((person: any) => person.id === rsvpId);
+  const { data: promotedUser, error: promotedUserError } = await supabase
+    .from("rsvps")
+    .select("id, user_id")
+    .eq("id", rsvpId)
+    .single();
+
+  if (promotedUserError || !promotedUser?.user_id) {
+    alert("Moved to Going, but could not find promoted user.");
+    await loadPage();
+    return;
+  }
 
   const { error } = await supabase
     .from("rsvps")
@@ -384,12 +391,6 @@ async function moveToGoing(rsvpId: string) {
 
   if (error) {
     alert(error.message);
-    return;
-  }
-
-  if (!promotedUser?.user_id) {
-    alert("Moved to Going, but user ID was missing so no notification/email was sent.");
-    await loadPage();
     return;
   }
 
@@ -419,25 +420,55 @@ async function moveToGoing(rsvpId: string) {
 
   if (!emailResponse.ok) {
     const emailResult = await emailResponse.json();
-    alert(JSON.stringify(emailResult, null, 2));
+    console.error("Waitlist promotion email failed:", emailResult);
   }
 
   await loadPage();
 }
 
   async function removeRsvp(rsvpId: string) {
-    if (!canManageAttendance) return;
-    if (!confirm("Remove this member from the RSVP list?")) return;
+  if (!canManageAttendance || !event) return;
 
-    const { error } = await supabase.from("rsvps").delete().eq("id", rsvpId);
+  const { data: rsvpToRemove, error: lookupError } = await supabase
+    .from("rsvps")
+    .select("id, status")
+    .eq("id", rsvpId)
+    .single();
 
-    if (error) {
-      alert(error.message);
+  if (lookupError || !rsvpToRemove) {
+    alert("Could not find RSVP to remove.");
+    return;
+  }
+
+  if (!confirm("Remove this member from the RSVP list?")) return;
+
+  const { error } = await supabase
+    .from("rsvps")
+    .delete()
+    .eq("id", rsvpId);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  if (rsvpToRemove.status === "going") {
+    const { data: nextWaitlist } = await supabase
+      .from("rsvps")
+      .select("id")
+      .eq("event_id", event.id)
+      .eq("status", "waitlist")
+      .order("created_at", { ascending: true })
+      .limit(1);
+
+    if (nextWaitlist && nextWaitlist.length > 0) {
+      await moveToGoing(nextWaitlist[0].id, true);
       return;
     }
-
-    await loadPage();
   }
+
+  await loadPage();
+}
 
   if (!event) {
     return <p className="text-gray-300">Loading event...</p>;

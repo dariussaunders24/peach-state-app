@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       );
     }
 
-    await resend.emails.send({
+    const { data: emailData, error: emailError } = await resend.emails.send({
       from: "Peach State Off-Road <notifications@peachstateoffroad.com>",
       to: data.user.email,
       subject: `You're in! A spot opened up for ${eventTitle}`,
@@ -48,7 +48,12 @@ export async function POST(req: Request) {
         </div>
       `,
     });
+if (emailError) {
+  console.error("Resend waitlist email error:", emailError);
+  return NextResponse.json({ error: emailError.message }, { status: 500 });
+}
 
+console.log("Waitlist promotion email sent:", emailData);
     return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json(
