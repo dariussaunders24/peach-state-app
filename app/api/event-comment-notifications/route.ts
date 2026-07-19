@@ -261,13 +261,13 @@ export async function POST(req: Request) {
       }
     }
 
-    const {
-      data: captainProfiles,
-      error: captainProfilesError,
-    } = await supabaseAdmin
-      .from("profiles")
-      .select("user_id, public_role")
-      .eq("public_role", "Ride Captain");
+  const {
+  data: captainProfiles,
+  error: captainProfilesError,
+} = await supabaseAdmin
+  .from("profiles")
+  .select("user_id, public_role")
+  .ilike("public_role", "%Ride Captain%");
 
     if (captainProfilesError) {
       console.error(
