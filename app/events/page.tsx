@@ -470,49 +470,85 @@ cutoff.setHours(cutoff.getHours() - 24);
     
   }
 
-  async function promoteRsvpToGoing(rsvp: any, event: any) {
-    const { error: promoteError } = await supabase
-      .from("rsvps")
-      .update({ status: "going" })
-      .eq("id", rsvp.id);
+async function promoteRsvpToGoing(rsvp: any, event: any) {
+  const { error: promoteError } = await supabase
+    .from("rsvps")
+    .update({ status: "going" })
+    .eq("id", rsvp.id);
 
-    if (promoteError) {
-      alert(promoteError.message);
+  if (promoteError) {
+    alert(promoteError.message);
+    return false;
+  }
+
+  // Send the in-app notification, but do not stop the email if this fails.
+  const { error: notificationError } = await supabase
+    .from("notifications")
+    .insert({
+      user_id: rsvp.user_id,
+      title: "You're In!",
+      message: `A spot opened up for ${event.title}. You've been moved from the waitlist to Going.`,
+    });
+
+  if (notificationError) {
+    console.error(
+      "Waitlist in-app notification failed:",
+      notificationError
+    );
+  }
+
+  try {
+    const emailResponse = await fetch(
+      "/api/notify-waitlist-promoted",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: rsvp.user_id,
+          eventTitle: event.title,
+          eventId: event.id,
+        }),
+      }
+    );
+
+    const emailResult = await emailResponse.json();
+
+    if (!emailResponse.ok) {
+      console.error(
+        "Waitlist promotion email failed:",
+        emailResult
+      );
+
+      alert(
+        `The member was moved to Going, but the email failed: ${
+          emailResult.error || "Unknown email error"
+        }`
+      );
+
       return false;
     }
 
-    const { error: notificationError } = await supabase
-      .from("notifications")
-      .insert({
-        user_id: rsvp.user_id,
-        title: "You're In!",
-        message: `A spot opened up for ${event.title}. You've been moved from the waitlist to Going.`,
-      });
+    console.log(
+      "Waitlist promotion email sent:",
+      emailResult
+    );
+  } catch (emailError) {
+    console.error(
+      "Waitlist promotion email request failed:",
+      emailError
+    );
 
-  if (notificationError) {
-  alert(notificationError.message);
-  return false;
-}
+    alert(
+      "The member was moved to Going, but the email request failed."
+    );
 
-const emailResponse = await fetch("/api/notify-waitlist-promoted", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    userId: rsvp.user_id,
-    eventTitle: event.title,
-    eventId: event.id,
-  }),
-});
-
-if (!emailResponse.ok) {
-  const emailResult = await emailResponse.json();
-  console.error("Waitlist promotion email failed:", emailResult);
-}
-
-return true;
+    return false;
   }
+
+  return true;
+}
 
   async function deleteEvent(eventId: string) {
     if (!confirm("Delete this event?")) return;
