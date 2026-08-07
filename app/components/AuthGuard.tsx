@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
-export default function AuthGuard({ children }: { children: React.ReactNode }) {
+export default function AuthGuard({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -12,7 +16,15 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   async function checkAccess() {
     const currentPath = window.location.pathname;
-    const publicPaths = ["/login", "/register", "/signup", "/banned", "/rigs-for-riggs"];
+
+    const publicPaths = [
+      "/login",
+      "/register",
+      "/signup",
+      "/banned",
+      "/thetrailhead",
+      "/thetrailhead/cancel",
+    ];
 
     if (publicPaths.includes(currentPath)) {
       setLoading(false);
@@ -60,13 +72,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#100B08] text-white">
-        <div className="rounded-2xl border border-[#F28C52]/30 bg-black/40 p-6 text-center shadow-xl">
-          <p className="text-sm text-white/70">Checking access...</p>
-        </div>
-      </div>
-    );
+    return <p>Checking access...</p>;
   }
 
   return <>{children}</>;
