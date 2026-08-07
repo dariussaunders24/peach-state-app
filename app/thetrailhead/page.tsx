@@ -172,7 +172,7 @@ export default function TheTrailhead() {
               <p>
                 This is more than a traditional car meet. The Trailhead is a
                 place for off-roaders, overlanders, outdoor enthusiasts,
-                families, and anyone interested in the community to get
+                families, pets and anyone interested in the community to get
                 together, check out different builds, meet new people, and
                 spend time with the community.
               </p>
@@ -201,8 +201,8 @@ export default function TheTrailhead() {
               />
 
               <FeatureCard
-                title="Featured Vendors"
-                text="This isn't an expo event to try to get you to buy things, so each month we plan to invite just 1-2 select vendors and industry partners to join us on site."
+                title="Featured Rigs"
+                text="Select vehicles will be chosen to park in our Featured Rig section. Apply via email to dariussaunders24@gmail.com for a chance to  be chosen."
               />
 
               <FeatureCard
