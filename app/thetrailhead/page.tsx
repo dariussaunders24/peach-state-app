@@ -1,9 +1,8 @@
 "use client";
 
 import { ReactNode, useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
 
-const CAPACITY = 35;
+const CAPACITY = 1;
 const EVENT_IMAGE = "/the-trailhead.png";
 
 export default function TheTrailhead() {
@@ -13,43 +12,46 @@ export default function TheTrailhead() {
   const [email, setEmail] = useState("");
   const [waiverAccepted, setWaiverAccepted] = useState(false);
 
-  const [registrationCount, setRegistrationCount] = useState(0);
+  const [goingCount, setGoingCount] = useState(0);
+  const [waitlistCount, setWaitlistCount] = useState(0);
   const [loadingCount, setLoadingCount] = useState(true);
 
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
+  const [registrationStatus, setRegistrationStatus] = useState<
+    "going" | "waitlist" | ""
+  >("");
   const [confirmationCode, setConfirmationCode] = useState("");
   const [emailSent, setEmailSent] = useState<boolean | null>(null);
+  const [error, setError] = useState("");
 
-  const spotsRemaining = Math.max(CAPACITY - registrationCount, 0);
-  const isFull = registrationCount >= CAPACITY;
+  const spotsRemaining = Math.max(CAPACITY - goingCount, 0);
+  const isFull = goingCount >= CAPACITY;
 
   useEffect(() => {
-    loadRegistrationCount();
+    loadRegistrationCounts();
   }, []);
 
-  async function getRegistrationCount() {
-    const { count, error } = await supabase
-      .from("the_trailhead_registrations")
-      .select("*", {
-        count: "exact",
-        head: true,
+  async function loadRegistrationCounts() {
+    setLoadingCount(true);
+
+    try {
+      const response = await fetch("/api/thetrailhead-counts", {
+        cache: "no-store",
       });
 
-    if (error) {
-      console.error("Registration count error:", error.message);
-      return null;
-    }
+      const data = await response.json().catch(() => null);
 
-    return count || 0;
-  }
+      if (!response.ok) {
+        console.error("Registration count error:", data?.error);
+        setLoadingCount(false);
+        return;
+      }
 
-  async function loadRegistrationCount() {
-    const count = await getRegistrationCount();
-
-    if (count !== null) {
-      setRegistrationCount(count);
+      setGoingCount(data?.goingCount || 0);
+      setWaitlistCount(data?.waitlistCount || 0);
+    } catch (countError) {
+      console.error("Registration count error:", countError);
     }
 
     setLoadingCount(false);
@@ -63,110 +65,48 @@ export default function TheTrailhead() {
     setSubmitting(true);
     setError("");
 
-    const currentCount = await getRegistrationCount();
-
-    if (currentCount === null) {
-      setError(
-        "Unable to verify registration availability. Please try again."
-      );
-      setSubmitting(false);
-      return;
-    }
-
-    setRegistrationCount(currentCount);
-
-    if (currentCount >= CAPACITY) {
-      setError("Registration is currently full.");
-      setSubmitting(false);
-      return;
-    }
-
-    if (!firstName.trim()) {
-      setError("Please enter your first name.");
-      setSubmitting(false);
-      return;
-    }
-
-    if (!lastName.trim()) {
-      setError("Please enter your last name.");
-      setSubmitting(false);
-      return;
-    }
-
-    if (!phone.trim()) {
-      setError("Please enter your phone number.");
-      setSubmitting(false);
-      return;
-    }
-
-    if (!email.trim()) {
-      setError("Please enter your email address.");
-      setSubmitting(false);
-      return;
-    }
-
-    if (!waiverAccepted) {
-      setError("You must accept the waiver before registering.");
-      setSubmitting(false);
-      return;
-    }
-
-    const { data: registration, error: insertError } = await supabase
-      .from("the_trailhead_registrations")
-      .insert({
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        phone: phone.trim(),
-        email: email.trim().toLowerCase(),
-        waiver_accepted: waiverAccepted,
-      })
-      .select("id")
-      .single();
-
-    if (insertError || !registration) {
-      console.error("Registration error:", insertError?.message);
-      setError("Something went wrong. Please try again.");
-      setSubmitting(false);
-      return;
-    }
-
-    const code = `TH-${registration.id.slice(0, 8).toUpperCase()}`;
-    setConfirmationCode(code);
-
     try {
-      const emailResponse = await fetch("/api/thetrailhead-confirmation", {
+      const response = await fetch("/api/thetrailhead-register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          registrationId: registration.id,
+          firstName,
+          lastName,
+          phone,
+          email,
+          waiverAccepted,
         }),
       });
 
-      if (!emailResponse.ok) {
-        const emailError = await emailResponse.json().catch(() => null);
-        console.error(
-          "Confirmation email failed:",
-          emailError?.error || emailResponse.statusText
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        setError(
+          data?.error || "Unable to complete registration. Please try again."
         );
-        setEmailSent(false);
-      } else {
-        setEmailSent(true);
+        setSubmitting(false);
+        return;
       }
-    } catch (emailError) {
-      console.error("Confirmation email error:", emailError);
-      setEmailSent(false);
+
+      setRegistrationStatus(data.status);
+      setConfirmationCode(data.registrationCode || "");
+      setEmailSent(data.emailSent === true);
+      setGoingCount(data.goingCount || 0);
+      setWaitlistCount(data.waitlistCount || 0);
+      setSuccess(true);
+      setSubmitting(false);
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    } catch (submitError) {
+      console.error("Trailhead registration error:", submitError);
+      setError("Unable to complete registration. Please try again.");
+      setSubmitting(false);
     }
-
-    setRegistrationCount(currentCount + 1);
-    setSuccess(true);
-    setSubmitting(false);
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
   }
 
   return (
@@ -286,12 +226,14 @@ export default function TheTrailhead() {
           </section>
 
           <section className="mt-6 rounded-xl border border-white/10 bg-black/30 p-5">
-            <h2 className="text-xl font-bold">Register for The Trailhead</h2>
+            <h2 className="text-xl font-bold">
+              {isFull ? "Join The Trailhead Waitlist" : "Register for The Trailhead"}
+            </h2>
 
             <p className="mt-3 leading-7 text-white/75">
               Registration helps us plan parking, activities, giveaways, and
               overall attendance for each Trailhead meet. No admittance without
-              proof of registration.
+              proof of confirmed registration.
             </p>
 
             <div className="mt-5 rounded-xl border border-[#F28C52]/25 bg-[#F28C52]/10 p-4">
@@ -302,17 +244,32 @@ export default function TheTrailhead() {
               ) : (
                 <>
                   <p className="text-lg font-bold text-white">
-                    {registrationCount} of {CAPACITY} Spots Filled
+                    {goingCount} of {CAPACITY} Confirmed Spots Filled
                   </p>
 
                   <p className="mt-1 text-sm text-white/70">
                     {isFull
-                      ? "Registration is currently full."
-                      : `${spotsRemaining} spots remaining.`}
+                      ? `Event spots are full. Waitlist is open${
+                          waitlistCount > 0
+                            ? ` with ${waitlistCount} currently waiting.`
+                            : "."
+                        }`
+                      : `${spotsRemaining} confirmed spots remaining.`}
                   </p>
                 </>
               )}
             </div>
+
+            {isFull && !loadingCount && (
+              <div className="mt-4 rounded-xl border border-yellow-400/25 bg-yellow-500/10 p-4">
+                <p className="text-sm leading-6 text-yellow-100">
+                  You can still register below. You will be placed on the
+                  waitlist in the order registrations are received. If a
+                  confirmed attendee cancels, the next person on the waitlist
+                  will automatically be moved into a confirmed spot and emailed.
+                </p>
+              </div>
+            )}
           </section>
 
           <section className="mt-6 rounded-xl border border-white/10 bg-black/30 p-5">
@@ -343,18 +300,34 @@ export default function TheTrailhead() {
           </section>
 
           {success ? (
-            <div className="mt-8 rounded-xl border border-green-500/30 bg-green-500/10 p-5">
-              <h2 className="text-xl font-bold text-green-300">
-                You&apos;re registered!
+            <div
+              className={`mt-8 rounded-xl p-5 ${
+                registrationStatus === "going"
+                  ? "border border-green-500/30 bg-green-500/10"
+                  : "border border-yellow-400/30 bg-yellow-500/10"
+              }`}
+            >
+              <h2
+                className={`text-xl font-bold ${
+                  registrationStatus === "going"
+                    ? "text-green-300"
+                    : "text-yellow-200"
+                }`}
+              >
+                {registrationStatus === "going"
+                  ? "You’re registered!"
+                  : "You’re on the waitlist!"}
               </h2>
 
               <p className="mt-2 text-white/75">
-                Your registration for The Trailhead is confirmed.
+                {registrationStatus === "going"
+                  ? "Your registration for The Trailhead is confirmed."
+                  : "The confirmed spots are currently full. You have been added to the waitlist and will be automatically promoted if a spot opens."}
               </p>
 
               {confirmationCode && (
-                <div className="mt-4 rounded-lg border border-green-400/30 bg-black/25 p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-green-300/80">
+                <div className="mt-4 rounded-lg border border-white/15 bg-black/25 p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/60">
                     Registration Code
                   </p>
                   <p className="mt-1 text-2xl font-bold text-white">
@@ -365,31 +338,25 @@ export default function TheTrailhead() {
 
               {emailSent === true ? (
                 <p className="mt-4 font-semibold text-white/90">
-                  A confirmation email has been sent to {email}. Please save
-                  that email and have it available at check-in as proof of
-                  registration.
+                  A {registrationStatus === "going" ? "confirmation" : "waitlist"}{" "}
+                  email has been sent to {email}.
+                  {registrationStatus === "going"
+                    ? " Save that email and have it available at check-in."
+                    : " If a spot opens, you will receive another email confirming that you have been moved to Going."}
                 </p>
-              ) : emailSent === false ? (
+              ) : (
                 <p className="mt-4 text-yellow-200">
-                  Your registration was saved, but we could not send the
-                  confirmation email. Save your registration code above and
-                  contact Peach State if you need a copy of your confirmation.
+                  Your registration was saved, but we could not send the email.
+                  Save your registration code above and contact Peach State if
+                  you need confirmation.
                 </p>
-              ) : null}
-            </div>
-          ) : isFull ? (
-            <div className="mt-8 rounded-xl border border-red-500/30 bg-red-500/10 p-5">
-              <h2 className="text-xl font-bold text-red-200">
-                Registration is currently full
-              </h2>
-
-              <p className="mt-2 text-white/75">
-                All available spots for this Trailhead meet have been filled.
-              </p>
+              )}
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-              <h2 className="text-2xl font-bold">Registration</h2>
+              <h2 className="text-2xl font-bold">
+                {isFull ? "Waitlist Registration" : "Registration"}
+              </h2>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <Field
@@ -450,6 +417,8 @@ export default function TheTrailhead() {
               >
                 {submitting
                   ? "Submitting..."
+                  : isFull
+                  ? "Join The Trailhead Waitlist"
                   : "Register for The Trailhead"}
               </button>
             </form>

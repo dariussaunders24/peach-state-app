@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
 export default function TheTrailheadPage() {
@@ -14,10 +14,12 @@ export default function TheTrailheadPage() {
   }, []);
 
   async function loadRegistrations() {
+    setLoading(true);
+
     const { data, error } = await supabase
       .from("the_trailhead_registrations")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: true });
 
     if (error) {
       console.error("Registration load error:", error.message);
@@ -27,7 +29,17 @@ export default function TheTrailheadPage() {
     setLoading(false);
   }
 
-  const emails = registrations
+  const goingRegistrations = useMemo(
+    () => registrations.filter((r) => r.status === "going"),
+    [registrations]
+  );
+
+  const waitlistRegistrations = useMemo(
+    () => registrations.filter((r) => r.status === "waitlist"),
+    [registrations]
+  );
+
+  const emails = goingRegistrations
     .map((r) => r.email)
     .filter(Boolean)
     .join(", ");
@@ -41,30 +53,49 @@ export default function TheTrailheadPage() {
     }, 2000);
   }
 
-  async function deleteRegistration(id: string, name: string) {
+  async function deleteRegistration(id: string, name: string, status: string) {
     const confirmed = window.confirm(
-      `Remove ${name} from The Trailhead registration list?`
+      `Remove ${name} from The Trailhead ${
+        status === "waitlist" ? "waitlist" : "registration list"
+      }?`
     );
 
     if (!confirmed) return;
 
     setDeletingId(id);
 
-    const { error } = await supabase
-      .from("the_trailhead_registrations")
-      .delete()
-      .eq("id", id);
+    try {
+      const response = await fetch("/api/thetrailhead-cancel", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          registrationId: id,
+        }),
+      });
 
-    if (error) {
-      console.error("Delete registration error:", error.message);
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        alert(
+          data?.error || "Unable to remove registration. Please try again."
+        );
+        setDeletingId("");
+        return;
+      }
+
+      await loadRegistrations();
+
+      if (data?.promoted) {
+        alert(
+          "Registration removed. The next waitlisted attendee was automatically promoted and emailed."
+        );
+      }
+    } catch (deleteError) {
+      console.error("Delete registration error:", deleteError);
       alert("Unable to remove registration. Please try again.");
-      setDeletingId("");
-      return;
     }
-
-    setRegistrations((current) =>
-      current.filter((registration) => registration.id !== id)
-    );
 
     setDeletingId("");
   }
@@ -72,22 +103,31 @@ export default function TheTrailheadPage() {
   if (loading) {
     return (
       <main className="mx-auto max-w-6xl px-4 py-10 text-white">
-        Loading registrations...
+        <p>Loading registrations...</p>
       </main>
     );
   }
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 text-white">
-      <h1 className="text-3xl font-bold">The Trailhead Registrations</h1>
+      <h1 className="font-cinzel text-3xl font-bold">
+        The Trailhead Registrations
+      </h1>
 
-      <p className="mt-2 text-white/70">
-        Total Registered: {registrations.length}
-      </p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <StatCard label="Confirmed" value={goingRegistrations.length} />
+        <StatCard label="Capacity" value={35} />
+        <StatCard label="Waitlist" value={waitlistRegistrations.length} />
+      </div>
 
       <section className="mt-6 rounded-xl border border-white/10 bg-black/40 p-5">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <h2 className="text-xl font-bold">Email List</h2>
+          <div>
+            <h2 className="text-xl font-bold">Confirmed Email List</h2>
+            <p className="mt-1 text-sm text-white/60">
+              Includes confirmed attendees only, not the waitlist.
+            </p>
+          </div>
 
           <button
             type="button"
@@ -102,18 +142,72 @@ export default function TheTrailheadPage() {
         <textarea
           readOnly
           value={emails}
-          placeholder="No registered emails yet."
+          placeholder="No confirmed emails yet."
           className="mt-3 h-32 w-full rounded-lg border border-white/10 bg-black/50 p-3 text-sm text-white"
         />
       </section>
 
-      <div className="mt-8 overflow-x-auto rounded-xl border border-white/10">
-        <table className="w-full min-w-[800px] border-collapse bg-black/40 text-left text-sm">
+      <RegistrationTable
+        title="Confirmed / Going"
+        registrations={goingRegistrations}
+        deletingId={deletingId}
+        onDelete={deleteRegistration}
+      />
+
+      <RegistrationTable
+        title="Waitlist"
+        registrations={waitlistRegistrations}
+        deletingId={deletingId}
+        onDelete={deleteRegistration}
+        showPosition
+      />
+    </main>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+}: {
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-black/40 p-4">
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#F28C52]">
+        {label}
+      </p>
+      <p className="mt-1 text-2xl font-bold text-white">{value}</p>
+    </div>
+  );
+}
+
+function RegistrationTable({
+  title,
+  registrations,
+  deletingId,
+  onDelete,
+  showPosition = false,
+}: {
+  title: string;
+  registrations: any[];
+  deletingId: string;
+  onDelete: (id: string, name: string, status: string) => void;
+  showPosition?: boolean;
+}) {
+  return (
+    <section className="mt-8">
+      <h2 className="text-2xl font-bold">{title}</h2>
+
+      <div className="mt-3 overflow-x-auto rounded-xl border border-white/10">
+        <table className="w-full min-w-[900px] border-collapse bg-black/40 text-left text-sm">
           <thead className="bg-white/10 text-white">
             <tr>
+              {showPosition && <th className="p-3">Position</th>}
               <th className="p-3">Name</th>
               <th className="p-3">Phone</th>
               <th className="p-3">Email</th>
+              <th className="p-3">Status</th>
               <th className="p-3">Waiver</th>
               <th className="p-3">Registered</th>
               <th className="p-3">Remove</th>
@@ -121,7 +215,7 @@ export default function TheTrailheadPage() {
           </thead>
 
           <tbody>
-            {registrations.map((registration) => {
+            {registrations.map((registration, index) => {
               const name = `${registration.first_name} ${registration.last_name}`;
 
               return (
@@ -129,11 +223,29 @@ export default function TheTrailheadPage() {
                   key={registration.id}
                   className="border-t border-white/10 text-white/75"
                 >
+                  {showPosition && (
+                    <td className="p-3 font-bold text-[#F28C52]">
+                      #{index + 1}
+                    </td>
+                  )}
                   <td className="p-3">{name}</td>
                   <td className="p-3">{registration.phone}</td>
                   <td className="p-3">{registration.email}</td>
                   <td className="p-3">
-                    {registration.waiver_accepted ? "Accepted" : "Not Accepted"}
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wide ${
+                        registration.status === "going"
+                          ? "bg-green-500/15 text-green-300"
+                          : "bg-yellow-500/15 text-yellow-200"
+                      }`}
+                    >
+                      {registration.status === "going" ? "Going" : "Waitlist"}
+                    </span>
+                  </td>
+                  <td className="p-3">
+                    {registration.waiver_accepted
+                      ? "Accepted"
+                      : "Not Accepted"}
                   </td>
                   <td className="p-3">
                     {new Date(registration.created_at).toLocaleString()}
@@ -141,11 +253,19 @@ export default function TheTrailheadPage() {
                   <td className="p-3">
                     <button
                       type="button"
-                      onClick={() => deleteRegistration(registration.id, name)}
+                      onClick={() =>
+                        onDelete(
+                          registration.id,
+                          name,
+                          registration.status
+                        )
+                      }
                       disabled={deletingId === registration.id}
                       className="rounded-lg border border-red-400/40 bg-red-500/10 px-3 py-1.5 text-sm font-semibold text-red-200 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      {deletingId === registration.id ? "Removing..." : "Remove"}
+                      {deletingId === registration.id
+                        ? "Removing..."
+                        : "Remove"}
                     </button>
                   </td>
                 </tr>
@@ -154,14 +274,17 @@ export default function TheTrailheadPage() {
 
             {registrations.length === 0 && (
               <tr>
-                <td className="p-4 text-white/60" colSpan={6}>
-                  No registrations yet.
+                <td
+                  className="p-4 text-white/60"
+                  colSpan={showPosition ? 8 : 7}
+                >
+                  No registrations in this section.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
-    </main>
+    </section>
   );
 }
