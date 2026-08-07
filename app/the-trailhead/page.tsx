@@ -3,12 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
-const CAPACITY = 200;
-
-// EASY MONTHLY UPDATES
-const EVENT_DATE = "October 2026";
-const EVENT_TIME = "Time Coming Soon";
-const EVENT_LOCATION = "Revolution Auto";
+const CAPACITY = 35;
 const EVENT_IMAGE = "/the-trailhead.png";
 
 export default function TheTrailhead() {
@@ -144,7 +139,6 @@ export default function TheTrailhead() {
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 text-white">
       <section className="overflow-hidden rounded-2xl border border-white/10 bg-black/45 shadow-xl backdrop-blur">
-        {/* EVENT IMAGE */}
         <div className="flex justify-center bg-black/20 p-6">
           <img
             src={EVENT_IMAGE}
@@ -154,7 +148,6 @@ export default function TheTrailhead() {
         </div>
 
         <div className="p-6 md:p-8">
-          {/* HEADER */}
           <p className="text-xs uppercase tracking-[0.3em] text-[#F28C52]/80">
             Peach State Off-Road & Overlanding
           </p>
@@ -167,19 +160,7 @@ export default function TheTrailhead() {
             Our monthly off-road, overland, and automotive community meet.
           </p>
 
-          {/* EVENT DETAILS */}
           <section className="mt-8 rounded-xl border border-white/10 bg-black/30 p-5">
-            <h2 className="text-xl font-bold">Next Meet</h2>
-
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              <DetailCard label="Date" value={EVENT_DATE} />
-              <DetailCard label="Time" value={EVENT_TIME} />
-              <DetailCard label="Location" value={EVENT_LOCATION} />
-            </div>
-          </section>
-
-          {/* ABOUT */}
-          <section className="mt-6 rounded-xl border border-white/10 bg-black/30 p-5">
             <h2 className="text-xl font-bold">What is The Trailhead?</h2>
 
             <div className="mt-3 space-y-4 leading-7 text-white/75">
@@ -205,7 +186,6 @@ export default function TheTrailhead() {
             </div>
           </section>
 
-          {/* WHAT TO EXPECT */}
           <section className="mt-6 rounded-xl border border-white/10 bg-black/30 p-5">
             <h2 className="text-xl font-bold">What to Expect</h2>
 
@@ -242,7 +222,6 @@ export default function TheTrailhead() {
             </div>
           </section>
 
-          {/* LITTLE EXPLORERS */}
           <section className="mt-6 rounded-xl border border-[#F28C52]/25 bg-[#F28C52]/10 p-5">
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#F28C52]">
               For the Kids
@@ -260,7 +239,6 @@ export default function TheTrailhead() {
             </p>
           </section>
 
-          {/* REGISTRATION COUNT */}
           <section className="mt-6 rounded-xl border border-white/10 bg-black/30 p-5">
             <h2 className="text-xl font-bold">Register for The Trailhead</h2>
 
@@ -290,7 +268,6 @@ export default function TheTrailhead() {
             </div>
           </section>
 
-          {/* WAIVER */}
           <section className="mt-6 rounded-xl border border-white/10 bg-black/30 p-5">
             <h2 className="text-xl font-bold">Waiver & Disclaimer</h2>
 
@@ -318,7 +295,6 @@ export default function TheTrailhead() {
             </p>
           </section>
 
-          {/* SUCCESS */}
           {success ? (
             <div className="mt-8 rounded-xl border border-green-500/30 bg-green-500/10 p-5">
               <h2 className="text-xl font-bold text-green-300">
@@ -331,7 +307,6 @@ export default function TheTrailhead() {
               </p>
             </div>
           ) : isFull ? (
-            /* FULL */
             <div className="mt-8 rounded-xl border border-red-500/30 bg-red-500/10 p-5">
               <h2 className="text-xl font-bold text-red-200">
                 Registration is currently full
@@ -342,7 +317,6 @@ export default function TheTrailhead() {
               </p>
             </div>
           ) : (
-            /* REGISTRATION FORM */
             <form onSubmit={handleSubmit} className="mt-8 space-y-4">
               <h2 className="text-2xl font-bold">Registration</h2>
 
@@ -440,24 +414,6 @@ function Field({
         className="mt-2 w-full rounded-lg border border-white/10 bg-black/40 px-4 py-3 text-white outline-none transition focus:border-[#F28C52]"
       />
     </label>
-  );
-}
-
-function DetailCard({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-lg border border-white/10 bg-black/30 p-4">
-      <p className="text-xs font-bold uppercase tracking-wider text-[#F28C52]">
-        {label}
-      </p>
-
-      <p className="mt-1 font-semibold text-white">{value}</p>
-    </div>
   );
 }
 
