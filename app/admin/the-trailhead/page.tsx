@@ -15,7 +15,7 @@ export default function TheTrailheadPage() {
 
   async function loadRegistrations() {
     const { data, error } = await supabase
-      .from("rigs_for_riggs_registrations")
+      .from("the_trailhead_registrations")
       .select("*")
       .order("created_at", { ascending: false });
 
@@ -43,7 +43,7 @@ export default function TheTrailheadPage() {
 
   async function deleteRegistration(id: string, name: string) {
     const confirmed = window.confirm(
-      `Remove ${name} from the Rigs for Riggs registration list?`
+      `Remove ${name} from The Trailhead registration list?`
     );
 
     if (!confirmed) return;

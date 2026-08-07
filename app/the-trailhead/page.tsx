@@ -5,14 +5,22 @@ import { supabase } from "../lib/supabase";
 
 const CAPACITY = 200;
 
+// EASY MONTHLY UPDATES
+const EVENT_DATE = "October 2026";
+const EVENT_TIME = "Time Coming Soon";
+const EVENT_LOCATION = "Revolution Auto";
+const EVENT_IMAGE = "/the-trailhead.png";
+
 export default function TheTrailhead() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [waiverAccepted, setWaiverAccepted] = useState(false);
+
   const [registrationCount, setRegistrationCount] = useState(0);
   const [loadingCount, setLoadingCount] = useState(true);
+
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
@@ -24,28 +32,78 @@ export default function TheTrailhead() {
     loadRegistrationCount();
   }, []);
 
-  async function loadRegistrationCount() {
+  async function getRegistrationCount() {
     const { count, error } = await supabase
       .from("the_trailhead_registrations")
-      .select("*", { count: "exact", head: true });
+      .select("*", {
+        count: "exact",
+        head: true,
+      });
 
     if (error) {
       console.error("Registration count error:", error.message);
+      return null;
     }
 
-    setRegistrationCount(count || 0);
+    return count || 0;
+  }
+
+  async function loadRegistrationCount() {
+    const count = await getRegistrationCount();
+
+    if (count !== null) {
+      setRegistrationCount(count);
+    }
+
     setLoadingCount(false);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    if (submitting) return;
+
     setSubmitting(true);
     setError("");
 
-    await loadRegistrationCount();
+    const currentCount = await getRegistrationCount();
 
-    if (registrationCount >= CAPACITY) {
+    if (currentCount === null) {
+      setError(
+        "Unable to verify registration availability. Please try again."
+      );
+      setSubmitting(false);
+      return;
+    }
+
+    setRegistrationCount(currentCount);
+
+    if (currentCount >= CAPACITY) {
       setError("Registration is currently full.");
+      setSubmitting(false);
+      return;
+    }
+
+    if (!firstName.trim()) {
+      setError("Please enter your first name.");
+      setSubmitting(false);
+      return;
+    }
+
+    if (!lastName.trim()) {
+      setError("Please enter your last name.");
+      setSubmitting(false);
+      return;
+    }
+
+    if (!phone.trim()) {
+      setError("Please enter your phone number.");
+      setSubmitting(false);
+      return;
+    }
+
+    if (!email.trim()) {
+      setError("Please enter your email address.");
       setSubmitting(false);
       return;
     }
@@ -56,134 +114,159 @@ export default function TheTrailhead() {
       return;
     }
 
-    const { error } = await supabase
+    const { error: insertError } = await supabase
       .from("the_trailhead_registrations")
       .insert({
         first_name: firstName.trim(),
         last_name: lastName.trim(),
         phone: phone.trim(),
-        email: email.trim(),
+        email: email.trim().toLowerCase(),
         waiver_accepted: waiverAccepted,
       });
 
-    if (error) {
-      console.error(error.message);
+    if (insertError) {
+      console.error("Registration error:", insertError.message);
       setError("Something went wrong. Please try again.");
       setSubmitting(false);
       return;
     }
 
-    setRegistrationCount((current) => current + 1);
+    setRegistrationCount(currentCount + 1);
     setSuccess(true);
     setSubmitting(false);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   }
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 text-white">
       <section className="overflow-hidden rounded-2xl border border-white/10 bg-black/45 shadow-xl backdrop-blur">
-      <div className="flex justify-center bg-black/20 p-6">
-  <img
-    src="/rigs-for-riggs.png"
-    alt="The Trailhead event flyer"
-    className="h-auto w-full max-w-2xl rounded-xl object-contain"
-  />
-</div>
+        {/* EVENT IMAGE */}
+        <div className="flex justify-center bg-black/20 p-6">
+          <img
+            src={EVENT_IMAGE}
+            alt="The Trailhead monthly meet"
+            className="h-auto w-full max-w-2xl rounded-xl object-contain"
+          />
+        </div>
 
-        <div className="p-6">
+        <div className="p-6 md:p-8">
+          {/* HEADER */}
           <p className="text-xs uppercase tracking-[0.3em] text-[#F28C52]/80">
-            Community Parade Registration
+            Peach State Off-Road & Overlanding
           </p>
 
-          <h1 className="mt-3 font-cinzel text-4xl font-bold text-white">
-            Rigs for Riggs
+          <h1 className="mt-3 font-cinzel text-4xl font-bold text-white md:text-5xl">
+            The Trailhead
           </h1>
 
-          <section className="mt-6 rounded-xl border border-white/10 bg-black/30 p-5">
-            <h2 className="text-xl font-bold">Event Details</h2>
+          <p className="mt-3 text-lg text-white/70">
+            Our monthly off-road, overland, and automotive community meet.
+          </p>
 
-            <div className="mt-1 space-y-2 text-white/75">
-              
+          {/* EVENT DETAILS */}
+          <section className="mt-8 rounded-xl border border-white/10 bg-black/30 p-5">
+            <h2 className="text-xl font-bold">Next Meet</h2>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <DetailCard label="Date" value={EVENT_DATE} />
+              <DetailCard label="Time" value={EVENT_TIME} />
+              <DetailCard label="Location" value={EVENT_LOCATION} />
             </div>
+          </section>
 
-            <p className="mt-4 text-white/75">
-              <div className="whitespace-pre-line leading-8 text-white/75">
-{`EVENT UPDATE: We wanted to share an important update regarding the Rigs for Riggs drive-by event.
-With heavy hearts, we are saddened to share that Riggs recently passed away surrounded by the love of his family. While this is not the outcome any of us hoped for, Riggs' family has asked that we still come together as planned to celebrate his life, support their family, and bring some excitement to his big brother during this difficult time.
+          {/* ABOUT */}
+          <section className="mt-6 rounded-xl border border-white/10 bg-black/30 p-5">
+            <h2 className="text-xl font-bold">What is The Trailhead?</h2>
 
-- Donations for the family can be made here, otherwise, you donations (no oversized toys or riding toys), can be donated at the check-in locations. Roy donations will be distributed to various child organizations.
-- Decorations: No birthday decorations, but "In loving memory of Riggs" signage is okay if anyone wants to show support.
-- Noise: We encourage drivers not to use their vehicle volume excessively, but mild honking/revving is now okay.
-- Please contact event coordinators directly if you have any other questions.
+            <div className="mt-3 space-y-4 leading-7 text-white/75">
+              <p>
+                The Trailhead is Peach State Off-Road & Overlanding&apos;s
+                monthly community meet hosted at Revolution Auto.
+              </p>
 
+              <p>
+                This is more than a traditional car meet. The Trailhead is a
+                place for off-roaders, overlanders, outdoor enthusiasts,
+                families, and anyone interested in the community to get
+                together, check out different builds, meet new people, and
+                spend time with the Peach State community.
+              </p>
 
-Date: Sunday, June 28, 2026
+              <p>
+                You do not need a heavily modified vehicle to attend. Stock
+                vehicles, daily drivers, trail rigs, overland builds, trucks,
+                SUVs, Jeeps, Subarus, Broncos, Toyotas, and everything in
+                between are welcome.
+              </p>
+            </div>
+          </section>
 
-Arrival & Check-In: 12:30 PM
+          {/* WHAT TO EXPECT */}
+          <section className="mt-6 rounded-xl border border-white/10 bg-black/30 p-5">
+            <h2 className="text-xl font-bold">What to Expect</h2>
 
-Driver Meeting (Required): 1:15PM
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <FeatureCard
+                title="Off-Road & Overland Builds"
+                text="Check out vehicles from across the Peach State community and meet the people behind the builds."
+              />
 
-Vehicle Roll-Out: 1:45PM
+              <FeatureCard
+                title="Food Truck"
+                text="Grab something to eat while you hang out and explore the meet."
+              />
 
-Parade Start: 2:00 PM
+              <FeatureCard
+                title="Featured Vendors"
+                text="Each month we plan to invite select vendors and industry partners to join us on site."
+              />
 
-Meet-Up Location:
+              <FeatureCard
+                title="Giveaways"
+                text="Select Trailhead meets will include giveaways and prizes for attendees."
+              />
 
-Appalachian Gun, Pawn & Range
-140 Shelby Lane
-Jasper, GA 30143
+              <FeatureCard
+                title="Little Explorers"
+                text="Kids can take part in our Little Explorer activities and Trailhead Passport program."
+              />
 
-Overflow parking will be available at the trailer store across from the main parking area if needed. Please follow parking attendants and organizer instructions upon arrival.
+              <FeatureCard
+                title="Community"
+                text="Meet fellow members, ask questions, talk builds, learn something new, and get connected."
+              />
+            </div>
+          </section>
 
-ABOUT THE EVENT
-
-The family has just been approved for a GoFund Me. Please donate whatever you can. Every little bit helps:
-https://www.gofundme.com/f/remembering-riggs-help-the-grooms-family-heal
-
-Riggs is a 4-year-old boy who has been diagnosed with terminal cancer, but who also loves big off-road vehicles and all things automotive. Join us as we come together to create a special birthday parade and an unforgettable day for Riggs and his family.
-
-On Saturday, June 27, we will come together as a community to create a special birthday parade for Riggs and his family. Whether you drive a lifted truck, Jeep, Bronco, SUV, overland rig, or other unique vehicle, your participation can help create lasting memories for a very special little boy.
-
-Participants are encouraged to bring positive energy, decorate their vehicles if desired, and help make this an unforgettable experience.
-
-Video birthday wishes for Riggs are welcome and appreciated.
-
-PARTICIPANT GUIDELINES
-
-To help ensure a safe and enjoyable experience for Riggs and his family, all participants must follow these guidelines:
-
-• No contact parade
-• Gift and donation drop-off locations available
-• No revving engines
-• No horn use
-• No sirens
-• No flashing lights or strobes
-• Maintain idle speed
-• Follow organizer instructions
-• Be mindful of Riggs' medical condition and noise sensitivities
-• No riding toys, Power Wheels, or similar vehicles
-
-DONATIONS
-
-Participation is free.
-
-In lieu of gifts, cash donations are preferred. Digital donations are also welcome. Donation information and QR code available on the flyer.
-
-IMPORTANT INFORMATION
-
-• GMRS radios on channel 4
-• All participating vehicles must be street legal
-• All participating vehicles must carry valid insurance
-• Drivers are responsible for obeying all traffic laws
-• Attendance at the driver meeting is required
-• No press or media attendance is requested
-• Please respect the privacy of Riggs and his family
-• Follow all directions provided by event organizers and volunteers`}
-</div>
-
+          {/* LITTLE EXPLORERS */}
+          <section className="mt-6 rounded-xl border border-[#F28C52]/25 bg-[#F28C52]/10 p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#F28C52]">
+              For the Kids
             </p>
 
-            <p className="mt-4 text-white/75">
-              Please register below if you would like to participate. Registration is per individual vehicle, not person or club. 
+            <h2 className="mt-2 text-2xl font-bold">
+              Little Explorer Passport
+            </h2>
+
+            <p className="mt-3 leading-7 text-white/75">
+              Kids attending The Trailhead can participate in the Little
+              Explorer Passport program. Complete activities around the meet,
+              collect stamps, take part in monthly challenges, and reach
+              Explorer milestones throughout the year.
+            </p>
+          </section>
+
+          {/* REGISTRATION COUNT */}
+          <section className="mt-6 rounded-xl border border-white/10 bg-black/30 p-5">
+            <h2 className="text-xl font-bold">Register for The Trailhead</h2>
+
+            <p className="mt-3 leading-7 text-white/75">
+              Registration helps us plan parking, activities, giveaways, and
+              overall attendance for each Trailhead meet.
             </p>
 
             <div className="mt-5 rounded-xl border border-[#F28C52]/25 bg-[#F28C52]/10 p-4">
@@ -194,8 +277,9 @@ IMPORTANT INFORMATION
               ) : (
                 <>
                   <p className="text-lg font-bold text-white">
-                    {registrationCount} of {CAPACITY} Vehicle Spots Filled
+                    {registrationCount} of {CAPACITY} Spots Filled
                   </p>
+
                   <p className="mt-1 text-sm text-white/70">
                     {isFull
                       ? "Registration is currently full."
@@ -206,43 +290,62 @@ IMPORTANT INFORMATION
             </div>
           </section>
 
+          {/* WAIVER */}
           <section className="mt-6 rounded-xl border border-white/10 bg-black/30 p-5">
             <h2 className="text-xl font-bold">Waiver & Disclaimer</h2>
 
             <p className="mt-3 text-sm leading-6 text-white/70">
-              By registering for and participating in this event, I acknowledge
-              that I am voluntarily participating in a vehicle parade/community
-              event. I understand that participation may involve risks including
-              vehicle damage, personal injury, property damage, traffic-related
-              incidents, or other unforeseen circumstances. I agree that my vehicle is street legal and legally insured and I agree to operate
-              my vehicle safely, follow all traffic laws, follow event organizer
+              By registering for and participating in The Trailhead, I
+              acknowledge that I am voluntarily attending an automotive
+              community event. I understand that attendance and participation
+              may involve risks including vehicle damage, personal injury,
+              property damage, traffic-related incidents, or other unforeseen
+              circumstances.
+            </p>
+
+            <p className="mt-3 text-sm leading-6 text-white/70">
+              I agree to operate my vehicle safely, follow all applicable laws,
+              respect the host property, follow event organizer and host
               instructions, and accept full responsibility for myself, my
-              passengers, my vehicle, and my actions. I release the event
-              organizers, volunteers, hosts, property owners, and any associated
-              parties from liability to the fullest extent permitted by law.
+              passengers, my vehicle, and my actions.
+            </p>
+
+            <p className="mt-3 text-sm leading-6 text-white/70">
+              I release Peach State Off-Road & Overlanding, Revolution Auto,
+              event organizers, volunteers, vendors, sponsors, property owners,
+              and associated parties from liability to the fullest extent
+              permitted by law.
             </p>
           </section>
 
+          {/* SUCCESS */}
           {success ? (
             <div className="mt-8 rounded-xl border border-green-500/30 bg-green-500/10 p-5">
               <h2 className="text-xl font-bold text-green-300">
-                Registration received
+                You&apos;re registered!
               </h2>
+
               <p className="mt-2 text-white/75">
-                Thank you for registering for Rigs for Riggs.
+                Thank you for registering for The Trailhead. We look forward to
+                seeing you there.
               </p>
             </div>
           ) : isFull ? (
+            /* FULL */
             <div className="mt-8 rounded-xl border border-red-500/30 bg-red-500/10 p-5">
               <h2 className="text-xl font-bold text-red-200">
                 Registration is currently full
               </h2>
+
               <p className="mt-2 text-white/75">
-                All available vehicle spots have been filled.
+                All available spots for this Trailhead meet have been filled.
               </p>
             </div>
           ) : (
+            /* REGISTRATION FORM */
             <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+              <h2 className="text-2xl font-bold">Registration</h2>
+
               <div className="grid gap-4 md:grid-cols-2">
                 <Field
                   label="First Name"
@@ -261,6 +364,7 @@ IMPORTANT INFORMATION
 
               <Field
                 label="Phone Number"
+                type="tel"
                 value={phone}
                 onChange={setPhone}
                 required
@@ -282,19 +386,26 @@ IMPORTANT INFORMATION
                   className="mt-1 h-4 w-4"
                   required
                 />
+
                 <span>
                   I have read and agree to the waiver and disclaimer above.
                 </span>
               </label>
 
-              {error && <p className="text-sm text-red-300">{error}</p>}
+              {error && (
+                <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3">
+                  <p className="text-sm text-red-300">{error}</p>
+                </div>
+              )}
 
               <button
                 type="submit"
                 disabled={submitting || loadingCount}
                 className="w-full rounded-lg bg-[#F28C52] px-5 py-3 font-semibold text-black transition hover:bg-[#C96A2C] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {submitting ? "Submitting..." : "Register my vehicle for Rigs for Riggs"}
+                {submitting
+                  ? "Submitting..."
+                  : "Register for The Trailhead"}
               </button>
             </form>
           )}
@@ -320,13 +431,47 @@ function Field({
   return (
     <label className="block">
       <span className="text-sm font-semibold text-white/80">{label}</span>
+
       <input
         type={type}
         required={required}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-2 w-full rounded-lg border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-[#F28C52]"
+        className="mt-2 w-full rounded-lg border border-white/10 bg-black/40 px-4 py-3 text-white outline-none transition focus:border-[#F28C52]"
       />
     </label>
+  );
+}
+
+function DetailCard({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-black/30 p-4">
+      <p className="text-xs font-bold uppercase tracking-wider text-[#F28C52]">
+        {label}
+      </p>
+
+      <p className="mt-1 font-semibold text-white">{value}</p>
+    </div>
+  );
+}
+
+function FeatureCard({
+  title,
+  text,
+}: {
+  title: string;
+  text: string;
+}) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-black/30 p-4">
+      <h3 className="font-bold text-white">{title}</h3>
+      <p className="mt-2 text-sm leading-6 text-white/65">{text}</p>
+    </div>
   );
 }
