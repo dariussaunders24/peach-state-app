@@ -174,7 +174,7 @@ export default function TheTrailhead() {
                 place for off-roaders, overlanders, outdoor enthusiasts,
                 families, and anyone interested in the community to get
                 together, check out different builds, meet new people, and
-                spend time with the Peach State community.
+                spend time with the community.
               </p>
 
               <p>
@@ -192,7 +192,7 @@ export default function TheTrailhead() {
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <FeatureCard
                 title="Off-Road & Overland Builds"
-                text="Check out vehicles from across the Peach State community and meet the people behind the builds."
+                text="Check out vehicles from across the community and meet the people behind the builds."
               />
 
               <FeatureCard
@@ -202,12 +202,12 @@ export default function TheTrailhead() {
 
               <FeatureCard
                 title="Featured Vendors"
-                text="Each month we plan to invite select vendors and industry partners to join us on site."
+                text="This isn't an expo event to try to get you to buy things, so each month we plan to invite just 1-2 select vendors and industry partners to join us on site."
               />
 
               <FeatureCard
                 title="Giveaways"
-                text="Select Trailhead meets will include giveaways and prizes for attendees."
+                text="SELECT Trailhead meets will include giveaways and raffle prizes for attendees."
               />
 
               <FeatureCard
@@ -244,7 +244,7 @@ export default function TheTrailhead() {
 
             <p className="mt-3 leading-7 text-white/75">
               Registration helps us plan parking, activities, giveaways, and
-              overall attendance for each Trailhead meet.
+              overall attendance for each Trailhead meet. No admittance without proof of registration. 
             </p>
 
             <div className="mt-5 rounded-xl border border-[#F28C52]/25 bg-[#F28C52]/10 p-4">
