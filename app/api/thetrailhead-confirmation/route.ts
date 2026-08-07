@@ -50,6 +50,10 @@ export async function POST(req: Request) {
       .toUpperCase()}`;
 
     const fullName = `${registration.first_name} ${registration.last_name}`;
+    const origin = new URL(req.url).origin;
+    const cancelUrl = `${origin}/thetrailhead/cancel?id=${encodeURIComponent(
+      registration.id
+    )}`;
 
     const sendResult = await resend.emails.send({
       from: "Peach State Off-Road <notifications@peachstateoffroad.com>",
@@ -117,6 +121,22 @@ export async function POST(req: Request) {
                     code when you arrive. Admission is limited to registered
                     vehicles.
                   </div>
+                </div>
+
+                <div style="margin-top:28px;border-top:1px solid #333333;padding-top:22px;">
+                  <div style="font-size:16px;font-weight:800;color:#ffffff;">
+                    Can&apos;t make it?
+                  </div>
+                  <p style="margin:8px 0 16px;font-size:14px;line-height:1.6;color:#bbbbbb;">
+                    Please cancel your registration so the spot can be made
+                    available to someone else.
+                  </p>
+                  <a
+                    href="${cancelUrl}"
+                    style="display:inline-block;background:#F28C52;color:#111111;text-decoration:none;font-size:14px;font-weight:800;padding:12px 18px;border-radius:8px;"
+                  >
+                    Cancel My Registration
+                  </a>
                 </div>
 
                 <p style="margin:24px 0 0;font-size:14px;line-height:1.6;color:#999999;">
