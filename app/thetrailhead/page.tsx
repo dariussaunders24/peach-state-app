@@ -225,10 +225,10 @@ export default function TheTrailhead() {
                 text="SELECT Trailhead meets will include giveaways and raffle prizes for attendees."
               />
 
-              <FeatureCard
-                title="Little Explorers"
-                text="Kids can take part in our Little Explorer activities and Trailhead Passport program."
-              />
+             <FeatureCard
+  title="Buy / Sell / Trade"
+  text="Bring off-road, overland, camping, recovery, and vehicle gear to buy, sell, or trade with other attendees."
+/>
 
               <FeatureCard
                 title="Community"
