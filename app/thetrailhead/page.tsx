@@ -2,7 +2,7 @@
 
 import { ReactNode, useEffect, useState } from "react";
 
-const CAPACITY = 1;
+const CAPACITY = 35;
 const EVENT_IMAGE = "/the-trailhead.png";
 
 export default function TheTrailhead() {
