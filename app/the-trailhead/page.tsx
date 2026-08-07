@@ -5,7 +5,7 @@ import { supabase } from "../lib/supabase";
 
 const CAPACITY = 200;
 
-export default function RigsForRiggsPage() {
+export default function TheTrailhead() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
@@ -26,7 +26,7 @@ export default function RigsForRiggsPage() {
 
   async function loadRegistrationCount() {
     const { count, error } = await supabase
-      .from("rigs_for_riggs_registrations")
+      .from("the_trailhead_registrations")
       .select("*", { count: "exact", head: true });
 
     if (error) {
@@ -57,7 +57,7 @@ export default function RigsForRiggsPage() {
     }
 
     const { error } = await supabase
-      .from("rigs_for_riggs_registrations")
+      .from("the_trailhead_registrations")
       .insert({
         first_name: firstName.trim(),
         last_name: lastName.trim(),
@@ -84,7 +84,7 @@ export default function RigsForRiggsPage() {
       <div className="flex justify-center bg-black/20 p-6">
   <img
     src="/rigs-for-riggs.png"
-    alt="Rigs for Riggs event flyer"
+    alt="The Trailhead event flyer"
     className="h-auto w-full max-w-2xl rounded-xl object-contain"
   />
 </div>

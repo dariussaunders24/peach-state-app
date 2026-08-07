@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
-export default function AdminRigsForRiggsPage() {
+export default function TheTrailheadPage() {
   const [registrations, setRegistrations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -51,7 +51,7 @@ export default function AdminRigsForRiggsPage() {
     setDeletingId(id);
 
     const { error } = await supabase
-      .from("rigs_for_riggs_registrations")
+      .from("the_trailhead_registrations")
       .delete()
       .eq("id", id);
 
@@ -79,7 +79,7 @@ export default function AdminRigsForRiggsPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 text-white">
-      <h1 className="text-3xl font-bold">Rigs for Riggs Registrations</h1>
+      <h1 className="text-3xl font-bold">The Trailhead Registrations</h1>
 
       <p className="mt-2 text-white/70">
         Total Registered: {registrations.length}
