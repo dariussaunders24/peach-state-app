@@ -120,6 +120,35 @@ export default function TheTrailhead() {
           />
         </div>
 
+        {!loadingCount && (
+          <div className="border-t border-white/10 bg-black/30 px-6 py-4">
+            {isFull ? (
+              <div className="rounded-xl border border-[#F28C52]/30 bg-[#F28C52]/10 p-4 text-center">
+                <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#F28C52]">
+                  Registration Full
+                </p>
+                <p className="mt-2 text-xl font-bold text-white">
+                  {goingCount} / {CAPACITY} Confirmed
+                </p>
+                <p className="mt-1 text-sm font-semibold text-white/80">
+                  Waitlist: {waitlistCount}{" "}
+                  {waitlistCount === 1 ? "vehicle" : "vehicles"}
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-green-500/20 bg-green-500/10 p-4 text-center">
+                <p className="text-xs font-bold uppercase tracking-[0.25em] text-green-300">
+                  Registration Open
+                </p>
+                <p className="mt-2 text-lg font-bold text-white">
+                  {spotsRemaining} confirmed{" "}
+                  {spotsRemaining === 1 ? "spot" : "spots"} remaining
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="p-6 md:p-8">
           <p className="text-xs uppercase tracking-[0.3em] text-[#F28C52]/80">
             Peach State Off-Road & Overlanding
@@ -241,6 +270,23 @@ export default function TheTrailhead() {
                 <p className="font-semibold text-white/80">
                   Loading registration count...
                 </p>
+              ) : isFull ? (
+                <>
+                  <p className="text-lg font-bold text-white">
+                    {goingCount} of {CAPACITY} Confirmed Spots Filled
+                  </p>
+
+                  <p className="mt-2 text-lg font-bold text-[#F28C52]">
+                    Waitlist: {waitlistCount}{" "}
+                    {waitlistCount === 1 ? "vehicle" : "vehicles"}
+                  </p>
+
+                  <p className="mt-2 text-sm leading-6 text-white/70">
+                    Confirmed registrations are full. Attendees on the waitlist
+                    are automatically promoted in the order they registered
+                    whenever a confirmed attendee cancels.
+                  </p>
+                </>
               ) : (
                 <>
                   <p className="text-lg font-bold text-white">
@@ -248,13 +294,8 @@ export default function TheTrailhead() {
                   </p>
 
                   <p className="mt-1 text-sm text-white/70">
-                    {isFull
-                      ? `Event spots are full. Waitlist is open${
-                          waitlistCount > 0
-                            ? ` with ${waitlistCount} currently waiting.`
-                            : "."
-                        }`
-                      : `${spotsRemaining} confirmed spots remaining.`}
+                    {spotsRemaining} confirmed{" "}
+                    {spotsRemaining === 1 ? "spot" : "spots"} remaining.
                   </p>
                 </>
               )}
@@ -262,11 +303,14 @@ export default function TheTrailhead() {
 
             {isFull && !loadingCount && (
               <div className="mt-4 rounded-xl border border-yellow-400/25 bg-yellow-500/10 p-4">
-                <p className="text-sm leading-6 text-yellow-100">
-                  You can still register below. You will be placed on the
-                  waitlist in the order registrations are received. If a
-                  confirmed attendee cancels, the next person on the waitlist
-                  will automatically be moved into a confirmed spot and emailed.
+                <p className="font-bold text-yellow-100">
+                  The waitlist is open.
+                </p>
+                <p className="mt-2 text-sm leading-6 text-yellow-100/90">
+                  Register below to join the waitlist. Your position is based on
+                  the order registrations are received. If a confirmed attendee
+                  cancels, the next person on the waitlist will automatically be
+                  promoted and receive a confirmation email.
                 </p>
               </div>
             )}
