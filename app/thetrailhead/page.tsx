@@ -19,6 +19,8 @@ export default function TheTrailhead() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [confirmationCode, setConfirmationCode] = useState("");
+  const [emailSent, setEmailSent] = useState<boolean | null>(null);
 
   const spotsRemaining = Math.max(CAPACITY - registrationCount, 0);
   const isFull = registrationCount >= CAPACITY;
@@ -109,7 +111,7 @@ export default function TheTrailhead() {
       return;
     }
 
-    const { error: insertError } = await supabase
+    const { data: registration, error: insertError } = await supabase
       .from("the_trailhead_registrations")
       .insert({
         first_name: firstName.trim(),
@@ -117,13 +119,44 @@ export default function TheTrailhead() {
         phone: phone.trim(),
         email: email.trim().toLowerCase(),
         waiver_accepted: waiverAccepted,
-      });
+      })
+      .select("id")
+      .single();
 
-    if (insertError) {
-      console.error("Registration error:", insertError.message);
+    if (insertError || !registration) {
+      console.error("Registration error:", insertError?.message);
       setError("Something went wrong. Please try again.");
       setSubmitting(false);
       return;
+    }
+
+    const code = `TH-${registration.id.slice(0, 8).toUpperCase()}`;
+    setConfirmationCode(code);
+
+    try {
+      const emailResponse = await fetch("/api/thetrailhead-confirmation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          registrationId: registration.id,
+        }),
+      });
+
+      if (!emailResponse.ok) {
+        const emailError = await emailResponse.json().catch(() => null);
+        console.error(
+          "Confirmation email failed:",
+          emailError?.error || emailResponse.statusText
+        );
+        setEmailSent(false);
+      } else {
+        setEmailSent(true);
+      }
+    } catch (emailError) {
+      console.error("Confirmation email error:", emailError);
+      setEmailSent(false);
     }
 
     setRegistrationCount(currentCount + 1);
@@ -316,9 +349,33 @@ export default function TheTrailhead() {
               </h2>
 
               <p className="mt-2 text-white/75">
-                Thank you for registering for The Trailhead. We look forward to
-                seeing you there.
+                Your registration for The Trailhead is confirmed.
               </p>
+
+              {confirmationCode && (
+                <div className="mt-4 rounded-lg border border-green-400/30 bg-black/25 p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-green-300/80">
+                    Registration Code
+                  </p>
+                  <p className="mt-1 text-2xl font-bold text-white">
+                    {confirmationCode}
+                  </p>
+                </div>
+              )}
+
+              {emailSent === true ? (
+                <p className="mt-4 font-semibold text-white/90">
+                  A confirmation email has been sent to {email}. Please save
+                  that email and have it available at check-in as proof of
+                  registration.
+                </p>
+              ) : emailSent === false ? (
+                <p className="mt-4 text-yellow-200">
+                  Your registration was saved, but we could not send the
+                  confirmation email. Save your registration code above and
+                  contact Peach State if you need a copy of your confirmation.
+                </p>
+              ) : null}
             </div>
           ) : isFull ? (
             <div className="mt-8 rounded-xl border border-red-500/30 bg-red-500/10 p-5">
