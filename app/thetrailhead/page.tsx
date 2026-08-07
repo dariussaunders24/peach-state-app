@@ -168,7 +168,7 @@ export default function TheTrailhead() {
             <div className="mt-3 space-y-4 leading-7 text-white/75">
               <p>
                 The Trailhead is Peach State Off-Road & Overlanding&apos;s
-                monthly community meet that is open to the entire community and
+                monthly community meet that is free to attend and open to the entire community and
                 is hosted at Revolution Auto.
               </p>
 
