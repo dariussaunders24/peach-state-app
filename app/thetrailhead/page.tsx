@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 const CAPACITY = 35;
@@ -166,7 +166,8 @@ export default function TheTrailhead() {
             <div className="mt-3 space-y-4 leading-7 text-white/75">
               <p>
                 The Trailhead is Peach State Off-Road & Overlanding&apos;s
-                monthly community meet hosted at Revolution Auto.
+                monthly community meet that is open to the entire community and
+                is hosted at Revolution Auto.
               </p>
 
               <p>
@@ -202,7 +203,19 @@ export default function TheTrailhead() {
 
               <FeatureCard
                 title="Featured Rigs"
-                text="Select vehicles will be chosen to park in our Featured Rig section. Apply via email to dariussaunders24@gmail.com for a chance to  be chosen."
+                text={
+                  <>
+                    Select vehicles will be chosen to park in our Featured Rig
+                    section. Apply via email to{" "}
+                    <a
+                      href="mailto:dariussaunders24@gmail.com?subject=Featured%20Rig%20Application"
+                      className="font-semibold text-[#F28C52] hover:underline"
+                    >
+                      dariussaunders24@gmail.com
+                    </a>{" "}
+                    for a chance to be chosen.
+                  </>
+                }
               />
 
               <FeatureCard
@@ -244,7 +257,8 @@ export default function TheTrailhead() {
 
             <p className="mt-3 leading-7 text-white/75">
               Registration helps us plan parking, activities, giveaways, and
-              overall attendance for each Trailhead meet. No admittance without proof of registration. 
+              overall attendance for each Trailhead meet. No admittance without
+              proof of registration.
             </p>
 
             <div className="mt-5 rounded-xl border border-[#F28C52]/25 bg-[#F28C52]/10 p-4">
@@ -422,12 +436,12 @@ function FeatureCard({
   text,
 }: {
   title: string;
-  text: string;
+  text: ReactNode;
 }) {
   return (
     <div className="rounded-lg border border-white/10 bg-black/30 p-4">
       <h3 className="font-bold text-white">{title}</h3>
-      <p className="mt-2 text-sm leading-6 text-white/65">{text}</p>
+      <div className="mt-2 text-sm leading-6 text-white/65">{text}</div>
     </div>
   );
 }
