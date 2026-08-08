@@ -169,7 +169,7 @@ export default function TheTrailhead() {
               <p>
                 The Trailhead is Peach State Off-Road & Overlanding&apos;s
                 monthly community meet that is free to attend and open to the entire community and
-                is hosted at Revolution Auto.
+                is hosted at Revolution Auto located at 3620 Kennesaw N Industrial Pkwy, Suite E Kennesaw, GA 30144.
               </p>
 
               <p>
