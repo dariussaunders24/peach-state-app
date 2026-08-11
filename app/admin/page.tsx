@@ -182,7 +182,7 @@ if (!emailResponse.ok) {
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+     <div className="grid gap-4 sm:grid-cols-2">
   <a
     href="/admin/resources"
     className="rounded-xl border border-white/10 bg-black/30 p-5 transition hover:border-[#F28C52]/60"
@@ -193,6 +193,19 @@ if (!emailResponse.ok) {
 
     <p className="mt-2 text-sm text-white/60">
       Create and manage blogs, videos, guides, and beginner training content.
+    </p>
+  </a>
+
+  <a
+    href="/admin/email-blast"
+    className="rounded-xl border border-white/10 bg-black/30 p-5 transition hover:border-[#F28C52]/60"
+  >
+    <h2 className="text-xl font-bold text-white">
+      Email Blast
+    </h2>
+
+    <p className="mt-2 text-sm text-white/60">
+      Send announcements and updates to registered Peach State members.
     </p>
   </a>
 </div>
