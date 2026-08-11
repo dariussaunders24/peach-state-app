@@ -104,27 +104,31 @@ function buildEmailHtml({
 
           <!-- HEADER -->
           <tr>
-            <td
-              align="center"
-              style="
-                background-color:#171717;
-                padding:28px 35px;
-              "
-            >
-              <img
-                src="https://www.peachstateoffroad.com/peach-state-email-logo.png"
-                alt="Peach State Off-Road and Overlanding"
-                width="520"
-                style="
-                  display:block;
-                  width:100%;
-                  max-width:520px;
-                  height:auto;
-                  margin:0 auto;
-                "
-              />
-            </td>
-          </tr>
+            <!-- HEADER -->
+<tr>
+  <td
+    align="center"
+    bgcolor="#000000"
+    style="
+      background-color:#000000;
+      padding:32px 40px;
+    "
+  >
+    <img
+      src="https://www.peachstateoffroad.com/peach-state-email-logo.png"
+      alt="Peach State Off-Road and Overlanding"
+      width="520"
+      style="
+        display:block;
+        width:100%;
+        max-width:520px;
+        height:auto;
+        margin:0 auto;
+        border:0;
+      "
+    />
+  </td>
+</tr>
 
           <!-- ORANGE ACCENT -->
           <tr>
