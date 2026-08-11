@@ -22,6 +22,12 @@ type Badge = {
   image_url: string | null;
 };
 
+type AttendedEvent = {
+  id: string;
+  title: string;
+  event_date: string | null;
+};
+
 const buildFields = [
   { key: "suspension", label: "Suspension" },
   { key: "tires_wheels", label: "Tires / Wheels" },
@@ -40,6 +46,8 @@ export default function MemberProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [badges, setBadges] = useState<Badge[]>([]);
   const [builds, setBuilds] = useState<any[]>([]);
+  const [attendedEvents, setAttendedEvents] = useState<AttendedEvent[]>([]);
+  const [attendanceCount, setAttendanceCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -51,7 +59,9 @@ export default function MemberProfilePage() {
 
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
-      .select("user_id, name, location, image_url, bio, instagram, public_role")
+      .select(
+        "user_id, name, location, image_url, bio, instagram, public_role"
+      )
       .eq("user_id", id)
       .single();
 
@@ -94,6 +104,55 @@ export default function MemberProfilePage() {
       earnedBadges = earnedBadgeData || [];
     }
 
+    // -----------------------------------------
+    // Load attended events
+    // -----------------------------------------
+
+    const { data: attendedRsvps, error: attendanceError } = await supabase
+      .from("rsvps")
+      .select("event_id")
+      .eq("user_id", id)
+      .eq("checked_in", true);
+
+    if (attendanceError) {
+      console.error(
+        "Error loading attendance:",
+        attendanceError.message
+      );
+
+      setAttendanceCount(0);
+      setAttendedEvents([]);
+    } else {
+      const attendedRows = attendedRsvps || [];
+
+      setAttendanceCount(attendedRows.length);
+
+      const eventIds = attendedRows
+        .map((row) => row.event_id)
+        .filter(Boolean);
+
+      if (eventIds.length > 0) {
+        const { data: eventData, error: eventError } = await supabase
+          .from("events")
+          .select("id, title, event_date")
+          .in("id", eventIds)
+          .order("event_date", { ascending: false });
+
+        if (eventError) {
+          console.error(
+            "Error loading attended events:",
+            eventError.message
+          );
+
+          setAttendedEvents([]);
+        } else {
+          setAttendedEvents((eventData || []).slice(0, 3));
+        }
+      } else {
+        setAttendedEvents([]);
+      }
+    }
+
     setProfile(profileData || null);
     setBadges(earnedBadges);
     setLoading(false);
@@ -127,11 +186,14 @@ export default function MemberProfilePage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 text-white">
-      <Link href="/members" className="text-sm text-[#F28C52] hover:underline">
+      <Link
+        href="/members"
+        className="text-sm text-[#F28C52] hover:underline"
+      >
         ← Back to Members
       </Link>
 
-           <div className="mt-6 overflow-hidden rounded-2xl border border-[#F28C52]/20 bg-black/40 shadow-lg">
+      <div className="mt-6 overflow-hidden rounded-2xl border border-[#F28C52]/20 bg-black/40 shadow-lg">
         <div className="flex justify-center bg-black/30 px-6 py-8">
           {profile.image_url ? (
             <img
@@ -146,26 +208,26 @@ export default function MemberProfilePage() {
           )}
         </div>
 
-     <div className="p-6">
-  <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-    <div>
-      <h1 className="text-3xl font-bold text-[#F28C52] md:text-4xl">
-        {profile.name || "Member"}
-      </h1>
+        <div className="p-6">
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-[#F28C52] md:text-4xl">
+                {profile.name || "Member"}
+              </h1>
 
-      {profile.public_role && (
-        <div className="mt-3 inline-flex items-center rounded-full border border-[#F28C52]/40 bg-[#F28C52]/10 px-4 py-1 shadow-[0_0_18px_rgba(242,140,82,0.18)]">
-          <span className="text-xs font-semibold tracking-wide text-[#F28C52]">
-            {profile.public_role}
-          </span>
-        </div>
-      )}
+              {profile.public_role && (
+                <div className="mt-3 inline-flex items-center rounded-full border border-[#F28C52]/40 bg-[#F28C52]/10 px-4 py-1 shadow-[0_0_18px_rgba(242,140,82,0.18)]">
+                  <span className="text-xs font-semibold tracking-wide text-[#F28C52]">
+                    {profile.public_role}
+                  </span>
+                </div>
+              )}
 
-      {profile.bio && (
-        <p className="mt-3 max-w-2xl whitespace-pre-line text-sm leading-6 text-white/75">
-          {profile.bio}
-        </p>
-      )}
+              {profile.bio && (
+                <p className="mt-3 max-w-2xl whitespace-pre-line text-sm leading-6 text-white/75">
+                  {profile.bio}
+                </p>
+              )}
 
               {profile.instagram && (
                 <a
@@ -187,8 +249,90 @@ export default function MemberProfilePage() {
             )}
           </div>
 
+          {/* -------------------------------- */}
+          {/* PEACH STATE ACTIVITY */}
+          {/* -------------------------------- */}
+
+          <section className="mt-8 rounded-xl border border-[#F28C52]/20 bg-black/30 p-4">
+            <h2 className="text-xl font-semibold text-[#F28C52]">
+              Peach State Activity
+            </h2>
+
+            <p className="mt-1 text-sm text-white/50">
+              Recorded participation in Peach State events.
+            </p>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-xl border border-white/10 bg-black/35 p-5 text-center">
+                <p className="text-4xl font-bold text-[#F28C52]">
+                  {attendanceCount}
+                </p>
+
+                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/50">
+                  Events Attended
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-black/35 p-5 text-center">
+                <p className="text-4xl font-bold text-[#F28C52]">
+                  {badges.length}
+                </p>
+
+                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/50">
+                  Badges Earned
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 border-t border-white/10 pt-5">
+              <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-white/60">
+                Recent Events
+              </h3>
+
+              {attendedEvents.length === 0 ? (
+                <p className="mt-3 text-sm text-white/50">
+                  No recorded event attendance yet.
+                </p>
+              ) : (
+                <div className="mt-3 space-y-3">
+                  {attendedEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      className="flex flex-col gap-1 rounded-xl border border-white/10 bg-black/30 p-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div>
+                        <p className="font-semibold text-white">
+                          {event.title}
+                        </p>
+
+                        {event.event_date && (
+                          <p className="mt-1 text-xs text-white/45">
+                            {new Date(event.event_date).toLocaleDateString(
+                              undefined,
+                              {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              }
+                            )}
+                          </p>
+                        )}
+                      </div>
+
+                      <span className="mt-2 inline-flex w-fit items-center rounded-full border border-green-400/30 bg-green-500/10 px-3 py-1 text-xs font-bold text-green-300 sm:mt-0">
+                        ✓ Attended
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+
           <section className="mt-6">
-            <h2 className="text-xl font-semibold text-[#F28C52]">Badges</h2>
+            <h2 className="text-xl font-semibold text-[#F28C52]">
+              Badges
+            </h2>
 
             {badges.length === 0 ? (
               <p className="mt-2 text-white/60">No badges yet.</p>
@@ -236,7 +380,11 @@ export default function MemberProfilePage() {
                 {otherBuilds.length > 0 && (
                   <div className="grid gap-4 md:grid-cols-2">
                     {otherBuilds.map((build) => (
-                      <MemberBuildCard key={build.id} build={build} compact />
+                      <MemberBuildCard
+                        key={build.id}
+                        build={build}
+                        compact
+                      />
                     ))}
                   </div>
                 )}
@@ -252,15 +400,21 @@ export default function MemberProfilePage() {
 function MemberBuildCard({ build, compact = false }: any) {
   return (
     <div className="overflow-hidden rounded-xl border border-white/10 bg-black/40">
-  {build.image_url && (
-  <div className={compact ? "w-full aspect-[4/3] bg-black" : "w-full aspect-[16/9] bg-black"}>
-    <img
-      src={build.image_url}
-      alt={`${build.year} ${build.make} ${build.model}`}
-      className="h-full w-full object-contain"
-    />
-  </div>
-)}
+      {build.image_url && (
+        <div
+          className={
+            compact
+              ? "w-full aspect-[4/3] bg-black"
+              : "w-full aspect-[16/9] bg-black"
+          }
+        >
+          <img
+            src={build.image_url}
+            alt={`${build.year} ${build.make} ${build.model}`}
+            className="h-full w-full object-contain"
+          />
+        </div>
+      )}
 
       <div className="p-4">
         {build.is_primary && (
@@ -294,6 +448,7 @@ function MemberBuildCard({ build, compact = false }: any) {
                 <p className="text-xs uppercase tracking-wide text-white/50">
                   Other Build Notes
                 </p>
+
                 <p className="mt-1 whitespace-pre-line text-sm leading-6 text-white">
                   {build.other_notes}
                 </p>
@@ -309,7 +464,10 @@ function MemberBuildCard({ build, compact = false }: any) {
 function Section({ title, children }: any) {
   return (
     <section className="mt-8 rounded-xl border border-white/10 bg-black/30 p-4">
-      <h2 className="mb-4 text-xl font-semibold text-[#F28C52]">{title}</h2>
+      <h2 className="mb-4 text-xl font-semibold text-[#F28C52]">
+        {title}
+      </h2>
+
       {children}
     </section>
   );
@@ -318,7 +476,9 @@ function Section({ title, children }: any) {
 function InfoBlock({ label, value }: any) {
   return (
     <div className="rounded-lg border border-white/10 bg-black/30 p-3">
-      <p className="text-xs uppercase tracking-wide text-white/50">{label}</p>
+      <p className="text-xs uppercase tracking-wide text-white/50">
+        {label}
+      </p>
 
       <p className="mt-1 whitespace-pre-line text-sm text-white">
         {value && value.trim() ? value : "Not listed"}
