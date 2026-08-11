@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { createClient } from "@supabase/supabase-js";
+import sanitizeHtml from "sanitize-html";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -27,45 +28,159 @@ function escapeHtml(value: string) {
     .replace(/'/g, "&#039;");
 }
 
-function formatMessage(message: string) {
-  return escapeHtml(message)
-    .split("\n")
-    .map((line) => {
-      if (!line.trim()) {
-        return `<div style="height:12px;"></div>`;
-      }
+function sanitizeMessageHtml(messageHtml: string) {
+  return sanitizeHtml(messageHtml, {
+    allowedTags: [
+      "p",
+      "br",
+      "strong",
+      "b",
+      "em",
+      "i",
+      "u",
+      "h1",
+      "h2",
+      "h3",
+      "ul",
+      "ol",
+      "li",
+      "a",
+      "span",
+    ],
 
-      return `
-        <p style="
-          margin:0 0 14px 0;
-          font-size:16px;
-          line-height:1.65;
-          color:#333333;
-        ">
-          ${line}
-        </p>
-      `;
-    })
-    .join("");
+    allowedAttributes: {
+      a: [
+        "href",
+        "target",
+        "rel",
+      ],
+
+      span: [
+        "style",
+      ],
+
+      p: [
+        "style",
+      ],
+
+      h1: [
+        "style",
+      ],
+
+      h2: [
+        "style",
+      ],
+
+      h3: [
+        "style",
+      ],
+    },
+
+    allowedStyles: {
+      "*": {
+        "font-family": [
+          /^Canva$/i,
+          /^Cinzel$/i,
+          /^Arial$/i,
+          /^Georgia$/i,
+          /^serif$/i,
+          /^sans-serif$/i,
+        ],
+      },
+    },
+
+    allowedSchemes: [
+      "http",
+      "https",
+      "mailto",
+    ],
+
+    transformTags: {
+      a: sanitizeHtml.simpleTransform(
+        "a",
+        {
+          target: "_blank",
+          rel: "noopener noreferrer",
+        },
+        true
+      ),
+    },
+  });
 }
 
 function buildEmailHtml({
   heading,
-  message,
+  messageHtml,
   buttonText,
   buttonUrl,
 }: {
   heading?: string | null;
-  message: string;
+  messageHtml: string;
   buttonText?: string | null;
   buttonUrl?: string | null;
 }) {
+  const cleanMessage =
+    sanitizeMessageHtml(messageHtml);
+
   return `
 <!DOCTYPE html>
+
 <html>
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap');
+
+    .email-message p {
+      margin:0 0 16px 0;
+    }
+
+    .email-message h1,
+    .email-message h2,
+    .email-message h3 {
+      margin:24px 0 12px 0;
+      color:#171717;
+      line-height:1.25;
+    }
+
+    .email-message h1 {
+      font-size:28px;
+    }
+
+    .email-message h2 {
+      font-size:24px;
+    }
+
+    .email-message h3 {
+      font-size:20px;
+    }
+
+    .email-message ul {
+      margin:12px 0 18px 0;
+      padding-left:26px;
+    }
+
+    .email-message ol {
+      margin:12px 0 18px 0;
+      padding-left:26px;
+    }
+
+    .email-message li {
+      margin-bottom:7px;
+    }
+
+    .email-message a {
+      color:#D96E32;
+      text-decoration:underline;
+    }
+  </style>
 </head>
 
 <body
@@ -76,6 +191,7 @@ function buildEmailHtml({
     font-family:Arial, Helvetica, sans-serif;
   "
 >
+
   <table
     width="100%"
     cellpadding="0"
@@ -86,6 +202,7 @@ function buildEmailHtml({
       padding:30px 15px;
     "
   >
+
     <tr>
       <td align="center">
 
@@ -103,36 +220,39 @@ function buildEmailHtml({
         >
 
           <!-- HEADER -->
-          <tr>
-            <!-- HEADER -->
-<tr>
-  <td
-    align="center"
-    bgcolor="#000000"
-    style="
-      background-color:#000000;
-      padding:32px 40px;
-    "
-  >
-    <img
-      src="https://www.peachstateoffroad.com/peach-state-email-logo.png"
-      alt="Peach State Off-Road and Overlanding"
-      width="520"
-      style="
-        display:block;
-        width:100%;
-        max-width:520px;
-        height:auto;
-        margin:0 auto;
-        border:0;
-      "
-    />
-  </td>
-</tr>
 
-          <!-- ORANGE ACCENT -->
           <tr>
             <td
+              align="center"
+              bgcolor="#000000"
+              style="
+                background-color:#000000;
+                padding:28px 35px;
+              "
+            >
+
+              <img
+                src="https://www.peachstateoffroad.com/peach-state-email-logo.png"
+                alt="Peach State Off-Road and Overlanding"
+                width="520"
+                style="
+                  display:block;
+                  width:100%;
+                  max-width:520px;
+                  height:auto;
+                  margin:0 auto;
+                  border:0;
+                "
+              />
+
+            </td>
+          </tr>
+
+          <!-- ORANGE ACCENT -->
+
+          <tr>
+            <td
+              bgcolor="#F28C52"
               style="
                 height:5px;
                 background-color:#F28C52;
@@ -145,8 +265,14 @@ function buildEmailHtml({
           </tr>
 
           <!-- EMAIL CONTENT -->
+
           <tr>
-            <td style="padding:36px 32px 32px 32px;">
+
+            <td
+              style="
+                padding:36px 32px 32px 32px;
+              "
+            >
 
               ${
                 heading
@@ -154,7 +280,9 @@ function buildEmailHtml({
                     <h1
                       style="
                         margin:0 0 24px 0;
+                        font-family:'Cinzel', Georgia, serif;
                         font-size:27px;
+                        font-weight:700;
                         line-height:1.25;
                         color:#171717;
                       "
@@ -166,13 +294,15 @@ function buildEmailHtml({
               }
 
               <div
+                class="email-message"
                 style="
+                  font-family:Arial, Helvetica, sans-serif;
                   font-size:16px;
                   line-height:1.7;
                   color:#333333;
                 "
               >
-                ${formatMessage(message)}
+                ${cleanMessage}
               </div>
 
               ${
@@ -183,12 +313,18 @@ function buildEmailHtml({
                       cellpadding="0"
                       cellspacing="0"
                       border="0"
-                      style="margin-top:30px;"
+                      style="
+                        margin-top:30px;
+                      "
                     >
                       <tr>
+
                         <td align="center">
+
                           <a
                             href="${escapeHtml(buttonUrl)}"
+                            target="_blank"
+                            rel="noopener noreferrer"
                             style="
                               display:inline-block;
                               background-color:#F28C52;
@@ -202,7 +338,9 @@ function buildEmailHtml({
                           >
                             ${escapeHtml(buttonText)}
                           </a>
+
                         </td>
+
                       </tr>
                     </table>
                   `
@@ -210,18 +348,23 @@ function buildEmailHtml({
               }
 
             </td>
+
           </tr>
 
           <!-- TAGLINE -->
+
           <tr>
+
             <td
               align="center"
+              bgcolor="#f7f7f7"
               style="
                 background-color:#f7f7f7;
                 border-top:1px solid #eeeeee;
                 padding:24px 25px 18px 25px;
               "
             >
+
               <div
                 style="
                   font-size:16px;
@@ -230,21 +373,29 @@ function buildEmailHtml({
                 "
               >
                 Get Out.
-                <span style="color:#F28C52;">Explore.</span>
+                <span style="color:#F28C52;">
+                  Explore.
+                </span>
                 Belong.
               </div>
+
             </td>
+
           </tr>
 
           <!-- FOOTER -->
+
           <tr>
+
             <td
               align="center"
+              bgcolor="#f7f7f7"
               style="
                 background-color:#f7f7f7;
                 padding:0 25px 26px 25px;
               "
             >
+
               <div
                 style="
                   font-size:12px;
@@ -253,22 +404,31 @@ function buildEmailHtml({
                 "
               >
                 Peach State Off-Road and Overlanding
+
                 <br />
+
                 peachstateoffroad.com
-                <br /><br />
+
+                <br />
+                <br />
 
                 You are receiving this email because you are a registered
                 Peach State Off-Road and Overlanding member.
               </div>
+
             </td>
+
           </tr>
 
         </table>
 
       </td>
     </tr>
+
   </table>
+
 </body>
+
 </html>
 `;
 }
@@ -280,7 +440,7 @@ export async function POST(req: Request) {
     const {
       subject,
       heading,
-      message,
+      messageHtml,
       buttonText,
       buttonUrl,
       recipientIds,
@@ -292,22 +452,95 @@ export async function POST(req: Request) {
 
     if (!subject?.trim()) {
       return NextResponse.json(
-        { error: "Subject is required." },
-        { status: 400 }
+        {
+          error:
+            "Subject is required.",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
-    if (!message?.trim()) {
+    if (
+      !messageHtml ||
+      typeof messageHtml !== "string"
+    ) {
       return NextResponse.json(
-        { error: "Message is required." },
-        { status: 400 }
+        {
+          error:
+            "Message is required.",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
-    if (!Array.isArray(recipientIds) || recipientIds.length === 0) {
+    const cleanMessage =
+      sanitizeMessageHtml(messageHtml);
+
+    const textOnlyMessage =
+      cleanMessage
+        .replace(/<br\s*\/?>/gi, " ")
+        .replace(/<[^>]+>/g, "")
+        .replace(/&nbsp;/g, " ")
+        .trim();
+
+    if (!textOnlyMessage) {
       return NextResponse.json(
-        { error: "No recipients selected." },
-        { status: 400 }
+        {
+          error:
+            "Message is required.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (
+      !Array.isArray(recipientIds) ||
+      recipientIds.length === 0
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "No recipients selected.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (
+      buttonText?.trim() &&
+      !buttonUrl?.trim()
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Button URL is required.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (
+      buttonUrl?.trim() &&
+      !buttonText?.trim()
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Button text is required.",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
@@ -321,28 +554,44 @@ export async function POST(req: Request) {
     }[] = [];
 
     let page = 1;
+
     const perPage = 1000;
 
     while (true) {
       const {
-        data: { users },
+        data: {
+          users,
+        },
         error,
-      } = await supabaseAdmin.auth.admin.listUsers({
-        page,
-        perPage,
-      });
+      } =
+        await supabaseAdmin.auth.admin.listUsers(
+          {
+            page,
+            perPage,
+          }
+        );
 
       if (error) {
-        console.error("Error loading Auth users:", error);
+        console.error(
+          "Error loading Auth users:",
+          error
+        );
 
         return NextResponse.json(
-          { error: "Could not load recipients." },
-          { status: 500 }
+          {
+            error:
+              "Could not load recipients.",
+          },
+          {
+            status: 500,
+          }
         );
       }
 
       for (const user of users) {
-        if (!user.email) continue;
+        if (!user.email) {
+          continue;
+        }
 
         authUsers.push({
           id: user.id,
@@ -350,7 +599,9 @@ export async function POST(req: Request) {
         });
       }
 
-      if (users.length < perPage) {
+      if (
+        users.length < perPage
+      ) {
         break;
       }
 
@@ -361,61 +612,95 @@ export async function POST(req: Request) {
     // Load profiles
     // -----------------------------------------
 
-    const { data: profiles, error: profileError } =
+    const {
+      data: profiles,
+      error: profileError,
+    } =
       await supabaseAdmin
         .from("profiles")
-        .select("user_id, name, is_banned");
+        .select(
+          "user_id, name, is_banned"
+        );
 
     if (profileError) {
-      console.error("Profile error:", profileError);
+      console.error(
+        "Profile error:",
+        profileError
+      );
 
       return NextResponse.json(
-        { error: "Could not load member profiles." },
-        { status: 500 }
+        {
+          error:
+            "Could not load member profiles.",
+        },
+        {
+          status: 500,
+        }
       );
     }
 
-    const profileMap = new Map(
-      (profiles || []).map((profile) => [
-        profile.user_id,
-        profile,
-      ])
-    );
+    const profileMap =
+      new Map(
+        (profiles || []).map(
+          (profile) => [
+            profile.user_id,
+            profile,
+          ]
+        )
+      );
 
     // -----------------------------------------
     // Build selected recipient list
     // -----------------------------------------
 
-    const selectedSet = new Set(recipientIds);
+    const selectedSet =
+      new Set(recipientIds);
 
-    const recipients: Recipient[] = authUsers
-      .filter((user) => {
-        if (!selectedSet.has(user.id)) {
-          return false;
-        }
+    const recipients: Recipient[] =
+      authUsers
+        .filter((user) => {
+          if (
+            !selectedSet.has(user.id)
+          ) {
+            return false;
+          }
 
-        const profile = profileMap.get(user.id);
+          const profile =
+            profileMap.get(user.id);
 
-        if (profile?.is_banned === true) {
-          return false;
-        }
+          if (
+            profile?.is_banned ===
+            true
+          ) {
+            return false;
+          }
 
-        return true;
-      })
-      .map((user) => {
-        const profile = profileMap.get(user.id);
+          return true;
+        })
+        .map((user) => {
+          const profile =
+            profileMap.get(user.id);
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: profile?.name?.trim() || "Unnamed Member",
-        };
-      });
+          return {
+            id: user.id,
+            email: user.email,
+            name:
+              profile?.name?.trim() ||
+              "Unnamed Member",
+          };
+        });
 
-    if (recipients.length === 0) {
+    if (
+      recipients.length === 0
+    ) {
       return NextResponse.json(
-        { error: "No valid recipients found." },
-        { status: 400 }
+        {
+          error:
+            "No valid recipients found.",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
@@ -423,29 +708,63 @@ export async function POST(req: Request) {
     // Create blast record
     // -----------------------------------------
 
-    const { data: blast, error: blastError } =
+    const {
+      data: blast,
+      error: blastError,
+    } =
       await supabaseAdmin
         .from("email_blasts")
         .insert({
-          subject: subject.trim(),
-          heading: heading?.trim() || null,
-          message: message.trim(),
-          button_text: buttonText?.trim() || null,
-          button_url: buttonUrl?.trim() || null,
-          total_recipients: recipients.length,
-          successful_recipients: 0,
-          failed_recipients: 0,
-          status: "sending",
+          subject:
+            subject.trim(),
+
+          heading:
+            heading?.trim() ||
+            null,
+
+          message:
+            cleanMessage,
+
+          button_text:
+            buttonText?.trim() ||
+            null,
+
+          button_url:
+            buttonUrl?.trim() ||
+            null,
+
+          total_recipients:
+            recipients.length,
+
+          successful_recipients:
+            0,
+
+          failed_recipients:
+            0,
+
+          status:
+            "sending",
         })
         .select("id")
         .single();
 
-    if (blastError || !blast) {
-      console.error("Blast insert error:", blastError);
+    if (
+      blastError ||
+      !blast
+    ) {
+      console.error(
+        "Blast insert error:",
+        blastError
+      );
 
       return NextResponse.json(
-        { error: "Could not create email blast record." },
-        { status: 500 }
+        {
+          error:
+            "Could not create email blast record.",
+        },
+        {
+          status: 500,
+        }
       );
     }
 
@@ -453,20 +772,41 @@ export async function POST(req: Request) {
     // Insert recipient records
     // -----------------------------------------
 
-    const recipientRows = recipients.map((recipient) => ({
-      blast_id: blast.id,
-      user_id: recipient.id,
-      email: recipient.email,
-      name: recipient.name,
-      status: "pending",
-    }));
+    const recipientRows =
+      recipients.map(
+        (recipient) => ({
+          blast_id:
+            blast.id,
 
-    const { error: recipientInsertError } =
+          user_id:
+            recipient.id,
+
+          email:
+            recipient.email,
+
+          name:
+            recipient.name,
+
+          status:
+            "pending",
+        })
+      );
+
+    const {
+      error:
+        recipientInsertError,
+    } =
       await supabaseAdmin
-        .from("email_blast_recipients")
-        .insert(recipientRows);
+        .from(
+          "email_blast_recipients"
+        )
+        .insert(
+          recipientRows
+        );
 
-    if (recipientInsertError) {
+    if (
+      recipientInsertError
+    ) {
       console.error(
         "Recipient record insert error:",
         recipientInsertError
@@ -475,118 +815,230 @@ export async function POST(req: Request) {
       await supabaseAdmin
         .from("email_blasts")
         .update({
-          status: "failed",
+          status:
+            "failed",
         })
-        .eq("id", blast.id);
+        .eq(
+          "id",
+          blast.id
+        );
 
       return NextResponse.json(
-        { error: "Could not create recipient records." },
-        { status: 500 }
+        {
+          error:
+            "Could not create recipient records.",
+        },
+        {
+          status: 500,
+        }
       );
     }
 
     // -----------------------------------------
-    // Build HTML once
+    // Build final email HTML
     // -----------------------------------------
 
-    const html = buildEmailHtml({
-      heading,
-      message,
-      buttonText,
-      buttonUrl,
-    });
+    const html =
+      buildEmailHtml({
+        heading:
+          heading?.trim() ||
+          null,
 
-    let successfulRecipients = 0;
-    let failedRecipients = 0;
+        messageHtml:
+          cleanMessage,
+
+        buttonText:
+          buttonText?.trim() ||
+          null,
+
+        buttonUrl:
+          buttonUrl?.trim() ||
+          null,
+      });
+
+    let successfulRecipients =
+      0;
+
+    let failedRecipients =
+      0;
 
     // -----------------------------------------
-    // Send in groups of 100
+    // Send in batches of 100
     // -----------------------------------------
 
-    const batchSize = 100;
+    const batchSize =
+      100;
 
-    for (let i = 0; i < recipients.length; i += batchSize) {
-      const batch = recipients.slice(i, i + batchSize);
+    for (
+      let i = 0;
+      i < recipients.length;
+      i += batchSize
+    ) {
+      const batch =
+        recipients.slice(
+          i,
+          i + batchSize
+        );
 
-      const emails = batch.map((recipient) => ({
-        from: FROM_EMAIL,
-        to: [recipient.email],
-        subject: subject.trim(),
-        html,
-      }));
+      const emails =
+        batch.map(
+          (recipient) => ({
+            from:
+              FROM_EMAIL,
+
+            to: [
+              recipient.email,
+            ],
+
+            subject:
+              subject.trim(),
+
+            html,
+          })
+        );
 
       try {
-        const { data, error } = await resend.batch.send(emails);
+        const {
+          data,
+          error,
+        } =
+          await resend.batch.send(
+            emails
+          );
 
-        if (error || !data) {
-          console.error("Resend batch error:", error);
+        if (
+          error ||
+          !data
+        ) {
+          console.error(
+            "Resend batch error:",
+            error
+          );
 
-          failedRecipients += batch.length;
+          failedRecipients +=
+            batch.length;
 
           await supabaseAdmin
-            .from("email_blast_recipients")
+            .from(
+              "email_blast_recipients"
+            )
             .update({
-              status: "failed",
+              status:
+                "failed",
+
               error_message:
-                error?.message || "Unknown Resend batch error",
+                error?.message ||
+                "Unknown Resend batch error",
             })
-            .eq("blast_id", blast.id)
+            .eq(
+              "blast_id",
+              blast.id
+            )
             .in(
               "user_id",
-              batch.map((recipient) => recipient.id)
+              batch.map(
+                (recipient) =>
+                  recipient.id
+              )
             );
 
           continue;
         }
 
-        for (let index = 0; index < batch.length; index++) {
-          const recipient = batch[index];
-          const result = data.data?.[index];
+        for (
+          let index = 0;
+          index < batch.length;
+          index++
+        ) {
+          const recipient =
+            batch[index];
+
+          const result =
+            data.data?.[
+              index
+            ];
 
           if (result?.id) {
             successfulRecipients++;
 
             await supabaseAdmin
-              .from("email_blast_recipients")
+              .from(
+                "email_blast_recipients"
+              )
               .update({
-                status: "sent",
-                resend_email_id: result.id,
-                sent_at: new Date().toISOString(),
+                status:
+                  "sent",
+
+                resend_email_id:
+                  result.id,
+
+                sent_at:
+                  new Date().toISOString(),
               })
-              .eq("blast_id", blast.id)
-              .eq("user_id", recipient.id);
+              .eq(
+                "blast_id",
+                blast.id
+              )
+              .eq(
+                "user_id",
+                recipient.id
+              );
           } else {
             failedRecipients++;
 
             await supabaseAdmin
-              .from("email_blast_recipients")
+              .from(
+                "email_blast_recipients"
+              )
               .update({
-                status: "failed",
+                status:
+                  "failed",
+
                 error_message:
                   "Resend did not return an email ID.",
               })
-              .eq("blast_id", blast.id)
-              .eq("user_id", recipient.id);
+              .eq(
+                "blast_id",
+                blast.id
+              )
+              .eq(
+                "user_id",
+                recipient.id
+              );
           }
         }
       } catch (error) {
-        console.error("Unexpected batch send error:", error);
+        console.error(
+          "Unexpected batch send error:",
+          error
+        );
 
-        failedRecipients += batch.length;
+        failedRecipients +=
+          batch.length;
 
         await supabaseAdmin
-          .from("email_blast_recipients")
+          .from(
+            "email_blast_recipients"
+          )
           .update({
-            status: "failed",
+            status:
+              "failed",
+
             error_message:
               error instanceof Error
                 ? error.message
                 : "Unexpected send error",
           })
-          .eq("blast_id", blast.id)
+          .eq(
+            "blast_id",
+            blast.id
+          )
           .in(
             "user_id",
-            batch.map((recipient) => recipient.id)
+            batch.map(
+              (recipient) =>
+                recipient.id
+            )
           );
       }
     }
@@ -595,34 +1047,62 @@ export async function POST(req: Request) {
     // Finish blast
     // -----------------------------------------
 
-    let finalStatus = "completed";
+    let finalStatus =
+      "completed";
 
-    if (successfulRecipients === 0) {
-      finalStatus = "failed";
-    } else if (failedRecipients > 0) {
-      finalStatus = "completed_with_errors";
+    if (
+      successfulRecipients === 0
+    ) {
+      finalStatus =
+        "failed";
+    } else if (
+      failedRecipients > 0
+    ) {
+      finalStatus =
+        "completed_with_errors";
     }
 
     await supabaseAdmin
       .from("email_blasts")
       .update({
-        successful_recipients: successfulRecipients,
-        failed_recipients: failedRecipients,
-        status: finalStatus,
-        completed_at: new Date().toISOString(),
+        successful_recipients:
+          successfulRecipients,
+
+        failed_recipients:
+          failedRecipients,
+
+        status:
+          finalStatus,
+
+        completed_at:
+          new Date().toISOString(),
       })
-      .eq("id", blast.id);
+      .eq(
+        "id",
+        blast.id
+      );
 
     return NextResponse.json({
       success: true,
-      blastId: blast.id,
-      totalRecipients: recipients.length,
+
+      blastId:
+        blast.id,
+
+      totalRecipients:
+        recipients.length,
+
       successfulRecipients,
+
       failedRecipients,
-      status: finalStatus,
+
+      status:
+        finalStatus,
     });
   } catch (error) {
-    console.error("Email blast send error:", error);
+    console.error(
+      "Email blast send error:",
+      error
+    );
 
     return NextResponse.json(
       {
@@ -631,7 +1111,9 @@ export async function POST(req: Request) {
             ? error.message
             : "Something went wrong sending the email blast.",
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }
