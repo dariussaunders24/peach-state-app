@@ -1150,7 +1150,7 @@ return (
         </div>
       )}
 
-      <h1 className="text-3xl font-bold text-[#F28C52]">Events TEST</h1>
+      <h1 className="text-3xl font-bold text-[#F28C52]">Events</h1>
 
       {isAdmin && (
         <div className="space-y-5 rounded-xl border border-[#F28C52]/30 bg-black/40 p-4">
