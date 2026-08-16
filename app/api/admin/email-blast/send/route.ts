@@ -13,6 +13,9 @@ const supabaseAdmin = createClient(
 const FROM_EMAIL =
   "Peach State Off-Road <notifications@peachstateoffroad.com>";
 
+const REPLY_TO_EMAIL =
+  "dariussaunders24@gmail.com";
+
 type Recipient = {
   id: string;
   email: string;
@@ -885,6 +888,9 @@ export async function POST(req: Request) {
           (recipient) => ({
             from:
               FROM_EMAIL,
+
+            replyTo:
+              REPLY_TO_EMAIL,
 
             to: [
               recipient.email,
