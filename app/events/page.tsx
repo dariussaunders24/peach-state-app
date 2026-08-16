@@ -41,7 +41,7 @@ const terrainOptions = [
 ];
 
 const defaultDisclaimer =
-  "By RSVP’ing to this event, you accept any and all risk for vehicle damage, personal injury, recovery needs, or liability. Peach State Off-Road and Overlanding and its organizers are not liable. No-shows without canceling your RSVP at least 24 hours before the event will result in a (1) ride ban. This is so we can ensure maximum enjoyment and available spots for all members who want to attend.";
+  "By RSVP’ing to this event, you accept any and all risk for vehicle damage, personal injury, recovery needs, or liability. Peach State Off-Road and Overlanding and its organizers are not liable. No-shows without canceling your RSVP at least 24 hours before the event may result in a one-ride restriction at admin discretion. This helps ensure available spots for members who want to attend.";
 
 const defaultTrailFields = {
   trail_difficulty: "moderate",
@@ -88,6 +88,7 @@ const [canManageAttendance, setCanManageAttendance] = useState(false);
     difficulty: "",
     bring_items: [] as string[],
     rsvp_disclaimer: defaultDisclaimer,
+    is_trail_ride: true,
     ...defaultTrailFields,
   });
 
@@ -102,6 +103,7 @@ const [canManageAttendance, setCanManageAttendance] = useState(false);
     difficulty: "",
     bring_items: [] as string[],
     rsvp_disclaimer: defaultDisclaimer,
+    is_trail_ride: true,
     ...defaultTrailFields,
   });
 
@@ -205,6 +207,7 @@ const [canManageAttendance, setCanManageAttendance] = useState(false);
       difficulty: event.difficulty || "",
       bring_items: event.bring_items || [],
       rsvp_disclaimer: event.rsvp_disclaimer || defaultDisclaimer,
+      is_trail_ride: event.is_trail_ride ?? true,
       trail_difficulty: event.trail_difficulty || "moderate",
       min_tire_diameter: event.min_tire_diameter
         ? String(event.min_tire_diameter)
@@ -261,6 +264,7 @@ const [canManageAttendance, setCanManageAttendance] = useState(false);
         difficulty,
         bring_items: editForm.bring_items,
         rsvp_disclaimer: editForm.rsvp_disclaimer.trim() || defaultDisclaimer,
+        is_trail_ride: editForm.is_trail_ride,
         trail_difficulty: editForm.trail_difficulty,
         min_tire_diameter: Number(editForm.min_tire_diameter),
         recommended_lift_level: Number(editForm.recommended_lift_level),
@@ -312,6 +316,7 @@ const [canManageAttendance, setCanManageAttendance] = useState(false);
       difficulty,
       bring_items: newEvent.bring_items,
       rsvp_disclaimer: newEvent.rsvp_disclaimer.trim() || defaultDisclaimer,
+      is_trail_ride: newEvent.is_trail_ride,
       trail_difficulty: newEvent.trail_difficulty,
       min_tire_diameter: Number(newEvent.min_tire_diameter),
       recommended_lift_level: Number(newEvent.recommended_lift_level),
@@ -364,6 +369,7 @@ if (!notifyResponse.ok) {
       difficulty: "",
       bring_items: [],
       rsvp_disclaimer: defaultDisclaimer,
+      is_trail_ride: true,
       ...defaultTrailFields,
     });
 
@@ -402,7 +408,7 @@ cutoff.setHours(cutoff.getHours() - 24);
           if (userIds.length > 0) {
             const { data: profileData, error: profileError } = await supabase
               .from("profiles")
-              .select("user_id, name, image_url")
+              .select("user_id, name, image_url, ride_ban_active, ride_ban_source_event_id, ride_ban_applied_at")
               .in("user_id", userIds);
 
             if (profileError) {
@@ -635,6 +641,40 @@ async function promoteRsvpToGoing(rsvp: any, event: any) {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return;
 
+    if (event.is_trail_ride) {
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("ride_ban_active")
+        .eq("user_id", userData.user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        alert(profileError.message);
+        return;
+      }
+
+      if (profile?.ride_ban_active) {
+        const { error: clearBanError } = await supabase
+          .from("profiles")
+          .update({
+            ride_ban_active: false,
+            ride_ban_source_event_id: null,
+            ride_ban_applied_at: null,
+          })
+          .eq("user_id", userData.user.id);
+
+        if (clearBanError) {
+          alert(clearBanError.message);
+          return;
+        }
+
+        showConfirmation(
+          "You are unable to RSVP for this trail ride because of a one-ride restriction from a previous missed ride. This restriction has now been served and cleared. You may RSVP for the next trail ride."
+        );
+        return;
+      }
+    }
+
     const accepted = confirm(event.rsvp_disclaimer || defaultDisclaimer);
     if (!accepted) return;
 
@@ -667,7 +707,7 @@ async function promoteRsvpToGoing(rsvp: any, event: any) {
 
     if (status === "going") {
       showConfirmation(
-        "RSVP confirmed. You’re on the Going list.\n\nReminder: No-shows without canceling your RSVP at least 24 hours before the event will result in a 1-ride ban. This helps us keep spots available for members who want to attend."
+        "RSVP confirmed. You’re on the Going list.\n\nReminder: No-shows without canceling your RSVP at least 24 hours before the event may result in a one-ride restriction at admin discretion."
       );
     } else {
       showConfirmation(
@@ -790,6 +830,76 @@ async function toggleAttendance(rsvpId: string, currentValue: boolean) {
   }
 
   await loadEvents();
+}
+
+async function applyRideBan(userId: string, event: any) {
+  if (!isAdmin) return;
+  if (!event.is_trail_ride) {
+    alert("Ride bans can only be applied from trail ride events.");
+    return;
+  }
+
+  const member = (event.attendees || []).find(
+    (attendee: any) => attendee.user_id === userId
+  );
+
+  const memberName = member?.profiles?.name || "this member";
+
+  if (
+    !confirm(
+      `Apply a one-ride ban to ${memberName}? They will be blocked from RSVP'ing to their next trail ride, and the restriction will then be cleared.`
+    )
+  ) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      ride_ban_active: true,
+      ride_ban_source_event_id: event.id,
+      ride_ban_applied_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  await loadEvents();
+  showConfirmation(`1-ride ban applied to ${memberName}.`);
+}
+
+async function removeRideBan(userId: string, event: any) {
+  if (!isAdmin) return;
+
+  const member = (event.attendees || []).find(
+    (attendee: any) => attendee.user_id === userId
+  );
+
+  const memberName = member?.profiles?.name || "this member";
+
+  if (!confirm(`Remove the active ride ban from ${memberName}?`)) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      ride_ban_active: false,
+      ride_ban_source_event_id: null,
+      ride_ban_applied_at: null,
+    })
+    .eq("user_id", userId);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  await loadEvents();
+  showConfirmation(`Ride ban removed from ${memberName}.`);
 }
 
 async function copyEventEmails(
@@ -982,6 +1092,21 @@ return (
                 className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
               />
 
+              <label className="flex items-center gap-3 rounded-lg border border-[#F28C52]/30 bg-[#F28C52]/10 p-3 text-sm font-semibold text-white">
+                <input
+                  type="checkbox"
+                  checked={editForm.is_trail_ride}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      is_trail_ride: e.target.checked,
+                    }))
+                  }
+                  className="h-4 w-4 accent-[#F28C52]"
+                />
+                Trail Ride
+              </label>
+
               <TrailRequirementsFields
                 form={editForm}
                 setForm={setEditForm}
@@ -1122,6 +1247,21 @@ return (
             className="w-full rounded-lg border border-white/20 bg-white px-3 py-2 text-black placeholder-gray-500"
           />
 
+          <label className="flex items-center gap-3 rounded-lg border border-[#F28C52]/30 bg-[#F28C52]/10 p-3 text-sm font-semibold text-white">
+            <input
+              type="checkbox"
+              checked={newEvent.is_trail_ride}
+              onChange={(e) =>
+                setNewEvent((prev) => ({
+                  ...prev,
+                  is_trail_ride: e.target.checked,
+                }))
+              }
+              className="h-4 w-4 accent-[#F28C52]"
+            />
+            Trail Ride
+          </label>
+
           <TrailRequirementsFields
             form={newEvent}
             setForm={setNewEvent}
@@ -1179,6 +1319,8 @@ return (
   toggleAttendance={toggleAttendance}
   adminUpdateRsvpStatus={adminUpdateRsvpStatus}
   adminRemoveRsvp={adminRemoveRsvp}
+  applyRideBan={applyRideBan}
+  removeRideBan={removeRideBan}
 />
     ))}
   </div>
@@ -1657,6 +1799,8 @@ function EventCard({
   toggleAttendance,
   adminUpdateRsvpStatus,
   adminRemoveRsvp,
+  applyRideBan,
+  removeRideBan,
 }: any) {
   const [userStatus, setUserStatus] = useState("");
 
@@ -1801,8 +1945,32 @@ const sameButtonSize = "flex h-12 w-full items-center justify-center";
                             >
                               Remove
                             </button>
+
                           </div>
                         )}
+
+                        {isAdmin &&
+                          event.is_trail_ride &&
+                          !attendee.checked_in &&
+                          (attendee.profiles?.ride_ban_active ? (
+                            <button
+                              onClick={() =>
+                                removeRideBan(attendee.user_id, event)
+                              }
+                              className="rounded border border-orange-400/40 px-2 py-1 text-xs text-orange-300"
+                            >
+                              Remove 1-Ride Ban
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() =>
+                                applyRideBan(attendee.user_id, event)
+                              }
+                              className="rounded border border-[#F28C52]/50 px-2 py-1 text-xs text-[#F28C52]"
+                            >
+                              Apply 1-Ride Ban
+                            </button>
+                          ))}
                       </div>
                     ))}
                   </div>
