@@ -9,7 +9,7 @@ import CanIRunThis from "../../components/CanIRunThis";
 const adminEmails = ["dariussaunders24@gmail.com"];
 
 const defaultDisclaimer =
-  "By RSVP’ing to this event, you accept any and all risk for vehicle damage, personal injury, recovery needs, or liability. Peach State Off-Road and Overlanding and its organizers are not liable. No-shows without canceling your RSVP at least 24 hours before the event will result in a (1) ride ban. This is so we can ensure maximum enjoyment and available spots for all members who want to attend.";
+  "By RSVP’ing to this event, you accept any and all risk for vehicle damage, personal injury, recovery needs, or liability. Peach State Off-Road and Overlanding and its organizers are not liable. No-shows without canceling your RSVP at least 24 hours before the event may result in a one-ride restriction at admin discretion. This helps ensure available spots for members who want to attend.";
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -84,7 +84,7 @@ export default function EventDetailPage() {
       (rsvps || []).map(async (rsvpItem) => {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("name")
+          .select("name, ride_ban_active, ride_ban_source_event_id, ride_ban_applied_at")
           .eq("user_id", rsvpItem.user_id)
           .maybeSingle();
 
@@ -94,6 +94,9 @@ export default function EventDetailPage() {
           status: rsvpItem.status,
           checked_in: rsvpItem.checked_in || false,
           name: profile?.name || "Member",
+          ride_ban_active: profile?.ride_ban_active || false,
+          ride_ban_source_event_id: profile?.ride_ban_source_event_id || null,
+          ride_ban_applied_at: profile?.ride_ban_applied_at || null,
         };
       })
     );
@@ -270,6 +273,42 @@ export default function EventDetailPage() {
 
     if (!event) return;
 
+    if (event.is_trail_ride) {
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("ride_ban_active")
+        .eq("user_id", currentUserId)
+        .maybeSingle();
+
+      if (profileError) {
+        alert(profileError.message);
+        return;
+      }
+
+      if (profile?.ride_ban_active) {
+        const { error: clearBanError } = await supabase
+          .from("profiles")
+          .update({
+            ride_ban_active: false,
+            ride_ban_source_event_id: null,
+            ride_ban_applied_at: null,
+          })
+          .eq("user_id", currentUserId);
+
+        if (clearBanError) {
+          alert(clearBanError.message);
+          return;
+        }
+
+        alert(
+          "You are unable to RSVP for this trail ride because of a one-ride restriction from a previous missed ride. This restriction has now been served and cleared. You may RSVP for the next trail ride."
+        );
+
+        await loadPage();
+        return;
+      }
+    }
+
     const accepted = confirm(event.rsvp_disclaimer || defaultDisclaimer);
 
     if (!accepted) return;
@@ -336,6 +375,66 @@ if (currentRsvp.status === "going") {
 
 alert("Your RSVP has been canceled.");
 await loadPage();
+  }
+
+  async function applyRideBan(userId: string) {
+    if (!isAdmin || !event || !event.is_trail_ride) return;
+
+    const member = attendees.find((a) => a.user_id === userId);
+    const memberName = member?.name || "this member";
+
+    if (
+      !confirm(
+        `Apply a one-ride ban to ${memberName}? They will be blocked from RSVP'ing to their next trail ride, and the restriction will then be cleared.`
+      )
+    ) {
+      return;
+    }
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        ride_ban_active: true,
+        ride_ban_source_event_id: event.id,
+        ride_ban_applied_at: new Date().toISOString(),
+      })
+      .eq("user_id", userId);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    alert(`1-ride ban applied to ${memberName}.`);
+    await loadPage();
+  }
+
+  async function removeRideBan(userId: string) {
+    if (!isAdmin) return;
+
+    const member = attendees.find((a) => a.user_id === userId);
+    const memberName = member?.name || "this member";
+
+    if (!confirm(`Remove the active ride ban from ${memberName}?`)) {
+      return;
+    }
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        ride_ban_active: false,
+        ride_ban_source_event_id: null,
+        ride_ban_applied_at: null,
+      })
+      .eq("user_id", userId);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    alert(`Ride ban removed from ${memberName}.`);
+    await loadPage();
   }
 
   async function toggleAttendance(rsvpId: string, currentValue: boolean) {
@@ -772,6 +871,25 @@ async function moveToGoing(rsvpId: string, bypassPermission = false) {
                     >
                       Remove
                     </button>
+
+                    {isAdmin &&
+                      event.is_trail_ride &&
+                      !a.checked_in &&
+                      (a.ride_ban_active ? (
+                        <button
+                          onClick={() => removeRideBan(a.user_id)}
+                          className="rounded border border-orange-400/40 px-2 py-1 text-xs text-orange-300"
+                        >
+                          Remove 1-Ride Ban
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => applyRideBan(a.user_id)}
+                          className="rounded border border-[#F28C52]/50 px-2 py-1 text-xs text-[#F28C52]"
+                        >
+                          Apply 1-Ride Ban
+                        </button>
+                      ))}
                   </div>
                 )}
               </div>
