@@ -776,6 +776,22 @@ async function adminRemoveRsvp(
 
   await loadEvents();
 }
+async function toggleAttendance(rsvpId: string, currentValue: boolean) {
+  if (!canManageAttendance) return;
+
+  const { error } = await supabase
+    .from("rsvps")
+    .update({ checked_in: !currentValue })
+    .eq("id", rsvpId);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  await loadEvents();
+}
+
 async function copyEventEmails(
   eventId: string,
   status: "going" | "waitlist" | "all"
@@ -1159,6 +1175,8 @@ return (
   deleteEvent={deleteEvent}
   uploadCoverPhoto={uploadCoverPhoto}
   copyEventEmails={copyEventEmails}
+  canManageAttendance={canManageAttendance}
+  toggleAttendance={toggleAttendance}
 />
     ))}
   </div>
@@ -1633,6 +1651,8 @@ function EventCard({
   uploadCoverPhoto,
   copyEventEmails,
   loadEvents,
+  canManageAttendance,
+  toggleAttendance,
 }: any) {
   const [userStatus, setUserStatus] = useState("");
 
@@ -1723,13 +1743,34 @@ const sameButtonSize = "flex h-12 w-full items-center justify-center";
                   <p className="text-sm font-semibold text-green-300">Going</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {goingAttendees.map((attendee: any) => (
-                      <Link
+                      <div
                         key={`${event.id}-${attendee.user_id}`}
-                        href={`/members/${attendee.user_id}`}
-                        className="rounded-full border border-green-400/20 bg-green-500/10 px-3 py-1 text-sm text-green-200 hover:border-green-300"
+                        className="flex items-center gap-2"
                       >
-                        {attendee.profiles?.name || "Member"}
-                      </Link>
+                        <Link
+                          href={`/members/${attendee.user_id}`}
+                          className="rounded-full border border-green-400/20 bg-green-500/10 px-3 py-1 text-sm text-green-200 hover:border-green-300"
+                        >
+                          {attendee.profiles?.name || "Member"}
+                        </Link>
+
+                        {canManageAttendance && (
+                          <label className="flex items-center gap-2 rounded border border-[#F28C52]/40 px-2 py-1 text-xs text-[#F28C52]">
+                            <input
+                              type="checkbox"
+                              checked={attendee.checked_in || false}
+                              onChange={() =>
+                                toggleAttendance(
+                                  attendee.id,
+                                  attendee.checked_in || false
+                                )
+                              }
+                              className="h-4 w-4 accent-[#F28C52]"
+                            />
+                            Attended
+                          </label>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
