@@ -1741,11 +1741,11 @@ const sameButtonSize = "flex h-12 w-full items-center justify-center";
               {goingAttendees.length > 0 && (
                 <div>
                   <p className="text-sm font-semibold text-green-300">Going</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
+                  <div className="mt-2 space-y-2">
                     {goingAttendees.map((attendee: any) => (
                       <div
                         key={`${event.id}-${attendee.user_id}`}
-                        className="flex items-center gap-2"
+                        className="flex items-center justify-between gap-3"
                       >
                         <Link
                           href={`/members/${attendee.user_id}`}
@@ -1781,7 +1781,7 @@ const sameButtonSize = "flex h-12 w-full items-center justify-center";
                   <p className="text-sm font-semibold text-yellow-300">
                     Waitlist
                   </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
+                  <div className="mt-2 space-y-2">
                     {waitlistAttendees.map((attendee: any) => (
                       <Link
                         key={`${event.id}-${attendee.user_id}`}
