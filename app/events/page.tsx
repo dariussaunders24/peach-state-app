@@ -1656,6 +1656,12 @@ function EventCard({
   }
 
   const publicLocation = event.public_location || event.location;
+  const goingAttendees = (event.attendees || []).filter(
+    (attendee: any) => attendee.status === "going"
+  );
+  const waitlistAttendees = (event.attendees || []).filter(
+    (attendee: any) => attendee.status === "waitlist"
+  );
 const sameButtonSize = "flex h-12 w-full items-center justify-center";
   return (
     <div className="overflow-hidden rounded-xl border border-[#F28C52]/20 bg-black/40">
@@ -1702,6 +1708,52 @@ const sameButtonSize = "flex h-12 w-full items-center justify-center";
             <p className="mt-1 text-sm text-yellow-300">
               Waitlist: {event.waitlistCount}
             </p>
+          )}
+        </div>
+
+        <div className="rounded-lg border border-white/10 bg-black/30 p-4">
+          <h4 className="font-semibold text-white">Attendees</h4>
+
+          {goingAttendees.length === 0 && waitlistAttendees.length === 0 ? (
+            <p className="mt-2 text-sm text-gray-400">No RSVPs yet.</p>
+          ) : (
+            <div className="mt-3 space-y-3">
+              {goingAttendees.length > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-green-300">Going</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {goingAttendees.map((attendee: any) => (
+                      <Link
+                        key={`${event.id}-${attendee.user_id}`}
+                        href={`/members/${attendee.user_id}`}
+                        className="rounded-full border border-green-400/20 bg-green-500/10 px-3 py-1 text-sm text-green-200 hover:border-green-300"
+                      >
+                        {attendee.profiles?.name || "Member"}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {waitlistAttendees.length > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-yellow-300">
+                    Waitlist
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {waitlistAttendees.map((attendee: any) => (
+                      <Link
+                        key={`${event.id}-${attendee.user_id}`}
+                        href={`/members/${attendee.user_id}`}
+                        className="rounded-full border border-yellow-300/20 bg-yellow-300/10 px-3 py-1 text-sm text-yellow-200 hover:border-yellow-300"
+                      >
+                        {attendee.profiles?.name || "Member"}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
