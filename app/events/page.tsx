@@ -1177,6 +1177,8 @@ return (
   copyEventEmails={copyEventEmails}
   canManageAttendance={canManageAttendance}
   toggleAttendance={toggleAttendance}
+  adminUpdateRsvpStatus={adminUpdateRsvpStatus}
+  adminRemoveRsvp={adminRemoveRsvp}
 />
     ))}
   </div>
@@ -1653,6 +1655,8 @@ function EventCard({
   loadEvents,
   canManageAttendance,
   toggleAttendance,
+  adminUpdateRsvpStatus,
+  adminRemoveRsvp,
 }: any) {
   const [userStatus, setUserStatus] = useState("");
 
@@ -1755,20 +1759,49 @@ const sameButtonSize = "flex h-12 w-full items-center justify-center";
                         </Link>
 
                         {canManageAttendance && (
-                          <label className="flex items-center gap-2 rounded border border-[#F28C52]/40 px-2 py-1 text-xs text-[#F28C52]">
-                            <input
-                              type="checkbox"
-                              checked={attendee.checked_in || false}
-                              onChange={() =>
-                                toggleAttendance(
+                          <div className="flex flex-wrap gap-2">
+                            <label className="flex items-center gap-2 rounded border border-[#F28C52]/40 px-2 py-1 text-xs text-[#F28C52]">
+                              <input
+                                type="checkbox"
+                                checked={attendee.checked_in || false}
+                                onChange={() =>
+                                  toggleAttendance(
+                                    attendee.id,
+                                    attendee.checked_in || false
+                                  )
+                                }
+                                className="h-4 w-4 accent-[#F28C52]"
+                              />
+                              Attended
+                            </label>
+
+                            <button
+                              onClick={() =>
+                                adminUpdateRsvpStatus(
                                   attendee.id,
-                                  attendee.checked_in || false
+                                  "waitlist",
+                                  attendee.user_id,
+                                  event
                                 )
                               }
-                              className="h-4 w-4 accent-[#F28C52]"
-                            />
-                            Attended
-                          </label>
+                              className="rounded border border-yellow-300/40 px-2 py-1 text-xs text-yellow-200"
+                            >
+                              Move to Waitlist
+                            </button>
+
+                            <button
+                              onClick={() =>
+                                adminRemoveRsvp(
+                                  attendee.id,
+                                  event,
+                                  attendee.status
+                                )
+                              }
+                              className="rounded border border-red-400/40 px-2 py-1 text-xs text-red-300"
+                            >
+                              Remove
+                            </button>
+                          </div>
                         )}
                       </div>
                     ))}
@@ -1783,13 +1816,48 @@ const sameButtonSize = "flex h-12 w-full items-center justify-center";
                   </p>
                   <div className="mt-2 space-y-2">
                     {waitlistAttendees.map((attendee: any) => (
-                      <Link
+                      <div
                         key={`${event.id}-${attendee.user_id}`}
-                        href={`/members/${attendee.user_id}`}
-                        className="rounded-full border border-yellow-300/20 bg-yellow-300/10 px-3 py-1 text-sm text-yellow-200 hover:border-yellow-300"
+                        className="flex items-center justify-between gap-3"
                       >
-                        {attendee.profiles?.name || "Member"}
-                      </Link>
+                        <Link
+                          href={`/members/${attendee.user_id}`}
+                          className="rounded-full border border-yellow-300/20 bg-yellow-300/10 px-3 py-1 text-sm text-yellow-200 hover:border-yellow-300"
+                        >
+                          {attendee.profiles?.name || "Member"}
+                        </Link>
+
+                        {canManageAttendance && (
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              onClick={() =>
+                                adminUpdateRsvpStatus(
+                                  attendee.id,
+                                  "going",
+                                  attendee.user_id,
+                                  event
+                                )
+                              }
+                              className="rounded border border-green-400/40 px-2 py-1 text-xs text-green-300"
+                            >
+                              Move to Going
+                            </button>
+
+                            <button
+                              onClick={() =>
+                                adminRemoveRsvp(
+                                  attendee.id,
+                                  event,
+                                  attendee.status
+                                )
+                              }
+                              className="rounded border border-red-400/40 px-2 py-1 text-xs text-red-300"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
