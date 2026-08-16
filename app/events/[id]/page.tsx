@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { supabase } from "../../lib/supabase";
 import CanIRunThis from "../../components/CanIRunThis";
 
@@ -742,7 +743,9 @@ async function moveToGoing(rsvpId: string, bypassPermission = false) {
                 key={a.id}
                 className="mt-2 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-green-400/20 bg-green-500/10 px-3 py-2 text-gray-300"
               >
-                <span>{a.name}</span>
+                <Link href={`/members/${a.user_id}`}>
+                  {a.name}
+                </Link>
 
                 {canManageAttendance && (
                   <div className="flex flex-wrap gap-2">
@@ -787,9 +790,9 @@ async function moveToGoing(rsvpId: string, bypassPermission = false) {
                 key={a.id}
                 className="mt-2 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-yellow-300/20 bg-yellow-300/10 px-3 py-2 text-gray-300"
               >
-                <span>
+                <Link href={`/members/${a.user_id}`}>
                   {i + 1}. {a.name}
-                </span>
+                </Link>
 
                 {canManageAttendance && (
                   <div className="flex flex-wrap gap-2">
