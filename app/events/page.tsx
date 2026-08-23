@@ -1107,11 +1107,13 @@ return (
                 Trail Ride
               </label>
 
-              <TrailRequirementsFields
-                form={editForm}
-                setForm={setEditForm}
-                toggleTerrain={toggleEditTrailTerrain}
-              />
+              {editForm.is_trail_ride && (
+                <TrailRequirementsFields
+                  form={editForm}
+                  setForm={setEditForm}
+                  toggleTerrain={toggleEditTrailTerrain}
+                />
+              )}
 
               <BringItemsBlock
                 selectedItems={editForm.bring_items}
@@ -1262,11 +1264,13 @@ return (
             Trail Ride
           </label>
 
-          <TrailRequirementsFields
-            form={newEvent}
-            setForm={setNewEvent}
-            toggleTerrain={toggleTrailTerrain}
-          />
+          {newEvent.is_trail_ride && (
+            <TrailRequirementsFields
+              form={newEvent}
+              setForm={setNewEvent}
+              toggleTerrain={toggleTrailTerrain}
+            />
+          )}
 
           <BringItemsBlock
             selectedItems={newEvent.bring_items}
@@ -2035,29 +2039,31 @@ const sameButtonSize = "flex h-12 w-full items-center justify-center";
         </div>
 
  <div className="flex items-center justify-center gap-3">
+  {event.is_trail_ride && (
   <CanIRunThis
-    eventTitle={event.title}
-    requirements={{
-      difficulty: event.trail_difficulty || "moderate",
-      minTireDiameter: event.min_tire_diameter || 31,
-      recommendedLiftLevel: event.recommended_lift_level ?? 1,
-      stockFriendly: event.stock_friendly || false,
-      skidPlates: event.skid_plates_requirement || "recommended",
-      rockSliders: event.rock_sliders_requirement || "not_needed",
-      recoveryPointsRequired: event.recovery_points_required ?? true,
-      recoveryGearRequired: event.recovery_gear_required ?? true,
-      winch: event.winch_requirement || "recommended",
-      traction: event.traction_requirement || "factory_ok",
-      waterCrossings: event.water_crossings || "moderate",
-      pinstripingRisk: event.pinstriping_risk || "medium",
-      terrain: event.trail_terrain || [
-        "Ruts",
-        "Mud / Clay",
-        "Water Crossings",
-      ],
-    }}
-  />
-
+      eventTitle={event.title}
+      requirements={{
+        difficulty: event.trail_difficulty || "moderate",
+        minTireDiameter: event.min_tire_diameter || 31,
+        recommendedLiftLevel: event.recommended_lift_level ?? 1,
+        stockFriendly: event.stock_friendly || false,
+        skidPlates: event.skid_plates_requirement || "recommended",
+        rockSliders: event.rock_sliders_requirement || "not_needed",
+        recoveryPointsRequired: event.recovery_points_required ?? true,
+        recoveryGearRequired: event.recovery_gear_required ?? true,
+        winch: event.winch_requirement || "recommended",
+        traction: event.traction_requirement || "factory_ok",
+        waterCrossings: event.water_crossings || "moderate",
+        pinstripingRisk: event.pinstriping_risk || "medium",
+        terrain: event.trail_terrain || [
+          "Ruts",
+          "Mud / Clay",
+          "Water Crossings",
+        ],
+      }}
+    />
+  
+  )}
   <a
     href={getGoogleCalendarUrl(event)}
     target="_blank"

@@ -762,30 +762,32 @@ async function moveToGoing(rsvpId: string, bypassPermission = false) {
           </div>
         )}
 
-        <div className="mt-6">
-          <CanIRunThis
-            eventTitle={event.title}
-            requirements={{
-              difficulty: event.trail_difficulty || "moderate",
-              minTireDiameter: event.min_tire_diameter || 31,
-              recommendedLiftLevel: event.recommended_lift_level ?? 1,
-              stockFriendly: event.stock_friendly || false,
-              skidPlates: event.skid_plates_requirement || "recommended",
-              rockSliders: event.rock_sliders_requirement || "not_needed",
-              recoveryPointsRequired: event.recovery_points_required ?? true,
-              recoveryGearRequired: event.recovery_gear_required ?? true,
-              winch: event.winch_requirement || "recommended",
-              traction: event.traction_requirement || "factory_ok",
-              waterCrossings: event.water_crossings || "moderate",
-              pinstripingRisk: event.pinstriping_risk || "medium",
-              terrain: event.trail_terrain || [
-                "Ruts",
-                "Mud / Clay",
-                "Water Crossings",
-              ],
-            }}
-          />
-        </div>
+        {event.is_trail_ride && (
+          <div className="mt-6">
+            <CanIRunThis
+              eventTitle={event.title}
+              requirements={{
+                difficulty: event.trail_difficulty || "moderate",
+                minTireDiameter: event.min_tire_diameter || 31,
+                recommendedLiftLevel: event.recommended_lift_level ?? 1,
+                stockFriendly: event.stock_friendly || false,
+                skidPlates: event.skid_plates_requirement || "recommended",
+                rockSliders: event.rock_sliders_requirement || "not_needed",
+                recoveryPointsRequired: event.recovery_points_required ?? true,
+                recoveryGearRequired: event.recovery_gear_required ?? true,
+                winch: event.winch_requirement || "recommended",
+                traction: event.traction_requirement || "factory_ok",
+                waterCrossings: event.water_crossings || "moderate",
+                pinstripingRisk: event.pinstriping_risk || "medium",
+                terrain: event.trail_terrain || [
+                  "Ruts",
+                  "Mud / Clay",
+                  "Water Crossings",
+                ],
+              }}
+            />
+          </div>
+        )}
 
         {userStatus ? (
           <div className="mt-6">
