@@ -2,6 +2,13 @@
 
 const vendors = [
   {
+    name: "Southern Style Calibrations",
+    discount: "Discount Code: peachstate",
+    description: "15% Off. Tunes for Toyota and Lexus Vehicles. More makes being added soon",
+    logo: "/vendors/southern.png",
+    url: "https://www.instagram.com/ssc.tuning?utm_source=ig_web_button_share_sheet&igsi=ZDNlZDc0MzIxNw==",
+  },
+  {
     name: "Morrflate",
     discount: "Discount Code: peachstate",
     description: "10% Off. Multi-tire inflation and deflation kits.",
