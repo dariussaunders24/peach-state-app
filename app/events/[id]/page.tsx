@@ -25,6 +25,7 @@ export default function EventDetailPage() {
   const [canManageAttendance, setCanManageAttendance] = useState(false);
   const [showRsvpDisclaimer, setShowRsvpDisclaimer] = useState(false);
   const [pendingRsvpStatus, setPendingRsvpStatus] = useState("");
+  const [rsvpDisclaimerAccepted, setRsvpDisclaimerAccepted] = useState(false);
 
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
@@ -314,11 +315,12 @@ export default function EventDetailPage() {
     const status = event.goingCount >= event.capacity ? "waitlist" : "going";
 
     setPendingRsvpStatus(status);
+    setRsvpDisclaimerAccepted(false);
     setShowRsvpDisclaimer(true);
   }
 
   async function confirmRsvp() {
-    if (!event || !currentUserId || !pendingRsvpStatus) return;
+    if (!event || !currentUserId || !pendingRsvpStatus || !rsvpDisclaimerAccepted) return;
 
     const status = pendingRsvpStatus;
 
@@ -604,11 +606,24 @@ async function moveToGoing(rsvpId: string, bypassPermission = false) {
               </p>
             </div>
 
-            <div className="mt-6 flex justify-end gap-3">
+            <label className="mt-6 flex cursor-pointer items-start gap-3 rounded-lg border border-white/10 bg-black/30 p-4">
+              <input
+                type="checkbox"
+                checked={rsvpDisclaimerAccepted}
+                onChange={(e) => setRsvpDisclaimerAccepted(e.target.checked)}
+                className="mt-1 h-4 w-4 accent-[#F28C52]"
+              />
+              <span className="text-sm leading-6 text-gray-300">
+                I have read and agree to the terms above.
+              </span>
+            </label>
+
+            <div className="mt-4 flex justify-end gap-3">
               <button
                 onClick={() => {
                   setShowRsvpDisclaimer(false);
                   setPendingRsvpStatus("");
+                  setRsvpDisclaimerAccepted(false);
                 }}
                 className="rounded-lg border border-white/20 px-4 py-2 font-semibold text-gray-300 hover:border-white/40"
               >
@@ -617,9 +632,14 @@ async function moveToGoing(rsvpId: string, bypassPermission = false) {
 
               <button
                 onClick={confirmRsvp}
-                className="rounded-lg bg-[#F28C52] px-5 py-2 font-semibold text-black hover:bg-[#C96A2C]"
+                disabled={!rsvpDisclaimerAccepted}
+                className={`rounded-lg px-5 py-2 font-semibold ${
+                  rsvpDisclaimerAccepted
+                    ? "bg-[#F28C52] text-black hover:bg-[#C96A2C]"
+                    : "cursor-not-allowed bg-white/10 text-white/30"
+                }`}
               >
-                I Agree
+                Confirm RSVP
               </button>
             </div>
           </div>
