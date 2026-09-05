@@ -78,6 +78,7 @@ const [canManageAttendance, setCanManageAttendance] = useState(false);
   const [editingEvent, setEditingEvent] = useState<any | null>(null);
   const [rsvpDisclaimerEvent, setRsvpDisclaimerEvent] = useState<any | null>(null);
   const [pendingRsvpUserId, setPendingRsvpUserId] = useState("");
+  const [rsvpDisclaimerAccepted, setRsvpDisclaimerAccepted] = useState(false);
 
   const [newEvent, setNewEvent] = useState({
     title: "",
@@ -678,11 +679,12 @@ async function promoteRsvpToGoing(rsvp: any, event: any) {
     }
 
     setPendingRsvpUserId(userData.user.id);
+    setRsvpDisclaimerAccepted(false);
     setRsvpDisclaimerEvent(event);
   }
 
   async function confirmRsvpFromDisclaimer() {
-    if (!rsvpDisclaimerEvent || !pendingRsvpUserId) return;
+    if (!rsvpDisclaimerEvent || !pendingRsvpUserId || !rsvpDisclaimerAccepted) return;
 
     const event = rsvpDisclaimerEvent;
     const userId = pendingRsvpUserId;
@@ -966,11 +968,24 @@ return (
               </p>
             </div>
 
-            <div className="mt-6 flex justify-end gap-3">
+            <label className="mt-6 flex cursor-pointer items-start gap-3 rounded-lg border border-white/10 bg-black/30 p-4">
+              <input
+                type="checkbox"
+                checked={rsvpDisclaimerAccepted}
+                onChange={(e) => setRsvpDisclaimerAccepted(e.target.checked)}
+                className="mt-1 h-4 w-4 accent-[#F28C52]"
+              />
+              <span className="text-sm leading-6 text-gray-300">
+                I have read and agree to the terms above.
+              </span>
+            </label>
+
+            <div className="mt-4 flex justify-end gap-3">
               <button
                 onClick={() => {
                   setRsvpDisclaimerEvent(null);
                   setPendingRsvpUserId("");
+                  setRsvpDisclaimerAccepted(false);
                 }}
                 className="rounded-lg border border-white/20 px-4 py-2 font-semibold text-gray-300 hover:border-white/40"
               >
@@ -979,9 +994,14 @@ return (
 
               <button
                 onClick={confirmRsvpFromDisclaimer}
-                className="rounded-lg bg-[#F28C52] px-5 py-2 font-semibold text-black hover:bg-[#C96A2C]"
+                disabled={!rsvpDisclaimerAccepted}
+                className={`rounded-lg px-5 py-2 font-semibold ${
+                  rsvpDisclaimerAccepted
+                    ? "bg-[#F28C52] text-black hover:bg-[#C96A2C]"
+                    : "cursor-not-allowed bg-white/10 text-white/30"
+                }`}
               >
-                I Agree
+                Confirm RSVP
               </button>
             </div>
           </div>
