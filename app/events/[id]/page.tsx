@@ -23,6 +23,8 @@ export default function EventDetailPage() {
   const [userStatus, setUserStatus] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [canManageAttendance, setCanManageAttendance] = useState(false);
+  const [showRsvpDisclaimer, setShowRsvpDisclaimer] = useState(false);
+  const [pendingRsvpStatus, setPendingRsvpStatus] = useState("");
 
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
@@ -309,11 +311,18 @@ export default function EventDetailPage() {
       }
     }
 
-    const accepted = confirm(event.rsvp_disclaimer || defaultDisclaimer);
-
-    if (!accepted) return;
-
     const status = event.goingCount >= event.capacity ? "waitlist" : "going";
+
+    setPendingRsvpStatus(status);
+    setShowRsvpDisclaimer(true);
+  }
+
+  async function confirmRsvp() {
+    if (!event || !currentUserId || !pendingRsvpStatus) return;
+
+    const status = pendingRsvpStatus;
+
+    setShowRsvpDisclaimer(false);
 
     const { error } = await supabase.from("rsvps").insert({
       user_id: currentUserId,
@@ -325,6 +334,8 @@ export default function EventDetailPage() {
       alert(error.message);
       return;
     }
+
+    setPendingRsvpStatus("");
 
     alert(
       status === "going"
@@ -580,6 +591,41 @@ async function moveToGoing(rsvpId: string, bypassPermission = false) {
 
   return (
     <div className="space-y-6">
+      {showRsvpDisclaimer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-[#F28C52]/40 bg-[#111] p-6 shadow-2xl">
+            <h2 className="text-2xl font-bold text-[#F28C52]">
+              Event Disclaimer
+            </h2>
+
+            <div className="mt-4 max-h-[60vh] overflow-y-auto pr-2">
+              <p className="whitespace-pre-line text-sm leading-6 text-gray-300">
+                {event.rsvp_disclaimer || defaultDisclaimer}
+              </p>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowRsvpDisclaimer(false);
+                  setPendingRsvpStatus("");
+                }}
+                className="rounded-lg border border-white/20 px-4 py-2 font-semibold text-gray-300 hover:border-white/40"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={confirmRsvp}
+                className="rounded-lg bg-[#F28C52] px-5 py-2 font-semibold text-black hover:bg-[#C96A2C]"
+              >
+                I Agree
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <a href="/events" className="text-sm text-[#F28C52] hover:underline">
         ← Back to Events
       </a>
