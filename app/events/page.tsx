@@ -76,6 +76,8 @@ const [canManageAttendance, setCanManageAttendance] = useState(false);
   const [currentUserId, setCurrentUserId] = useState("");
   const [confirmationMessage, setConfirmationMessage] = useState("");
   const [editingEvent, setEditingEvent] = useState<any | null>(null);
+  const [rsvpDisclaimerEvent, setRsvpDisclaimerEvent] = useState<any | null>(null);
+  const [pendingRsvpUserId, setPendingRsvpUserId] = useState("");
 
   const [newEvent, setNewEvent] = useState({
     title: "",
@@ -675,13 +677,23 @@ async function promoteRsvpToGoing(rsvp: any, event: any) {
       }
     }
 
-    const accepted = confirm(event.rsvp_disclaimer || defaultDisclaimer);
-    if (!accepted) return;
+    setPendingRsvpUserId(userData.user.id);
+    setRsvpDisclaimerEvent(event);
+  }
+
+  async function confirmRsvpFromDisclaimer() {
+    if (!rsvpDisclaimerEvent || !pendingRsvpUserId) return;
+
+    const event = rsvpDisclaimerEvent;
+    const userId = pendingRsvpUserId;
+
+    setRsvpDisclaimerEvent(null);
+    setPendingRsvpUserId("");
 
     const { data: existing } = await supabase
       .from("rsvps")
       .select("*")
-      .eq("user_id", userData.user.id)
+      .eq("user_id", userId)
       .eq("event_id", event.id)
       .limit(1);
 
@@ -693,7 +705,7 @@ async function promoteRsvpToGoing(rsvp: any, event: any) {
     const status = event.goingCount >= event.capacity ? "waitlist" : "going";
 
     const { error } = await supabase.from("rsvps").insert({
-      user_id: userData.user.id,
+      user_id: userId,
       event_id: event.id,
       status,
     });
@@ -941,6 +953,41 @@ async function copyEventEmails(
 
 return (
     <div className="space-y-8">
+      {rsvpDisclaimerEvent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-[#F28C52]/40 bg-[#111] p-6 shadow-2xl">
+            <h2 className="text-2xl font-bold text-[#F28C52]">
+              Event Disclaimer
+            </h2>
+
+            <div className="mt-4 max-h-[60vh] overflow-y-auto pr-2">
+              <p className="whitespace-pre-line text-sm leading-6 text-gray-300">
+                {rsvpDisclaimerEvent.rsvp_disclaimer || defaultDisclaimer}
+              </p>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setRsvpDisclaimerEvent(null);
+                  setPendingRsvpUserId("");
+                }}
+                className="rounded-lg border border-white/20 px-4 py-2 font-semibold text-gray-300 hover:border-white/40"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={confirmRsvpFromDisclaimer}
+                className="rounded-lg bg-[#F28C52] px-5 py-2 font-semibold text-black hover:bg-[#C96A2C]"
+              >
+                I Agree
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {confirmationMessage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
           <div className="w-full max-w-md rounded-2xl border border-[#F28C52]/40 bg-[#100B08] p-6 text-center shadow-2xl">
