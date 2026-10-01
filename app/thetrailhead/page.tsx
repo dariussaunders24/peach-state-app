@@ -9,7 +9,7 @@ export default function TrailheadPage() {
       <section className="overflow-hidden rounded-2xl border border-white/10 bg-black/45 shadow-xl backdrop-blur">
         {/* Trailhead Logo */}
         <div className="px-4 pt-4 md:px-6 md:pt-6">
-          <div className="mx-auto flex max-w-3xl justify-center rounded-2xl border border-[#F28C52]/25 bg-[#E8E1D6] px-6 py-5 shadow-lg md:px-10 md:py-7">
+          <div className="mx-auto flex max-w-3xl justify-center rounded-2xl border border-[#F28C52]/40 bg-[#B85C2E] px-6 py-5 shadow-lg md:px-10 md:py-7">
             <img
               src={TRAILHEAD_LOGO}
               alt="The Trailhead"
