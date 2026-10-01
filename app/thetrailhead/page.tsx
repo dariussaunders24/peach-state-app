@@ -1,216 +1,214 @@
 import Link from "next/link";
 
-const EVENT_IMAGE = "/the-trailhead.png";
+const TRAILHEAD_LOGO = "/trailhead-logo.png";
 
-export default function TheTrailheadPage() {
+export default function TrailheadPage() {
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 text-white">
+    <main className="mx-auto max-w-6xl px-4 py-8 md:py-12">
       {/* HERO */}
       <section className="overflow-hidden rounded-2xl border border-white/10 bg-black/45 shadow-xl backdrop-blur">
-        <div className="flex justify-center bg-black/20 p-4 md:p-6">
+        {/* Trailhead Logo */}
+        <div className="flex justify-center px-6 pb-2 pt-8 md:px-10 md:pt-10">
           <img
-            src={EVENT_IMAGE}
-            alt="The Trailhead monthly off-road and overland community meet"
-            className="h-auto w-full max-w-4xl rounded-xl object-contain"
+            src={TRAILHEAD_LOGO}
+            alt="The Trailhead"
+            className="h-auto w-full max-w-2xl object-contain"
           />
         </div>
 
-        <div className="p-6 md:p-8">
-          <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#F28C52]">
+        <div className="px-6 pb-8 pt-4 text-center md:px-10 md:pb-10">
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#F28C52]">
             Peach State Off-Road & Overlanding Presents
           </p>
 
-          <h1 className="mt-3 font-cinzel text-4xl font-bold md:text-6xl">
-            The Trailhead
-          </h1>
-
-          <p className="mt-4 max-w-3xl text-lg leading-8 text-white/70">
+          <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-white/80 md:text-xl">
             A monthly off-road, overland, outdoor, and automotive community
-            meet built around vehicles, adventure, families, and the people
-            who bring the community together.
+            meet built around vehicles, adventure, families, and the people who
+            bring the community together.
           </p>
 
-          <div className="mt-6 flex flex-wrap gap-2">
-            <Badge>Free to Attend</Badge>
-            <Badge>No RSVP Required</Badge>
-            <Badge>Open to the Public</Badge>
-            <Badge>All Makes & Models</Badge>
-            <Badge>Family Friendly</Badge>
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
+            {[
+              "Free to Attend",
+              "No RSVP Required",
+              "Open to the Public",
+              "All Makes & Models",
+              "Family Friendly",
+            ].map((item) => (
+              <span
+                key={item}
+                className="rounded-full border border-[#F28C52]/30 bg-[#F28C52]/10 px-4 py-2 text-sm font-bold text-[#F28C52]"
+              >
+                {item}
+              </span>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* NEXT MEET */}
-      <section className="mt-6 rounded-2xl border border-[#F28C52]/30 bg-[#F28C52]/10 p-6 md:p-8">
-        <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#F28C52]">
-          Next Trailhead
-        </p>
-
-        <div className="mt-3 grid gap-6 md:grid-cols-[1fr_auto] md:items-end">
+      {/* NEXT TRAILHEAD */}
+      <section className="mt-8 rounded-2xl border border-[#F28C52]/30 bg-[#F28C52]/10 p-6 md:p-8">
+        <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
           <div>
-            <h2 className="font-cinzel text-3xl font-bold">
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#F28C52]">
+              Next Trailhead
+            </p>
+
+            <h2 className="mt-2 font-cinzel text-2xl font-bold text-white md:text-3xl">
               Monthly Community Meet
             </h2>
 
-            <div className="mt-4 space-y-1 text-white/80">
+            <div className="mt-5 space-y-2 text-white/80">
               <p>
-                <strong className="text-white">Location:</strong>{" "}
+                <span className="font-bold text-white">Location:</span>{" "}
                 Revolution Auto Service
               </p>
 
               <p>
-                <strong className="text-white">Address:</strong>{" "}
+                <span className="font-bold text-white">Address:</span>{" "}
                 3620 Kennesaw N Industrial Pkwy, Suite E, Kennesaw, GA 30144
               </p>
-            </div>
 
-            <p className="mt-4 text-sm font-semibold uppercase tracking-[0.15em] text-[#F28C52]">
-              Free • No RSVP • Just Show Up
-            </p>
+              <p className="pt-2 font-bold text-[#F28C52]">
+                Free • No RSVP • Just Show Up
+              </p>
+            </div>
           </div>
 
           <Link
             href="/thetrailhead/event"
-            className="inline-flex items-center justify-center rounded-lg bg-[#F28C52] px-5 py-3 font-bold text-black transition hover:bg-[#C96A2C]"
+            className="inline-flex items-center justify-center rounded-xl bg-[#F28C52] px-6 py-3 font-bold text-black transition hover:bg-[#C96A2C]"
           >
             View Event Info
           </Link>
         </div>
       </section>
 
-      {/* WHAT IS THE TRAILHEAD */}
-      <section className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-6 md:p-8">
-        <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#F28C52]">
-          Welcome to The Trailhead
-        </p>
-
-        <h2 className="mt-2 font-cinzel text-3xl font-bold">
-          More Than a Car Meet
-        </h2>
-
-        <div className="mt-4 max-w-4xl space-y-4 leading-7 text-white/75">
-          <p>
-            The Trailhead is a free monthly community meet hosted by Peach
-            State Off-Road & Overlanding and open to the public.
+      {/* ABOUT */}
+      <section className="mt-12">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#F28C52]">
+            Built for the Community
           </p>
 
-          <p>
-            It is a place for off-roaders, overlanders, outdoor enthusiasts,
-            families, vehicle enthusiasts, and anyone interested in the
-            community to get together, check out different builds, meet new
-            people, and spend time with others who enjoy getting outside.
+          <h2 className="mt-3 font-cinzel text-3xl font-bold text-white md:text-4xl">
+            More Than a Car Meet
+          </h2>
+
+          <p className="mt-5 text-lg leading-8 text-white/70">
+            The Trailhead brings together the off-road, overland, outdoor, and
+            automotive communities in one place. Whether you drive a stock
+            daily driver, a dedicated trail rig, an overland build, or simply
+            enjoy the outdoors, you&apos;re welcome here.
           </p>
 
-          <p>
-            You do not need a heavily modified vehicle to attend. Stock
-            vehicles, daily drivers, trail rigs, overland builds, trucks,
-            SUVs, Jeeps, Subarus, Broncos, Toyotas, and everything in between
-            are welcome.
-          </p>
-
-          <p className="font-semibold text-white">
+          <p className="mt-4 text-lg font-bold text-white">
             No membership. No RSVP. No special vehicle required.
           </p>
         </div>
       </section>
 
       {/* EXPLORE */}
-      <section className="mt-8">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#F28C52]">
+      <section className="mt-12">
+        <div className="mb-6">
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#F28C52]">
             Explore The Trailhead
           </p>
 
-          <h2 className="mt-2 font-cinzel text-3xl font-bold">
+          <h2 className="mt-2 font-cinzel text-3xl font-bold text-white">
             There&apos;s More to See
           </h2>
         </div>
 
-        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <ExploreCard
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <TrailheadCard
             title="Event Info"
-            description="Get the details for the next Trailhead including location, time, parking, and what to expect."
+            description="Everything you need to know before coming to the next Trailhead meet."
             href="/thetrailhead/event"
-            linkText="View Event Info"
+            linkText="Event Details"
           />
 
-          <ExploreCard
+          <TrailheadCard
             title="Featured Rigs"
-            description="Check out the vehicles selected for the Featured Rig area and learn how to submit your own build."
+            description="See what the Featured Rig area is all about and learn how to submit your vehicle."
             href="/thetrailhead/featured-rigs"
-            linkText="Explore Featured Rigs"
+            linkText="Featured Rigs"
           />
 
-          <ExploreCard
+          <TrailheadCard
             title="Little Explorers"
-            description="Learn about our activities, passports, challenges, and prizes created especially for kids."
+            description="Activities, passports, challenges, and prizes created for our youngest adventurers."
             href="/thetrailhead/little-explorers"
-            linkText="Visit Little Explorers"
+            linkText="Little Explorers"
           />
 
-          <ExploreCard
+          <TrailheadCard
             title="Vendors"
-            description="See the businesses, food, coffee, organizations, and community vendors joining us."
+            description="Meet the local businesses, shops, makers, and community vendors joining us."
             href="/thetrailhead/vendors"
-            linkText="Meet the Vendors"
+            linkText="Vendors"
           />
 
-          <ExploreCard
+          <TrailheadCard
             title="Buy / Sell / Trade"
-            description="Bring off-road, overland, camping, recovery, and vehicle gear to buy, sell, or trade with other attendees."
+            description="Bring off-road, overland, camping, and automotive gear you want to sell or trade."
             href="/thetrailhead/event"
             linkText="Learn More"
           />
 
-          <ExploreCard
+          <TrailheadCard
             title="FAQ"
-            description="Coming for the first time? Find answers to common questions about vehicles, families, pets, parking, and more."
+            description="Answers to common questions about attending The Trailhead."
             href="/thetrailhead/faq"
-            linkText="Read the FAQ"
+            linkText="View FAQ"
           />
         </div>
       </section>
 
       {/* FEATURED RIG CTA */}
-      <section className="mt-8 rounded-2xl border border-[#F28C52]/30 bg-black/40 p-6 md:p-8">
-        <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-center">
+      <section className="mt-12 overflow-hidden rounded-2xl border border-white/10 bg-black/45 p-6 md:p-8">
+        <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#F28C52]">
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#F28C52]">
               Featured Rig
             </p>
 
-            <h2 className="mt-2 text-2xl font-bold">
+            <h2 className="mt-2 font-cinzel text-2xl font-bold text-white md:text-3xl">
               Want Your Build in the Featured Rig Area?
             </h2>
 
-            <p className="mt-3 max-w-3xl leading-7 text-white/70">
-              Each Trailhead gives select vehicles a dedicated place to show
-              off their build and share the story behind it. Featured Rig
-              submissions are open to the public.
+            <p className="mt-3 max-w-2xl leading-7 text-white/70">
+              The Featured Rig area highlights vehicles and the people behind
+              them. Submissions are open to the public and are not limited to
+              Peach State members.
             </p>
           </div>
 
           <Link
             href="/thetrailhead/featured-rigs"
-            className="inline-flex items-center justify-center rounded-lg border border-[#F28C52] px-5 py-3 font-bold text-[#F28C52] transition hover:bg-[#F28C52] hover:text-black"
+            className="inline-flex items-center justify-center rounded-xl border border-[#F28C52] px-6 py-3 font-bold text-[#F28C52] transition hover:bg-[#F28C52] hover:text-black"
           >
-            Featured Rig Info
+            Learn About Featured Rigs
           </Link>
         </div>
       </section>
 
       {/* BOTTOM CTA */}
-      <section className="mt-8 rounded-2xl bg-[#F28C52] p-6 text-center text-black md:p-8">
-        <h2 className="font-cinzel text-3xl font-bold">
+      <section className="mt-12 rounded-2xl border border-white/10 bg-black/45 px-6 py-10 text-center md:px-10 md:py-14">
+        <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#F28C52]">
+          Get Out. Explore. Belong.
+        </p>
+
+        <h2 className="mt-3 font-cinzel text-3xl font-bold text-white md:text-4xl">
           Start at The Trailhead.
         </h2>
 
-        <p className="mx-auto mt-3 max-w-2xl font-medium">
-          Bring your vehicle, bring the family, meet the community, and see
-          where the next adventure starts.
+        <p className="mx-auto mt-4 max-w-2xl text-lg text-white/70">
+          Come meet the community, check out the builds, grab some food and
+          coffee, bring the family, and see where your next adventure starts.
         </p>
 
-        <p className="mt-4 text-sm font-bold uppercase tracking-[0.2em]">
+        <p className="mt-6 font-bold text-[#F28C52]">
           Free • Public • All Makes & Models Welcome
         </p>
       </section>
@@ -218,15 +216,7 @@ export default function TheTrailheadPage() {
   );
 }
 
-function Badge({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-semibold text-white/80">
-      {children}
-    </span>
-  );
-}
-
-function ExploreCard({
+function TrailheadCard({
   title,
   description,
   href,
@@ -238,21 +228,17 @@ function ExploreCard({
   linkText: string;
 }) {
   return (
-    <Link
-      href={href}
-      className="group flex h-full flex-col rounded-xl border border-white/10 bg-black/30 p-5 transition hover:border-[#F28C52]/40 hover:bg-black/45"
-    >
-      <h3 className="text-xl font-bold text-white group-hover:text-[#F28C52]">
-        {title}
-      </h3>
+    <div className="flex h-full flex-col rounded-2xl border border-white/10 bg-black/45 p-6 transition hover:border-[#F28C52]/40">
+      <h3 className="font-cinzel text-xl font-bold text-white">{title}</h3>
 
-      <p className="mt-3 flex-1 text-sm leading-6 text-white/65">
-        {description}
-      </p>
+      <p className="mt-3 flex-1 leading-7 text-white/65">{description}</p>
 
-      <p className="mt-5 text-sm font-bold text-[#F28C52]">
+      <Link
+        href={href}
+        className="mt-5 inline-flex font-bold text-[#F28C52] transition hover:text-white"
+      >
         {linkText} →
-      </p>
-    </Link>
+      </Link>
+    </div>
   );
 }
