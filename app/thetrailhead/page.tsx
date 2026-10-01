@@ -1,517 +1,258 @@
-"use client";
+import Link from "next/link";
 
-import { ReactNode, useEffect, useState } from "react";
-
-const CAPACITY = 35;
 const EVENT_IMAGE = "/the-trailhead.png";
 
-export default function TheTrailhead() {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [waiverAccepted, setWaiverAccepted] = useState(false);
-
-  const [goingCount, setGoingCount] = useState(0);
-  const [waitlistCount, setWaitlistCount] = useState(0);
-  const [loadingCount, setLoadingCount] = useState(true);
-
-  const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [registrationStatus, setRegistrationStatus] = useState<
-    "going" | "waitlist" | ""
-  >("");
-  const [confirmationCode, setConfirmationCode] = useState("");
-  const [emailSent, setEmailSent] = useState<boolean | null>(null);
-  const [error, setError] = useState("");
-
-  const spotsRemaining = Math.max(CAPACITY - goingCount, 0);
-  const isFull = goingCount >= CAPACITY;
-
-  useEffect(() => {
-    loadRegistrationCounts();
-  }, []);
-
-  async function loadRegistrationCounts() {
-    setLoadingCount(true);
-
-    try {
-      const response = await fetch("/api/thetrailhead-counts", {
-        cache: "no-store",
-      });
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        console.error("Registration count error:", data?.error);
-        setLoadingCount(false);
-        return;
-      }
-
-      setGoingCount(data?.goingCount || 0);
-      setWaitlistCount(data?.waitlistCount || 0);
-    } catch (countError) {
-      console.error("Registration count error:", countError);
-    }
-
-    setLoadingCount(false);
-  }
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-
-    if (submitting) return;
-
-    setSubmitting(true);
-    setError("");
-
-    try {
-      const response = await fetch("/api/thetrailhead-register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          phone,
-          email,
-          waiverAccepted,
-        }),
-      });
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        setError(
-          data?.error || "Unable to complete registration. Please try again."
-        );
-        setSubmitting(false);
-        return;
-      }
-
-      setRegistrationStatus(data.status);
-      setConfirmationCode(data.registrationCode || "");
-      setEmailSent(data.emailSent === true);
-      setGoingCount(data.goingCount || 0);
-      setWaitlistCount(data.waitlistCount || 0);
-      setSuccess(true);
-      setSubmitting(false);
-
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
-    } catch (submitError) {
-      console.error("Trailhead registration error:", submitError);
-      setError("Unable to complete registration. Please try again.");
-      setSubmitting(false);
-    }
-  }
-
+export default function TheTrailheadPage() {
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10 text-white">
+    <main className="mx-auto max-w-6xl px-4 py-8 text-white">
+      {/* HERO */}
       <section className="overflow-hidden rounded-2xl border border-white/10 bg-black/45 shadow-xl backdrop-blur">
-        <div className="flex justify-center bg-black/20 p-6">
+        <div className="flex justify-center bg-black/20 p-4 md:p-6">
           <img
             src={EVENT_IMAGE}
-            alt="The Trailhead monthly meet"
-            className="h-auto w-full max-w-2xl rounded-xl object-contain"
+            alt="The Trailhead monthly off-road and overland community meet"
+            className="h-auto w-full max-w-4xl rounded-xl object-contain"
           />
         </div>
 
-        {!loadingCount && (
-          <div className="border-t border-white/10 bg-black/30 px-6 py-4">
-            {isFull ? (
-              <div className="rounded-xl border border-[#F28C52]/30 bg-[#F28C52]/10 p-4 text-center">
-                <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#F28C52]">
-                  Registration Full
-                </p>
-                <p className="mt-2 text-xl font-bold text-white">
-                  {goingCount} / {CAPACITY} Confirmed
-                </p>
-                <p className="mt-1 text-sm font-semibold text-white/80">
-                  Waitlist: {waitlistCount}{" "}
-                  {waitlistCount === 1 ? "vehicle" : "vehicles"}
-                </p>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-green-500/20 bg-green-500/10 p-4 text-center">
-                <p className="text-xs font-bold uppercase tracking-[0.25em] text-green-300">
-                  Registration Open
-                </p>
-                <p className="mt-2 text-lg font-bold text-white">
-                  {spotsRemaining} confirmed{" "}
-                  {spotsRemaining === 1 ? "spot" : "spots"} remaining
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
         <div className="p-6 md:p-8">
-          <p className="text-xs uppercase tracking-[0.3em] text-[#F28C52]/80">
-            Peach State Off-Road & Overlanding
+          <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#F28C52]">
+            Peach State Off-Road & Overlanding Presents
           </p>
 
-          <h1 className="mt-3 font-cinzel text-4xl font-bold text-white md:text-5xl">
+          <h1 className="mt-3 font-cinzel text-4xl font-bold md:text-6xl">
             The Trailhead
           </h1>
 
-          <p className="mt-3 text-lg text-white/70">
-            Our monthly off-road, overland, and automotive community meet.
+          <p className="mt-4 max-w-3xl text-lg leading-8 text-white/70">
+            A monthly off-road, overland, outdoor, and automotive community
+            meet built around vehicles, adventure, families, and the people
+            who bring the community together.
           </p>
 
-          <section className="mt-8 rounded-xl border border-white/10 bg-black/30 p-5">
-            <h2 className="text-xl font-bold">What is The Trailhead?</h2>
+          <div className="mt-6 flex flex-wrap gap-2">
+            <Badge>Free to Attend</Badge>
+            <Badge>No RSVP Required</Badge>
+            <Badge>Open to the Public</Badge>
+            <Badge>All Makes & Models</Badge>
+            <Badge>Family Friendly</Badge>
+          </div>
+        </div>
+      </section>
 
-            <div className="mt-3 space-y-4 leading-7 text-white/75">
+      {/* NEXT MEET */}
+      <section className="mt-6 rounded-2xl border border-[#F28C52]/30 bg-[#F28C52]/10 p-6 md:p-8">
+        <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#F28C52]">
+          Next Trailhead
+        </p>
+
+        <div className="mt-3 grid gap-6 md:grid-cols-[1fr_auto] md:items-end">
+          <div>
+            <h2 className="font-cinzel text-3xl font-bold">
+              Monthly Community Meet
+            </h2>
+
+            <div className="mt-4 space-y-1 text-white/80">
               <p>
-                The Trailhead is Peach State Off-Road & Overlanding&apos;s
-                monthly community meet that is free to attend and open to the entire community and
-                is hosted at Revolution Auto located at 3620 Kennesaw N Industrial Pkwy, Suite E Kennesaw, GA 30144.
+                <strong className="text-white">Location:</strong>{" "}
+                Revolution Auto Service
               </p>
 
               <p>
-                This is more than a traditional car meet. The Trailhead is a
-                place for off-roaders, overlanders, outdoor enthusiasts,
-                families, pets and anyone interested in the community to get
-                together, check out different builds, meet new people, and
-                spend time with the community.
-              </p>
-
-              <p>
-                You do not need a heavily modified vehicle to attend. Stock
-                vehicles, daily drivers, trail rigs, overland builds, trucks,
-                SUVs, Jeeps, Subarus, Broncos, Toyotas, and everything in
-                between are welcome.
+                <strong className="text-white">Address:</strong>{" "}
+                3620 Kennesaw N Industrial Pkwy, Suite E, Kennesaw, GA 30144
               </p>
             </div>
-          </section>
 
-          <section className="mt-6 rounded-xl border border-white/10 bg-black/30 p-5">
-            <h2 className="text-xl font-bold">What to Expect</h2>
+            <p className="mt-4 text-sm font-semibold uppercase tracking-[0.15em] text-[#F28C52]">
+              Free • No RSVP • Just Show Up
+            </p>
+          </div>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <FeatureCard
-                title="Off-Road & Overland Builds"
-                text="Check out vehicles from across the community and meet the people behind the builds."
-              />
+          <Link
+            href="/thetrailhead/event"
+            className="inline-flex items-center justify-center rounded-lg bg-[#F28C52] px-5 py-3 font-bold text-black transition hover:bg-[#C96A2C]"
+          >
+            View Event Info
+          </Link>
+        </div>
+      </section>
 
-              <FeatureCard
-                title="Food Truck"
-                text="Grab something to eat while you hang out and explore the meet."
-              />
+      {/* WHAT IS THE TRAILHEAD */}
+      <section className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-6 md:p-8">
+        <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#F28C52]">
+          Welcome to The Trailhead
+        </p>
 
-              <FeatureCard
-                title="Featured Rigs"
-                text={
-                  <>
-                    Select vehicles will be chosen to park in our Featured Rig
-                    section. Apply via email to{" "}
-                    <a
-                      href="mailto:dariussaunders24@gmail.com?subject=Featured%20Rig%20Application"
-                      className="font-semibold text-[#F28C52] hover:underline"
-                    >
-                      dariussaunders24@gmail.com
-                    </a>{" "}
-                    for a chance to be chosen.
-                  </>
-                }
-              />
+        <h2 className="mt-2 font-cinzel text-3xl font-bold">
+          More Than a Car Meet
+        </h2>
 
-              <FeatureCard
-                title="Giveaways"
-                text="SELECT Trailhead meets will include giveaways and raffle prizes for attendees."
-              />
+        <div className="mt-4 max-w-4xl space-y-4 leading-7 text-white/75">
+          <p>
+            The Trailhead is a free monthly community meet hosted by Peach
+            State Off-Road & Overlanding and open to the public.
+          </p>
 
-             <FeatureCard
-  title="Buy / Sell / Trade"
-  text="Bring off-road, overland, camping, recovery, and vehicle gear to buy, sell, or trade with other attendees."
-/>
+          <p>
+            It is a place for off-roaders, overlanders, outdoor enthusiasts,
+            families, vehicle enthusiasts, and anyone interested in the
+            community to get together, check out different builds, meet new
+            people, and spend time with others who enjoy getting outside.
+          </p>
 
-              <FeatureCard
-                title="Community"
-                text="Meet fellow members, ask questions, talk builds, learn something new, and get connected."
-              />
-            </div>
-          </section>
+          <p>
+            You do not need a heavily modified vehicle to attend. Stock
+            vehicles, daily drivers, trail rigs, overland builds, trucks,
+            SUVs, Jeeps, Subarus, Broncos, Toyotas, and everything in between
+            are welcome.
+          </p>
 
-          <section className="mt-6 rounded-xl border border-[#F28C52]/25 bg-[#F28C52]/10 p-5">
+          <p className="font-semibold text-white">
+            No membership. No RSVP. No special vehicle required.
+          </p>
+        </div>
+      </section>
+
+      {/* EXPLORE */}
+      <section className="mt-8">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#F28C52]">
+            Explore The Trailhead
+          </p>
+
+          <h2 className="mt-2 font-cinzel text-3xl font-bold">
+            There&apos;s More to See
+          </h2>
+        </div>
+
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ExploreCard
+            title="Event Info"
+            description="Get the details for the next Trailhead including location, time, parking, and what to expect."
+            href="/thetrailhead/event"
+            linkText="View Event Info"
+          />
+
+          <ExploreCard
+            title="Featured Rigs"
+            description="Check out the vehicles selected for the Featured Rig area and learn how to submit your own build."
+            href="/thetrailhead/featured-rigs"
+            linkText="Explore Featured Rigs"
+          />
+
+          <ExploreCard
+            title="Little Explorers"
+            description="Learn about our activities, passports, challenges, and prizes created especially for kids."
+            href="/thetrailhead/little-explorers"
+            linkText="Visit Little Explorers"
+          />
+
+          <ExploreCard
+            title="Vendors"
+            description="See the businesses, food, coffee, organizations, and community vendors joining us."
+            href="/thetrailhead/vendors"
+            linkText="Meet the Vendors"
+          />
+
+          <ExploreCard
+            title="Buy / Sell / Trade"
+            description="Bring off-road, overland, camping, recovery, and vehicle gear to buy, sell, or trade with other attendees."
+            href="/thetrailhead/event"
+            linkText="Learn More"
+          />
+
+          <ExploreCard
+            title="FAQ"
+            description="Coming for the first time? Find answers to common questions about vehicles, families, pets, parking, and more."
+            href="/thetrailhead/faq"
+            linkText="Read the FAQ"
+          />
+        </div>
+      </section>
+
+      {/* FEATURED RIG CTA */}
+      <section className="mt-8 rounded-2xl border border-[#F28C52]/30 bg-black/40 p-6 md:p-8">
+        <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-center">
+          <div>
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#F28C52]">
-              For the Kids
+              Featured Rig
             </p>
 
             <h2 className="mt-2 text-2xl font-bold">
-              Little Explorer Passport
+              Want Your Build in the Featured Rig Area?
             </h2>
 
-            <p className="mt-3 leading-7 text-white/75">
-              Kids attending The Trailhead can participate in the Little
-              Explorer Passport program. Complete activities around the meet,
-              collect stamps, take part in monthly challenges, and reach
-              Explorer milestones throughout the year.
+            <p className="mt-3 max-w-3xl leading-7 text-white/70">
+              Each Trailhead gives select vehicles a dedicated place to show
+              off their build and share the story behind it. Featured Rig
+              submissions are open to the public.
             </p>
-          </section>
+          </div>
 
-          <section className="mt-6 rounded-xl border border-white/10 bg-black/30 p-5">
-            <h2 className="text-xl font-bold">
-              {isFull ? "Join The Trailhead Waitlist" : "Register for The Trailhead"}
-            </h2>
-
-            <p className="mt-3 leading-7 text-white/75">
-              Registration helps us plan parking, activities, giveaways, and
-              overall attendance for each Trailhead meet. No admittance without
-              proof of confirmed registration.
-            </p>
-
-            <div className="mt-5 rounded-xl border border-[#F28C52]/25 bg-[#F28C52]/10 p-4">
-              {loadingCount ? (
-                <p className="font-semibold text-white/80">
-                  Loading registration count...
-                </p>
-              ) : isFull ? (
-                <>
-                  <p className="text-lg font-bold text-white">
-                    {goingCount} of {CAPACITY} Confirmed Spots Filled
-                  </p>
-
-                  <p className="mt-2 text-lg font-bold text-[#F28C52]">
-                    Waitlist: {waitlistCount}{" "}
-                    {waitlistCount === 1 ? "vehicle" : "vehicles"}
-                  </p>
-
-                  <p className="mt-2 text-sm leading-6 text-white/70">
-                    Confirmed registrations are full. Attendees on the waitlist
-                    are automatically promoted in the order they registered
-                    whenever a confirmed attendee cancels.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="text-lg font-bold text-white">
-                    {goingCount} of {CAPACITY} Confirmed Spots Filled
-                  </p>
-
-                  <p className="mt-1 text-sm text-white/70">
-                    {spotsRemaining} confirmed{" "}
-                    {spotsRemaining === 1 ? "spot" : "spots"} remaining.
-                  </p>
-                </>
-              )}
-            </div>
-
-            {isFull && !loadingCount && (
-              <div className="mt-4 rounded-xl border border-yellow-400/25 bg-yellow-500/10 p-4">
-                <p className="font-bold text-yellow-100">
-                  The waitlist is open.
-                </p>
-                <p className="mt-2 text-sm leading-6 text-yellow-100/90">
-                  Register below to join the waitlist. Your position is based on
-                  the order registrations are received. If a confirmed attendee
-                  cancels, the next person on the waitlist will automatically be
-                  promoted and receive a confirmation email.
-                </p>
-              </div>
-            )}
-          </section>
-
-          <section className="mt-6 rounded-xl border border-white/10 bg-black/30 p-5">
-            <h2 className="text-xl font-bold">Waiver & Disclaimer</h2>
-
-            <p className="mt-3 text-sm leading-6 text-white/70">
-              By registering for and participating in The Trailhead, I
-              acknowledge that I am voluntarily attending an automotive
-              community event. I understand that attendance and participation
-              may involve risks including vehicle damage, personal injury,
-              property damage, traffic-related incidents, or other unforeseen
-              circumstances.
-            </p>
-
-            <p className="mt-3 text-sm leading-6 text-white/70">
-              I agree to operate my vehicle safely, follow all applicable laws,
-              respect the host property, follow event organizer and host
-              instructions, and accept full responsibility for myself, my
-              passengers, my vehicle, and my actions.
-            </p>
-
-            <p className="mt-3 text-sm leading-6 text-white/70">
-              I release Peach State Off-Road & Overlanding, Revolution Auto,
-              event organizers, volunteers, vendors, sponsors, property owners,
-              and associated parties from liability to the fullest extent
-              permitted by law.
-            </p>
-          </section>
-
-          {success ? (
-            <div
-              className={`mt-8 rounded-xl p-5 ${
-                registrationStatus === "going"
-                  ? "border border-green-500/30 bg-green-500/10"
-                  : "border border-yellow-400/30 bg-yellow-500/10"
-              }`}
-            >
-              <h2
-                className={`text-xl font-bold ${
-                  registrationStatus === "going"
-                    ? "text-green-300"
-                    : "text-yellow-200"
-                }`}
-              >
-                {registrationStatus === "going"
-                  ? "You’re registered!"
-                  : "You’re on the waitlist!"}
-              </h2>
-
-              <p className="mt-2 text-white/75">
-                {registrationStatus === "going"
-                  ? "Your registration for The Trailhead is confirmed."
-                  : "The confirmed spots are currently full. You have been added to the waitlist and will be automatically promoted if a spot opens."}
-              </p>
-
-              {confirmationCode && (
-                <div className="mt-4 rounded-lg border border-white/15 bg-black/25 p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/60">
-                    Registration Code
-                  </p>
-                  <p className="mt-1 text-2xl font-bold text-white">
-                    {confirmationCode}
-                  </p>
-                </div>
-              )}
-
-              {emailSent === true ? (
-                <p className="mt-4 font-semibold text-white/90">
-                  A {registrationStatus === "going" ? "confirmation" : "waitlist"}{" "}
-                  email has been sent to {email}.
-                  {registrationStatus === "going"
-                    ? " Save that email and have it available at check-in."
-                    : " If a spot opens, you will receive another email confirming that you have been moved to Going."}
-                </p>
-              ) : (
-                <p className="mt-4 text-yellow-200">
-                  Your registration was saved, but we could not send the email.
-                  Save your registration code above and contact Peach State if
-                  you need confirmation.
-                </p>
-              )}
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-              <h2 className="text-2xl font-bold">
-                {isFull ? "Waitlist Registration" : "Registration"}
-              </h2>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <Field
-                  label="First Name"
-                  value={firstName}
-                  onChange={setFirstName}
-                  required
-                />
-
-                <Field
-                  label="Last Name"
-                  value={lastName}
-                  onChange={setLastName}
-                  required
-                />
-              </div>
-
-              <Field
-                label="Phone Number"
-                type="tel"
-                value={phone}
-                onChange={setPhone}
-                required
-              />
-
-              <Field
-                label="Email"
-                type="email"
-                value={email}
-                onChange={setEmail}
-                required
-              />
-
-              <label className="flex gap-3 rounded-xl border border-white/10 bg-black/30 p-4 text-sm text-white/75">
-                <input
-                  type="checkbox"
-                  checked={waiverAccepted}
-                  onChange={(e) => setWaiverAccepted(e.target.checked)}
-                  className="mt-1 h-4 w-4"
-                  required
-                />
-
-                <span>
-                  I have read and agree to the waiver and disclaimer above.
-                </span>
-              </label>
-
-              {error && (
-                <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3">
-                  <p className="text-sm text-red-300">{error}</p>
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={submitting || loadingCount}
-                className="w-full rounded-lg bg-[#F28C52] px-5 py-3 font-semibold text-black transition hover:bg-[#C96A2C] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {submitting
-                  ? "Submitting..."
-                  : isFull
-                  ? "Join The Trailhead Waitlist"
-                  : "Register for The Trailhead"}
-              </button>
-            </form>
-          )}
+          <Link
+            href="/thetrailhead/featured-rigs"
+            className="inline-flex items-center justify-center rounded-lg border border-[#F28C52] px-5 py-3 font-bold text-[#F28C52] transition hover:bg-[#F28C52] hover:text-black"
+          >
+            Featured Rig Info
+          </Link>
         </div>
+      </section>
+
+      {/* BOTTOM CTA */}
+      <section className="mt-8 rounded-2xl bg-[#F28C52] p-6 text-center text-black md:p-8">
+        <h2 className="font-cinzel text-3xl font-bold">
+          Start at The Trailhead.
+        </h2>
+
+        <p className="mx-auto mt-3 max-w-2xl font-medium">
+          Bring your vehicle, bring the family, meet the community, and see
+          where the next adventure starts.
+        </p>
+
+        <p className="mt-4 text-sm font-bold uppercase tracking-[0.2em]">
+          Free • Public • All Makes & Models Welcome
+        </p>
       </section>
     </main>
   );
 }
 
-function Field({
-  label,
-  value,
-  onChange,
-  type = "text",
-  required = false,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  type?: string;
-  required?: boolean;
-}) {
+function Badge({ children }: { children: React.ReactNode }) {
   return (
-    <label className="block">
-      <span className="text-sm font-semibold text-white/80">{label}</span>
-
-      <input
-        type={type}
-        required={required}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="mt-2 w-full rounded-lg border border-white/10 bg-black/40 px-4 py-3 text-white outline-none transition focus:border-[#F28C52]"
-      />
-    </label>
+    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-semibold text-white/80">
+      {children}
+    </span>
   );
 }
 
-function FeatureCard({
+function ExploreCard({
   title,
-  text,
+  description,
+  href,
+  linkText,
 }: {
   title: string;
-  text: ReactNode;
+  description: string;
+  href: string;
+  linkText: string;
 }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-black/30 p-4">
-      <h3 className="font-bold text-white">{title}</h3>
-      <div className="mt-2 text-sm leading-6 text-white/65">{text}</div>
-    </div>
+    <Link
+      href={href}
+      className="group flex h-full flex-col rounded-xl border border-white/10 bg-black/30 p-5 transition hover:border-[#F28C52]/40 hover:bg-black/45"
+    >
+      <h3 className="text-xl font-bold text-white group-hover:text-[#F28C52]">
+        {title}
+      </h3>
+
+      <p className="mt-3 flex-1 text-sm leading-6 text-white/65">
+        {description}
+      </p>
+
+      <p className="mt-5 text-sm font-bold text-[#F28C52]">
+        {linkText} →
+      </p>
+    </Link>
   );
 }
