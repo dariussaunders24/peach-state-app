@@ -1,290 +1,352 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
-export default function TheTrailheadPage() {
-  const [registrations, setRegistrations] = useState<any[]>([]);
+type TrailheadSettings = {
+  id: number;
+  event_date: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  venue_name: string | null;
+  address: string | null;
+  announcement: string | null;
+  special_feature: string | null;
+  event_image: string | null;
+};
+
+export default function TheTrailheadAdminPage() {
+  const [settings, setSettings] = useState<TrailheadSettings | null>(null);
   const [loading, setLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
-  const [deletingId, setDeletingId] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    loadRegistrations();
+    loadSettings();
   }, []);
 
-  async function loadRegistrations() {
+  async function getAccessToken() {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    return session?.access_token || null;
+  }
+
+  async function loadSettings() {
     setLoading(true);
-
-    const { data, error } = await supabase
-      .from("the_trailhead_registrations")
-      .select("*")
-      .order("created_at", { ascending: true });
-
-    if (error) {
-      console.error("Registration load error:", error.message);
-    }
-
-    setRegistrations(data || []);
-    setLoading(false);
-  }
-
-  const goingRegistrations = useMemo(
-    () => registrations.filter((r) => r.status === "going"),
-    [registrations]
-  );
-
-  const waitlistRegistrations = useMemo(
-    () => registrations.filter((r) => r.status === "waitlist"),
-    [registrations]
-  );
-
-  const emails = goingRegistrations
-    .map((r) => r.email)
-    .filter(Boolean)
-    .join(", ");
-
-  async function copyEmails() {
-    await navigator.clipboard.writeText(emails);
-    setCopied(true);
-
-    setTimeout(() => {
-      setCopied(false);
-    }, 2000);
-  }
-
-  async function deleteRegistration(id: string, name: string, status: string) {
-    const confirmed = window.confirm(
-      `Remove ${name} from The Trailhead ${
-        status === "waitlist" ? "waitlist" : "registration list"
-      }?`
-    );
-
-    if (!confirmed) return;
-
-    setDeletingId(id);
+    setError("");
 
     try {
-      const response = await fetch("/api/thetrailhead-cancel", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          registrationId: id,
-        }),
-      });
+      const token = await getAccessToken();
 
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        alert(
-          data?.error || "Unable to remove registration. Please try again."
-        );
-        setDeletingId("");
+      if (!token) {
+        setError("You must be signed in as an administrator.");
+        setLoading(false);
         return;
       }
 
-      await loadRegistrations();
+      const response = await fetch("/api/admin/thetrailhead-settings", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      if (data?.promoted) {
-        alert(
-          "Registration removed. The next waitlisted attendee was automatically promoted and emailed."
-        );
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data?.error || "Unable to load Trailhead settings.");
+        setLoading(false);
+        return;
       }
-    } catch (deleteError) {
-      console.error("Delete registration error:", deleteError);
-      alert("Unable to remove registration. Please try again.");
+
+      setSettings(data.settings);
+    } catch (loadError) {
+      console.error("Trailhead settings load error:", loadError);
+      setError("Unable to load Trailhead settings.");
     }
 
-    setDeletingId("");
+    setLoading(false);
+  }
+
+  function updateField(
+    field: keyof TrailheadSettings,
+    value: string
+  ) {
+    if (!settings) return;
+
+    setSettings({
+      ...settings,
+      [field]: value,
+    });
+  }
+
+  async function saveSettings() {
+    if (!settings) return;
+
+    setSaving(true);
+    setMessage("");
+    setError("");
+
+    try {
+      const token = await getAccessToken();
+
+      if (!token) {
+        setError("Your session has expired. Please sign in again.");
+        setSaving(false);
+        return;
+      }
+
+      const response = await fetch("/api/admin/thetrailhead-settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          id: settings.id,
+          event_date: settings.event_date,
+          start_time: settings.start_time,
+          end_time: settings.end_time,
+          venue_name: settings.venue_name,
+          address: settings.address,
+          announcement: settings.announcement,
+          special_feature: settings.special_feature,
+          event_image: settings.event_image,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data?.error || "Unable to save Trailhead settings.");
+        setSaving(false);
+        return;
+      }
+
+      setSettings(data.settings);
+      setMessage("Trailhead settings saved successfully.");
+    } catch (saveError) {
+      console.error("Trailhead settings save error:", saveError);
+      setError("Unable to save Trailhead settings.");
+    }
+
+    setSaving(false);
   }
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-6xl px-4 py-10 text-white">
-        <p>Loading registrations...</p>
+      <main className="mx-auto max-w-5xl px-4 py-10 text-white">
+        <p>Loading Trailhead settings...</p>
       </main>
     );
   }
 
-  return (
-    <main className="mx-auto max-w-6xl px-4 py-10 text-white">
-      <h1 className="font-cinzel text-3xl font-bold">
-        The Trailhead Registrations
-      </h1>
+  if (error && !settings) {
+    return (
+      <main className="mx-auto max-w-5xl px-4 py-10 text-white">
+        <h1 className="font-cinzel text-3xl font-bold text-[#F28C52]">
+          Trailhead Management
+        </h1>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <StatCard label="Confirmed" value={goingRegistrations.length} />
-        <StatCard label="Capacity" value={35} />
-        <StatCard label="Waitlist" value={waitlistRegistrations.length} />
+        <div className="mt-6 rounded-xl border border-red-400/30 bg-red-500/10 p-4 text-red-200">
+          {error}
+        </div>
+      </main>
+    );
+  }
+
+  if (!settings) {
+    return null;
+  }
+
+  return (
+    <main className="mx-auto max-w-5xl px-4 py-10 text-white">
+      <div>
+        <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#F28C52]">
+          Admin
+        </p>
+
+        <h1 className="mt-2 font-cinzel text-3xl font-bold">
+          Trailhead Management
+        </h1>
+
+        <p className="mt-3 max-w-3xl text-white/60">
+          Manage the information displayed on the public Trailhead website.
+          Changes saved here will be used for the next Trailhead meet.
+        </p>
       </div>
 
-      <section className="mt-6 rounded-xl border border-white/10 bg-black/40 p-5">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h2 className="text-xl font-bold">Confirmed Email List</h2>
-            <p className="mt-1 text-sm text-white/60">
-              Includes confirmed attendees only, not the waitlist.
-            </p>
-          </div>
+      {message && (
+        <div className="mt-6 rounded-xl border border-green-400/30 bg-green-500/10 p-4 text-green-200">
+          {message}
+        </div>
+      )}
 
-          <button
-            type="button"
-            onClick={copyEmails}
-            disabled={!emails}
-            className="rounded-lg bg-[#F28C52] px-4 py-2 text-sm font-semibold text-black hover:bg-[#C96A2C] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {copied ? "Copied!" : "Copy Emails"}
-          </button>
+      {error && (
+        <div className="mt-6 rounded-xl border border-red-400/30 bg-red-500/10 p-4 text-red-200">
+          {error}
+        </div>
+      )}
+
+      {/* NEXT MEET */}
+      <section className="mt-8 rounded-2xl border border-white/10 bg-black/40 p-5 md:p-6">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#F28C52]">
+            Event Details
+          </p>
+
+          <h2 className="mt-2 text-2xl font-bold text-white">
+            Next Trailhead Meet
+          </h2>
         </div>
 
-        <textarea
-          readOnly
-          value={emails}
-          placeholder="No confirmed emails yet."
-          className="mt-3 h-32 w-full rounded-lg border border-white/10 bg-black/50 p-3 text-sm text-white"
-        />
+        <div className="mt-6 grid gap-5 md:grid-cols-3">
+          <Field label="Date">
+            <input
+              type="date"
+              value={settings.event_date || ""}
+              onChange={(e) => updateField("event_date", e.target.value)}
+              className="w-full rounded-lg border border-white/15 bg-white px-3 py-2.5 text-black"
+            />
+          </Field>
+
+          <Field label="Start Time">
+            <input
+              type="time"
+              value={settings.start_time?.slice(0, 5) || ""}
+              onChange={(e) => updateField("start_time", e.target.value)}
+              className="w-full rounded-lg border border-white/15 bg-white px-3 py-2.5 text-black"
+            />
+          </Field>
+
+          <Field label="End Time">
+            <input
+              type="time"
+              value={settings.end_time?.slice(0, 5) || ""}
+              onChange={(e) => updateField("end_time", e.target.value)}
+              className="w-full rounded-lg border border-white/15 bg-white px-3 py-2.5 text-black"
+            />
+          </Field>
+        </div>
+
+        <div className="mt-5 grid gap-5 md:grid-cols-2">
+          <Field label="Venue Name">
+            <input
+              type="text"
+              value={settings.venue_name || ""}
+              onChange={(e) => updateField("venue_name", e.target.value)}
+              placeholder="Revolution Auto Service"
+              className="w-full rounded-lg border border-white/15 bg-white px-3 py-2.5 text-black"
+            />
+          </Field>
+
+          <Field label="Address">
+            <input
+              type="text"
+              value={settings.address || ""}
+              onChange={(e) => updateField("address", e.target.value)}
+              placeholder="Event address"
+              className="w-full rounded-lg border border-white/15 bg-white px-3 py-2.5 text-black"
+            />
+          </Field>
+        </div>
       </section>
 
-      <RegistrationTable
-        title="Confirmed / Going"
-        registrations={goingRegistrations}
-        deletingId={deletingId}
-        onDelete={deleteRegistration}
-      />
+      {/* MONTHLY CONTENT */}
+      <section className="mt-6 rounded-2xl border border-white/10 bg-black/40 p-5 md:p-6">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#F28C52]">
+            Monthly Content
+          </p>
 
-      <RegistrationTable
-        title="Waitlist"
-        registrations={waitlistRegistrations}
-        deletingId={deletingId}
-        onDelete={deleteRegistration}
-        showPosition
-      />
+          <h2 className="mt-2 text-2xl font-bold text-white">
+            Announcement & Features
+          </h2>
+
+          <p className="mt-2 text-sm text-white/50">
+            Use these fields for information that changes from one Trailhead
+            meet to the next.
+          </p>
+        </div>
+
+        <div className="mt-6 space-y-5">
+          <Field label="Announcement">
+            <textarea
+              value={settings.announcement || ""}
+              onChange={(e) => updateField("announcement", e.target.value)}
+              placeholder="Optional announcement for the next Trailhead..."
+              rows={4}
+              className="w-full rounded-lg border border-white/15 bg-white px-3 py-2.5 text-black"
+            />
+          </Field>
+
+          <Field label="Special Feature">
+            <textarea
+              value={settings.special_feature || ""}
+              onChange={(e) => updateField("special_feature", e.target.value)}
+              placeholder="Example: Free campfire and s'mores sponsored by OnX Offroad"
+              rows={3}
+              className="w-full rounded-lg border border-white/15 bg-white px-3 py-2.5 text-black"
+            />
+          </Field>
+
+          <Field label="Event Image">
+            <input
+              type="text"
+              value={settings.event_image || ""}
+              onChange={(e) => updateField("event_image", e.target.value)}
+              placeholder="/trailhead-logo.png"
+              className="w-full rounded-lg border border-white/15 bg-white px-3 py-2.5 text-black"
+            />
+
+            <p className="mt-2 text-xs text-white/40">
+              Enter a public image path such as /trailhead-logo.png.
+            </p>
+          </Field>
+        </div>
+      </section>
+
+      {/* SAVE */}
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <button
+          type="button"
+          onClick={saveSettings}
+          disabled={saving}
+          className="rounded-xl bg-[#F28C52] px-6 py-3 font-bold text-black transition hover:bg-[#C96A2C] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {saving ? "Saving..." : "Save Trailhead Settings"}
+        </button>
+
+        <a
+          href="/thetrailhead"
+          target="_blank"
+          rel="noreferrer"
+          className="rounded-xl border border-white/15 px-6 py-3 text-center font-bold text-white transition hover:border-[#F28C52]/50 hover:text-[#F28C52]"
+        >
+          View Public Trailhead
+        </a>
+      </div>
     </main>
   );
 }
 
-function StatCard({
+function Field({
   label,
-  value,
+  children,
 }: {
   label: string;
-  value: number;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-black/40 p-4">
-      <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#F28C52]">
+    <label className="block">
+      <span className="mb-2 block text-sm font-bold text-white">
         {label}
-      </p>
-      <p className="mt-1 text-2xl font-bold text-white">{value}</p>
-    </div>
-  );
-}
+      </span>
 
-function RegistrationTable({
-  title,
-  registrations,
-  deletingId,
-  onDelete,
-  showPosition = false,
-}: {
-  title: string;
-  registrations: any[];
-  deletingId: string;
-  onDelete: (id: string, name: string, status: string) => void;
-  showPosition?: boolean;
-}) {
-  return (
-    <section className="mt-8">
-      <h2 className="text-2xl font-bold">{title}</h2>
-
-      <div className="mt-3 overflow-x-auto rounded-xl border border-white/10">
-        <table className="w-full min-w-[900px] border-collapse bg-black/40 text-left text-sm">
-          <thead className="bg-white/10 text-white">
-            <tr>
-              {showPosition && <th className="p-3">Position</th>}
-              <th className="p-3">Name</th>
-              <th className="p-3">Phone</th>
-              <th className="p-3">Email</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Waiver</th>
-              <th className="p-3">Registered</th>
-              <th className="p-3">Remove</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {registrations.map((registration, index) => {
-              const name = `${registration.first_name} ${registration.last_name}`;
-
-              return (
-                <tr
-                  key={registration.id}
-                  className="border-t border-white/10 text-white/75"
-                >
-                  {showPosition && (
-                    <td className="p-3 font-bold text-[#F28C52]">
-                      #{index + 1}
-                    </td>
-                  )}
-                  <td className="p-3">{name}</td>
-                  <td className="p-3">{registration.phone}</td>
-                  <td className="p-3">{registration.email}</td>
-                  <td className="p-3">
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wide ${
-                        registration.status === "going"
-                          ? "bg-green-500/15 text-green-300"
-                          : "bg-yellow-500/15 text-yellow-200"
-                      }`}
-                    >
-                      {registration.status === "going" ? "Going" : "Waitlist"}
-                    </span>
-                  </td>
-                  <td className="p-3">
-                    {registration.waiver_accepted
-                      ? "Accepted"
-                      : "Not Accepted"}
-                  </td>
-                  <td className="p-3">
-                    {new Date(registration.created_at).toLocaleString()}
-                  </td>
-                  <td className="p-3">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        onDelete(
-                          registration.id,
-                          name,
-                          registration.status
-                        )
-                      }
-                      disabled={deletingId === registration.id}
-                      className="rounded-lg border border-red-400/40 bg-red-500/10 px-3 py-1.5 text-sm font-semibold text-red-200 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {deletingId === registration.id
-                        ? "Removing..."
-                        : "Remove"}
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-
-            {registrations.length === 0 && (
-              <tr>
-                <td
-                  className="p-4 text-white/60"
-                  colSpan={showPosition ? 8 : 7}
-                >
-                  No registrations in this section.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </section>
+      {children}
+    </label>
   );
 }
