@@ -183,6 +183,19 @@ if (!emailResponse.ok) {
       </div>
 
      <div className="grid gap-4 sm:grid-cols-2">
+      <a
+  href="/admin/thetrailhead"
+  className="rounded-xl border border-white/10 bg-black/30 p-5 transition hover:border-[#F28C52]/60"
+>
+  <h2 className="text-xl font-bold text-white">
+    Trailhead Management
+  </h2>
+
+  <p className="mt-2 text-sm text-white/60">
+    Manage the next Trailhead meet, event details, location, announcements,
+    and public Trailhead content.
+  </p>
+</a>
   <a
     href="/admin/resources"
     className="rounded-xl border border-white/10 bg-black/30 p-5 transition hover:border-[#F28C52]/60"
