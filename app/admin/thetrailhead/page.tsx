@@ -13,6 +13,9 @@ type TrailheadSettings = {
   announcement: string | null;
   special_feature: string | null;
   event_image: string | null;
+  little_explorer_title: string | null;
+  little_explorer_details: string | null;
+  little_explorer_bonus: string | null;
 };
 
 export default function TheTrailheadAdminPage() {
@@ -115,6 +118,9 @@ export default function TheTrailheadAdminPage() {
           announcement: settings.announcement,
           special_feature: settings.special_feature,
           event_image: settings.event_image,
+          little_explorer_title: settings.little_explorer_title,
+          little_explorer_details: settings.little_explorer_details,
+          little_explorer_bonus: settings.little_explorer_bonus,
         }),
       });
 
@@ -287,7 +293,7 @@ export default function TheTrailheadAdminPage() {
             <textarea
               value={settings.special_feature || ""}
               onChange={(e) => updateField("special_feature", e.target.value)}
-              placeholder="Example: Free campfire and s'mores sponsored by OnX Offroad"
+              placeholder="Example: Free campfire and s'mores sponsored by onX Offroad"
               rows={3}
               className="w-full rounded-lg border border-white/15 bg-white px-3 py-2.5 text-black"
             />
@@ -305,6 +311,62 @@ export default function TheTrailheadAdminPage() {
             <p className="mt-2 text-xs text-white/40">
               Enter a public image path such as /trailhead-logo.png.
             </p>
+          </Field>
+        </div>
+      </section>
+
+      {/* LITTLE EXPLORERS */}
+      <section className="mt-6 rounded-2xl border border-[#F28C52]/30 bg-[#F28C52]/5 p-5 md:p-6">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#F28C52]">
+            Little Explorers
+          </p>
+
+          <h2 className="mt-2 text-2xl font-bold text-white">
+            This Month at Explorer HQ
+          </h2>
+
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-white/50">
+            Update the activity, challenge, or special experience being
+            offered to Little Explorers at the next Trailhead meet.
+          </p>
+        </div>
+
+        <div className="mt-6 space-y-5">
+          <Field label="Activity / Theme">
+            <input
+              type="text"
+              value={settings.little_explorer_title || ""}
+              onChange={(e) =>
+                updateField("little_explorer_title", e.target.value)
+              }
+              placeholder="Example: Campfire & S'mores Night"
+              className="w-full rounded-lg border border-white/15 bg-white px-3 py-2.5 text-black"
+            />
+          </Field>
+
+          <Field label="Activity Details">
+            <textarea
+              value={settings.little_explorer_details || ""}
+              onChange={(e) =>
+                updateField("little_explorer_details", e.target.value)
+              }
+              placeholder="Describe this month's Little Explorer activity, challenge, or experience..."
+              rows={4}
+              className="w-full rounded-lg border border-white/15 bg-white px-3 py-2.5 text-black"
+            />
+          </Field>
+
+          <Field label="Prize / Bonus">
+            <textarea
+              value={settings.little_explorer_bonus || ""}
+              onChange={(e) =>
+                updateField("little_explorer_bonus", e.target.value)
+              }
+              placeholder="Example: Free s'mores and a Little Explorer prize while supplies last."
+              rows={3}
+              className="w-full rounded-lg border border-white/15 bg-white px-3 py-2.5 text-black"
+            />
           </Field>
         </div>
       </section>

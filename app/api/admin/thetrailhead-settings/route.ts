@@ -130,6 +130,16 @@ export async function PUT(request: NextRequest) {
       announcement: body.announcement?.trim() || null,
       special_feature: body.special_feature?.trim() || null,
       event_image: body.event_image?.trim() || null,
+
+      little_explorer_title:
+        body.little_explorer_title?.trim() || null,
+
+      little_explorer_details:
+        body.little_explorer_details?.trim() || null,
+
+      little_explorer_bonus:
+        body.little_explorer_bonus?.trim() || null,
+
       updated_at: new Date().toISOString(),
     };
 
