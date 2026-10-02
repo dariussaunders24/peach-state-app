@@ -21,13 +21,13 @@ export default function TrailheadLayout({
       <header className="border-b border-white/10 bg-black/60">
         <div className="mx-auto max-w-6xl px-4">
           {/* BRAND */}
-          <div className="flex justify-center py-6">
+          <div className="flex justify-center py-7">
             <Link
               href="/thetrailhead"
               aria-label="The Trailhead Home"
               className="block"
             >
-              <div className="flex h-40 w-80 items-center justify-center rounded-2xl border border-[#F28C52]/30 bg-[#B85C2E] px-6 py-5 transition hover:border-[#F28C52]/70">
+              <div className="flex h-56 w-[30rem] max-w-[90vw] items-center justify-center rounded-2xl border border-[#F28C52]/30 bg-[#B85C2E] px-8 py-6 transition hover:border-[#F28C52]/70">
                 <img
                   src="/trailhead-logo.png"
                   alt="The Trailhead - Off-Road Overland Community"
