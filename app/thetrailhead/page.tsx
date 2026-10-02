@@ -19,7 +19,8 @@ type TrailheadSettings = {
 };
 
 export default function TrailheadPage() {
-  const [settings, setSettings] = useState<TrailheadSettings | null>(null);
+  const [settings, setSettings] =
+    useState<TrailheadSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -70,27 +71,11 @@ export default function TrailheadPage() {
           </p>
 
           <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-white/80 md:text-xl">
-            A monthly off-road, overland, outdoor, and automotive community
-            meet built around vehicles, adventure, families, and the people who
-            bring the community together.
+            A monthly off-road, overland, outdoor, and automotive
+            community meet built around vehicles, adventure,
+            families, and the people who bring the community
+            together.
           </p>
-
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
-            {[
-              "Free to Attend",
-              "No RSVP Required",
-              "Open to the Public",
-              "All Makes & Models",
-              "Family Friendly",
-            ].map((item) => (
-              <span
-                key={item}
-                className="rounded-full border border-[#F28C52]/30 bg-[#F28C52]/10 px-4 py-2 text-sm font-bold text-[#F28C52]"
-              >
-                {item}
-              </span>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -114,28 +99,36 @@ export default function TrailheadPage() {
               <div className="mt-5 space-y-2 text-white/80">
                 {formattedDate && (
                   <p>
-                    <span className="font-bold text-white">Date:</span>{" "}
+                    <span className="font-bold text-white">
+                      Date:
+                    </span>{" "}
                     {formattedDate}
                   </p>
                 )}
 
                 {formattedTime && (
                   <p>
-                    <span className="font-bold text-white">Time:</span>{" "}
+                    <span className="font-bold text-white">
+                      Time:
+                    </span>{" "}
                     {formattedTime}
                   </p>
                 )}
 
                 {settings?.venue_name && (
                   <p>
-                    <span className="font-bold text-white">Location:</span>{" "}
+                    <span className="font-bold text-white">
+                      Location:
+                    </span>{" "}
                     {settings.venue_name}
                   </p>
                 )}
 
                 {settings?.address && (
                   <p>
-                    <span className="font-bold text-white">Address:</span>{" "}
+                    <span className="font-bold text-white">
+                      Address:
+                    </span>{" "}
                     {settings.address}
                   </p>
                 )}
@@ -198,10 +191,11 @@ export default function TrailheadPage() {
           </h2>
 
           <p className="mt-5 text-lg leading-8 text-white/70">
-            The Trailhead brings together the off-road, overland, outdoor, and
-            automotive communities in one place. Whether you drive a stock
-            daily driver, a dedicated trail rig, an overland build, or simply
-            enjoy the outdoors, you&apos;re welcome here.
+            The Trailhead brings together the off-road, overland,
+            outdoor, and automotive communities in one place.
+            Whether you drive a stock daily driver, a dedicated
+            trail rig, an overland build, or simply enjoy the
+            outdoors, you&apos;re welcome here.
           </p>
 
           <p className="mt-4 text-lg font-bold text-white">
@@ -280,9 +274,9 @@ export default function TrailheadPage() {
             </h2>
 
             <p className="mt-3 max-w-2xl leading-7 text-white/70">
-              The Featured Rig area highlights vehicles and the people behind
-              them. Submissions are open to the public and are not limited to
-              Peach State members.
+              The Featured Rig area highlights vehicles and the
+              people behind them. Submissions are open to the public
+              and are not limited to Peach State members.
             </p>
           </div>
 
@@ -298,7 +292,7 @@ export default function TrailheadPage() {
       {/* BOTTOM CTA */}
       <section className="mt-12 rounded-2xl border border-white/10 bg-black/45 px-6 py-10 text-center md:px-10 md:py-14">
         <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#F28C52]">
-          Get Out. Explore. Belong.
+          More Than a Meet. It&apos;s a Starting Point.
         </p>
 
         <h2 className="mt-3 font-cinzel text-3xl font-bold text-white md:text-4xl">
@@ -306,8 +300,9 @@ export default function TrailheadPage() {
         </h2>
 
         <p className="mx-auto mt-4 max-w-2xl text-lg text-white/70">
-          Come meet the community, check out the builds, grab some food and
-          coffee, bring the family, and see where your next adventure starts.
+          Come meet the community, check out the builds, grab some
+          food and coffee, bring the family, and see where your next
+          adventure starts.
         </p>
 
         <p className="mt-6 font-bold text-[#F28C52]">
@@ -349,19 +344,24 @@ function TrailheadCard({
   );
 }
 
-function formatEventDate(date: string | null | undefined) {
+function formatEventDate(
+  date: string | null | undefined
+) {
   if (!date) return "";
 
   const [year, month, day] = date.split("-").map(Number);
 
   if (!year || !month || !day) return "";
 
-  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  return new Date(year, month - 1, day).toLocaleDateString(
+    "en-US",
+    {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    }
+  );
 }
 
 function formatEventTime(
@@ -378,7 +378,9 @@ function formatEventTime(
   return start || end || "";
 }
 
-function formatSingleTime(time: string | null | undefined) {
+function formatSingleTime(
+  time: string | null | undefined
+) {
   if (!time) return "";
 
   const [hourString, minuteString] = time.split(":");
