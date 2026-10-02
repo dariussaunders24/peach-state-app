@@ -153,13 +153,13 @@ export default function VendorsPage() {
           {/* REVOLUTION AUTO SERVICE */}
           <div className="flex flex-col overflow-hidden rounded-2xl border border-[#F28C52]/30 bg-black/40">
             {/* LOGO AREA */}
-            <div className="flex h-44 items-center justify-center bg-black p-6">
-              <img
-                src="/rev-auto-logo.png"
-                alt="Revolution Auto Service"
-                className="max-h-24 w-auto max-w-full object-contain"
-              />
-            </div>
+            <div className="flex h-44 items-center justify-center bg-white p-6">
+  <img
+    src="/rev-auto-logo.png"
+    alt="Revolution Auto Service"
+    className="max-h-24 w-auto max-w-full object-contain"
+  />
+</div>
 
             {/* SPONSOR INFO */}
             <div className="flex flex-1 flex-col p-7">
