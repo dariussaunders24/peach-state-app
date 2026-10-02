@@ -4,8 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
-const TRAILHEAD_LOGO = "/trailhead-logo.png";
-
 type TrailheadSettings = {
   id: number;
   event_date: string | null;
@@ -21,6 +19,7 @@ type TrailheadSettings = {
 export default function TrailheadPage() {
   const [settings, setSettings] =
     useState<TrailheadSettings | null>(null);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,6 +44,7 @@ export default function TrailheadPage() {
   }
 
   const formattedDate = formatEventDate(settings?.event_date);
+
   const formattedTime = formatEventTime(
     settings?.start_time,
     settings?.end_time
@@ -53,30 +53,24 @@ export default function TrailheadPage() {
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 md:py-12">
       {/* HERO */}
-      <section className="overflow-hidden rounded-2xl border border-white/10 bg-black/45 shadow-xl backdrop-blur">
-        {/* Trailhead Logo */}
-        <div className="px-4 pt-4 md:px-6 md:pt-6">
-          <div className="mx-auto flex max-w-3xl justify-center rounded-2xl border border-[#F28C52]/40 bg-[#B85C2E] px-6 py-5 shadow-lg md:px-10 md:py-7">
-            <img
-              src={TRAILHEAD_LOGO}
-              alt="The Trailhead"
-              className="h-auto w-full max-w-2xl object-contain"
-            />
-          </div>
-        </div>
+      <section className="rounded-2xl border border-white/10 bg-black/45 px-6 py-10 text-center shadow-xl backdrop-blur md:px-10 md:py-14">
+        <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#F28C52] md:text-sm">
+          Peach State Off-Road & Overlanding Presents
+        </p>
 
-        <div className="px-6 pb-8 pt-6 text-center md:px-10 md:pb-10">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#F28C52]">
-            Peach State Off-Road & Overlanding Presents
-          </p>
+        <h1 className="mx-auto mt-4 max-w-4xl font-cinzel text-4xl font-bold leading-tight text-white md:text-5xl lg:text-6xl">
+          More Than a Meet.
+          <span className="mt-1 block text-[#F28C52]">
+            It&apos;s a Starting Point.
+          </span>
+        </h1>
 
-          <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-white/80 md:text-xl">
-            A monthly off-road, overland, outdoor, and automotive
-            community meet built around vehicles, adventure,
-            families, and the people who bring the community
-            together.
-          </p>
-        </div>
+        <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-white/75 md:text-xl">
+          A monthly off-road, overland, outdoor, and automotive
+          community meet built around vehicles, adventure,
+          families, and the people who bring the community
+          together.
+        </p>
       </section>
 
       {/* NEXT TRAILHEAD */}
@@ -291,15 +285,11 @@ export default function TrailheadPage() {
 
       {/* BOTTOM CTA */}
       <section className="mt-12 rounded-2xl border border-white/10 bg-black/45 px-6 py-10 text-center md:px-10 md:py-14">
-        <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#F28C52]">
-          More Than a Meet. It&apos;s a Starting Point.
-        </p>
-
-        <h2 className="mt-3 font-cinzel text-3xl font-bold text-white md:text-4xl">
+        <h2 className="font-cinzel text-3xl font-bold text-white md:text-4xl">
           Start at The Trailhead.
         </h2>
 
-        <p className="mx-auto mt-4 max-w-2xl text-lg text-white/70">
+        <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-white/70">
           Come meet the community, check out the builds, grab some
           food and coffee, bring the family, and see where your next
           adventure starts.
