@@ -58,12 +58,13 @@ export default function TrailheadPage() {
           Peach State Off-Road & Overlanding Presents
         </p>
 
-        <h1 className="mx-auto mt-4 max-w-4xl font-cinzel text-4xl font-bold leading-tight text-white md:text-5xl lg:text-6xl">
-          More Than a Meet.
-          <span className="mt-1 block text-[#F28C52]">
-            It&apos;s a Starting Point.
-          </span>
+        <h1 className="mt-4 font-cinzel text-4xl font-bold uppercase text-white md:text-5xl">
+          The Trailhead
         </h1>
+
+        <p className="mt-3 font-cinzel text-2xl font-bold text-[#F28C52] md:text-3xl">
+          More Than a Meet. It&apos;s a Starting Point.
+        </p>
 
         <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-white/75 md:text-xl">
           A monthly off-road, overland, outdoor, and automotive
@@ -252,34 +253,6 @@ export default function TrailheadPage() {
             href="/thetrailhead/faq"
             linkText="View FAQ"
           />
-        </div>
-      </section>
-
-      {/* FEATURED RIG CTA */}
-      <section className="mt-12 overflow-hidden rounded-2xl border border-white/10 bg-black/45 p-6 md:p-8">
-        <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
-          <div>
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#F28C52]">
-              Featured Rig
-            </p>
-
-            <h2 className="mt-2 font-cinzel text-2xl font-bold text-white md:text-3xl">
-              Want Your Build in the Featured Rig Area?
-            </h2>
-
-            <p className="mt-3 max-w-2xl leading-7 text-white/70">
-              The Featured Rig area highlights vehicles and the
-              people behind them. Submissions are open to the public
-              and are not limited to Peach State members.
-            </p>
-          </div>
-
-          <Link
-            href="/thetrailhead/featured-rigs"
-            className="inline-flex items-center justify-center rounded-xl border border-[#F28C52] px-6 py-3 font-bold text-[#F28C52] transition hover:bg-[#F28C52] hover:text-black"
-          >
-            Learn About Featured Rigs
-          </Link>
         </div>
       </section>
 
