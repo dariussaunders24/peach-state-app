@@ -1,8 +1,54 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
 
 const TRAILHEAD_LOGO = "/trailhead-logo.png";
 
+type TrailheadSettings = {
+  id: number;
+  event_date: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  venue_name: string | null;
+  address: string | null;
+  announcement: string | null;
+  special_feature: string | null;
+  event_image: string | null;
+};
+
 export default function TrailheadPage() {
+  const [settings, setSettings] = useState<TrailheadSettings | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  async function loadSettings() {
+    const { data, error } = await supabase
+      .from("trailhead_settings")
+      .select("*")
+      .order("id", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Trailhead settings load error:", error);
+    } else {
+      setSettings(data);
+    }
+
+    setLoading(false);
+  }
+
+  const formattedDate = formatEventDate(settings?.event_date);
+  const formattedTime = formatEventTime(
+    settings?.start_time,
+    settings?.end_time
+  );
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 md:py-12">
       {/* HERO */}
@@ -60,21 +106,45 @@ export default function TrailheadPage() {
               Monthly Community Meet
             </h2>
 
-            <div className="mt-5 space-y-2 text-white/80">
-              <p>
-                <span className="font-bold text-white">Location:</span>{" "}
-                Revolution Auto Service
+            {loading ? (
+              <p className="mt-5 text-white/60">
+                Loading event details...
               </p>
+            ) : (
+              <div className="mt-5 space-y-2 text-white/80">
+                {formattedDate && (
+                  <p>
+                    <span className="font-bold text-white">Date:</span>{" "}
+                    {formattedDate}
+                  </p>
+                )}
 
-              <p>
-                <span className="font-bold text-white">Address:</span>{" "}
-                3620 Kennesaw N Industrial Pkwy, Suite E, Kennesaw, GA 30144
-              </p>
+                {formattedTime && (
+                  <p>
+                    <span className="font-bold text-white">Time:</span>{" "}
+                    {formattedTime}
+                  </p>
+                )}
 
-              <p className="pt-2 font-bold text-[#F28C52]">
-                Free • No RSVP • Just Show Up
-              </p>
-            </div>
+                {settings?.venue_name && (
+                  <p>
+                    <span className="font-bold text-white">Location:</span>{" "}
+                    {settings.venue_name}
+                  </p>
+                )}
+
+                {settings?.address && (
+                  <p>
+                    <span className="font-bold text-white">Address:</span>{" "}
+                    {settings.address}
+                  </p>
+                )}
+
+                <p className="pt-2 font-bold text-[#F28C52]">
+                  Free • No RSVP • Just Show Up
+                </p>
+              </div>
+            )}
           </div>
 
           <Link
@@ -85,6 +155,36 @@ export default function TrailheadPage() {
           </Link>
         </div>
       </section>
+
+      {/* ANNOUNCEMENT */}
+      {!loading && settings?.announcement && (
+        <section className="mt-6 rounded-2xl border border-[#F28C52]/30 bg-black/45 p-6 md:p-8">
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#F28C52]">
+            Trailhead Update
+          </p>
+
+          <p className="mt-3 whitespace-pre-line text-lg leading-8 text-white/80">
+            {settings.announcement}
+          </p>
+        </section>
+      )}
+
+      {/* SPECIAL FEATURE */}
+      {!loading && settings?.special_feature && (
+        <section className="mt-6 rounded-2xl border border-white/10 bg-black/45 p-6 md:p-8">
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#F28C52]">
+            This Month at The Trailhead
+          </p>
+
+          <h2 className="mt-2 font-cinzel text-2xl font-bold text-white">
+            Special Feature
+          </h2>
+
+          <p className="mt-3 whitespace-pre-line text-lg leading-8 text-white/75">
+            {settings.special_feature}
+          </p>
+        </section>
+      )}
 
       {/* ABOUT */}
       <section className="mt-12">
@@ -231,9 +331,13 @@ function TrailheadCard({
 }) {
   return (
     <div className="flex h-full flex-col rounded-2xl border border-white/10 bg-black/45 p-6 transition hover:border-[#F28C52]/40">
-      <h3 className="font-cinzel text-xl font-bold text-white">{title}</h3>
+      <h3 className="font-cinzel text-xl font-bold text-white">
+        {title}
+      </h3>
 
-      <p className="mt-3 flex-1 leading-7 text-white/65">{description}</p>
+      <p className="mt-3 flex-1 leading-7 text-white/65">
+        {description}
+      </p>
 
       <Link
         href={href}
@@ -243,4 +347,52 @@ function TrailheadCard({
       </Link>
     </div>
   );
+}
+
+function formatEventDate(date: string | null | undefined) {
+  if (!date) return "";
+
+  const [year, month, day] = date.split("-").map(Number);
+
+  if (!year || !month || !day) return "";
+
+  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatEventTime(
+  startTime: string | null | undefined,
+  endTime: string | null | undefined
+) {
+  const start = formatSingleTime(startTime);
+  const end = formatSingleTime(endTime);
+
+  if (start && end) {
+    return `${start} – ${end}`;
+  }
+
+  return start || end || "";
+}
+
+function formatSingleTime(time: string | null | undefined) {
+  if (!time) return "";
+
+  const [hourString, minuteString] = time.split(":");
+
+  const hour = Number(hourString);
+  const minute = Number(minuteString);
+
+  if (Number.isNaN(hour) || Number.isNaN(minute)) {
+    return "";
+  }
+
+  const period = hour >= 12 ? "PM" : "AM";
+  const displayHour = hour % 12 || 12;
+  const displayMinute = minute.toString().padStart(2, "0");
+
+  return `${displayHour}:${displayMinute} ${period}`;
 }
