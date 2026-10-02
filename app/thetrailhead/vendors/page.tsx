@@ -109,37 +109,85 @@ export default function VendorsPage() {
           </p>
         </div>
 
-        <div className="mt-7 grid gap-5 md:grid-cols-2">
-          {/* ONX */}
-          <div className="rounded-2xl border border-[#F28C52]/30 bg-black/40 p-7">
-            <div className="inline-flex rounded-full border border-[#F28C52]/30 bg-[#F28C52]/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#F28C52]">
-              Official Yearly Sponsor
+        <div className="mt-8 grid gap-6 md:grid-cols-2">
+          {/* ONX OFFROAD */}
+          <div className="flex flex-col overflow-hidden rounded-2xl border border-[#F28C52]/30 bg-black/40">
+            {/* LOGO AREA */}
+            <div className="flex h-44 items-center justify-center bg-white p-6">
+              <img
+                src="/onx-logo.png"
+                alt="onX Offroad"
+                className="max-h-24 w-auto max-w-full object-contain"
+              />
             </div>
 
-            <h3 className="mt-5 font-cinzel text-3xl font-bold">
-              onX Offroad
-            </h3>
+            {/* SPONSOR INFO */}
+            <div className="flex flex-1 flex-col p-7">
+              <div className="inline-flex w-fit rounded-full border border-[#F28C52]/30 bg-[#F28C52]/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#F28C52]">
+                Official Yearly Sponsor
+              </div>
 
-            <p className="mt-4 leading-7 text-white/65">
-              Proud yearly sponsor of The Trailhead and supporter
-              of the off-road and overland community.
-            </p>
+              <h3 className="mt-5 font-cinzel text-2xl font-bold">
+                onX Offroad
+              </h3>
+
+              <p className="mt-3 flex-1 leading-7 text-white/65">
+                Proud yearly sponsor of The Trailhead and supporter
+                of the off-road and overland community.
+              </p>
+
+              <a
+                href="https://www.onxmaps.com/offroad"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 inline-flex w-fit items-center justify-center rounded-xl bg-[#F28C52] px-5 py-3 font-bold text-black transition hover:bg-[#C96A2C]"
+              >
+                Visit onX Offroad
+                <span aria-hidden="true" className="ml-2">
+                  ↗
+                </span>
+              </a>
+            </div>
           </div>
 
-          {/* REVOLUTION */}
-          <div className="rounded-2xl border border-[#F28C52]/30 bg-black/40 p-7">
-            <div className="inline-flex rounded-full border border-[#F28C52]/30 bg-[#F28C52]/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#F28C52]">
-              Official Yearly Sponsor
+          {/* REVOLUTION AUTO SERVICE */}
+          <div className="flex flex-col overflow-hidden rounded-2xl border border-[#F28C52]/30 bg-black/40">
+            {/* LOGO AREA */}
+            <div className="flex h-44 items-center justify-center bg-black p-6">
+              <img
+                src="/rev-auto-logo.png"
+                alt="Revolution Auto Service"
+                className="max-h-24 w-auto max-w-full object-contain"
+              />
             </div>
 
-            <h3 className="mt-5 font-cinzel text-3xl font-bold">
-              Revolution Auto Service
-            </h3>
+            {/* SPONSOR INFO */}
+            <div className="flex flex-1 flex-col p-7">
+              <div className="inline-flex w-fit rounded-full border border-[#F28C52]/30 bg-[#F28C52]/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#F28C52]">
+                Official Yearly Sponsor
+              </div>
 
-            <p className="mt-4 leading-7 text-white/65">
-              Official yearly sponsor of The Trailhead and host
-              location for our monthly community meet.
-            </p>
+              <h3 className="mt-5 font-cinzel text-2xl font-bold">
+                Revolution Auto Service
+              </h3>
+
+              <p className="mt-3 flex-1 leading-7 text-white/65">
+                Official yearly sponsor of The Trailhead and host
+                location for our monthly community meet.
+              </p>
+
+              <a
+                href="https://www.revolutionautokennesaw.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 inline-flex w-fit items-center justify-center rounded-xl bg-[#F28C52] px-5 py-3 font-bold text-black transition hover:bg-[#C96A2C]"
+              >
+                Visit Revolution Auto Service
+                <span aria-hidden="true" className="ml-2">
+                  ↗
+                </span>
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -170,7 +218,7 @@ export default function VendorsPage() {
         </p>
       </section>
 
-      {/* SUCCESS */}
+      {/* SUCCESS MESSAGE */}
       {success && (
         <section className="mt-8 rounded-2xl border border-green-400/30 bg-green-500/10 p-6">
           <h2 className="text-2xl font-bold text-green-200">
@@ -186,7 +234,7 @@ export default function VendorsPage() {
         </section>
       )}
 
-      {/* FORM */}
+      {/* VENDOR APPLICATION */}
       <section className="mt-8 rounded-2xl border border-[#F28C52]/30 bg-black/40 p-6 md:p-8">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#F28C52]">
@@ -203,7 +251,7 @@ export default function VendorsPage() {
           onSubmit={handleSubmit}
           className="mt-8 space-y-8"
         >
-          {/* BUSINESS */}
+          {/* BUSINESS INFORMATION */}
           <FormSection
             title="Business Information"
             description="Tell us who you are and what your business does."
@@ -233,7 +281,7 @@ export default function VendorsPage() {
             </div>
           </FormSection>
 
-          {/* CONTACT */}
+          {/* CONTACT INFORMATION */}
           <FormSection
             title="Contact Information"
             description="Who should we contact about your vendor inquiry?"
@@ -263,7 +311,7 @@ export default function VendorsPage() {
             </div>
           </FormSection>
 
-          {/* PRODUCTS */}
+          {/* PRODUCTS / SERVICES */}
           <FormSection
             title="What Would You Bring?"
             description="Help us understand what Trailhead attendees can expect from your setup."
@@ -286,7 +334,7 @@ export default function VendorsPage() {
             </div>
           </FormSection>
 
-          {/* NEEDS */}
+          {/* SETUP REQUIREMENTS */}
           <FormSection
             title="Setup Requirements"
             description="Let us know what your setup would require."
@@ -306,7 +354,7 @@ export default function VendorsPage() {
             </div>
           </FormSection>
 
-          {/* NOTES */}
+          {/* ADDITIONAL NOTES */}
           <FormSection
             title="Anything Else?"
             description="Share anything else you'd like us to know."
@@ -319,7 +367,7 @@ export default function VendorsPage() {
             />
           </FormSection>
 
-          {/* ERROR */}
+          {/* ERROR MESSAGE */}
           {error && (
             <div className="rounded-xl border border-red-400/30 bg-red-500/10 p-4 text-red-200">
               {error}
