@@ -7,6 +7,7 @@ const navItems = [
   { label: "Featured Rigs", href: "/thetrailhead/featured-rigs" },
   { label: "Little Explorers", href: "/thetrailhead/little-explorers" },
   { label: "Vendors", href: "/thetrailhead/vendors" },
+  { label: "Gallery", href: "/thetrailhead/gallery" },
   { label: "FAQ", href: "/thetrailhead/faq" },
 ];
 
@@ -54,6 +55,57 @@ export default function TrailheadLayout({
               ))}
             </div>
           </nav>
+
+          {/* SOCIAL LINKS */}
+          <div className="flex justify-center gap-3 pb-5">
+            <a
+              href="https://www.instagram.com/thetrailhead_ga/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="The Trailhead on Instagram"
+              className="flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-[#F28C52] hover:bg-[#F28C52]/10 hover:text-white"
+            >
+              {/* Instagram Icon */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-5 w-5"
+                aria-hidden="true"
+              >
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+              </svg>
+
+              Instagram
+            </a>
+
+            <a
+              href="https://www.facebook.com/thetrailhead.ga"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="The Trailhead on Facebook"
+              className="flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-[#F28C52] hover:bg-[#F28C52]/10 hover:text-white"
+            >
+              {/* Facebook Icon */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="h-5 w-5"
+                aria-hidden="true"
+              >
+                <path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.51 1.49-3.89 3.77-3.89 1.09 0 2.23.2 2.23.2v2.45h-1.25c-1.24 0-1.62.77-1.62 1.56V12h2.76l-.44 2.89h-2.32v6.99A10 10 0 0 0 22 12z" />
+              </svg>
+
+              Facebook
+            </a>
+          </div>
         </div>
       </header>
 
