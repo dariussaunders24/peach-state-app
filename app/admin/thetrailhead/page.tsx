@@ -256,13 +256,13 @@ export default function TheTrailheadAdminPage() {
       return;
     }
 
-    const maxFileSize = 150 * 1024 * 1024;
+    const maxFileSize = 50 * 1024 * 1024;
 
     if (file.size > maxFileSize) {
       setGalleryFile(null);
       event.target.value = "";
       setGalleryError(
-        "Photo must be 150 MB or smaller."
+        "Photo must be 50 MB or smaller."
       );
       return;
     }
@@ -763,7 +763,7 @@ export default function TheTrailheadAdminPage() {
               />
 
               <p className="mt-2 text-xs text-white/40">
-                JPG, PNG, WEBP, HEIC, or HEIF. Maximum 150 MB.
+                JPG, JPEG, PNG, WEBP, HEIC, or HEIF. Maximum 50 MB.
               </p>
             </Field>
 
