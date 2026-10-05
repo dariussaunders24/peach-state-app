@@ -126,77 +126,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const maxFileSize = 50 * 1024 * 1024;
+    const maxFileSize = 150 * 1024 * 1024;
 
     if (file.size > maxFileSize) {
       return NextResponse.json(
-        { error: "Photo must be 50 MB or smaller." },
+        { error: "Photo must be 150 MB or smaller." },
         { status: 400 }
       );
     }
 
-    const extension =
-      file.name.split(".").pop()?.toLowerCase() || "";
-
     const allowedTypes = [
       "image/jpeg",
-      "image/jpg",
       "image/png",
       "image/webp",
       "image/heic",
       "image/heif",
     ];
 
-    const allowedExtensions = [
-      "jpg",
-      "jpeg",
-      "png",
-      "webp",
-      "heic",
-      "heif",
-    ];
-
-    const validMimeType = allowedTypes.includes(
-      file.type.toLowerCase()
-    );
-
-    const validExtension =
-      allowedExtensions.includes(extension);
-
-    if (!validMimeType && !validExtension) {
+    if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
         {
           error:
-            `Unsupported photo format. File: ${file.name}. Type: ${file.type || "unknown"}. Use JPG, JPEG, PNG, WEBP, HEIC, or HEIF.`,
+            "Unsupported image type. Use JPG, PNG, WEBP, HEIC, or HEIF.",
         },
         { status: 400 }
       );
     }
 
-    const safeExtension =
-      allowedExtensions.includes(extension)
-        ? extension
-        : file.type === "image/png"
-          ? "png"
-          : file.type === "image/webp"
-            ? "webp"
-            : file.type === "image/heic"
-              ? "heic"
-              : file.type === "image/heif"
-                ? "heif"
-                : "jpg";
+    const extension =
+      file.name.split(".").pop()?.toLowerCase() || "jpg";
 
     const photoId = crypto.randomUUID();
 
-    const storagePath =
-      `${photoId}/${Date.now()}-${photoId}.${safeExtension}`;
+    const storagePath = `${photoId}/${Date.now()}-${photoId}.${extension}`;
 
     const fileBuffer = await file.arrayBuffer();
 
     const { error: uploadError } = await supabaseAdmin.storage
       .from(BUCKET_NAME)
       .upload(storagePath, fileBuffer, {
-        contentType: file.type || "application/octet-stream",
+        contentType: file.type,
         upsert: false,
       });
 
@@ -207,10 +176,7 @@ export async function POST(request: NextRequest) {
       );
 
       return NextResponse.json(
-        {
-          error:
-            `Unable to upload photo: ${uploadError.message}`,
-        },
+        { error: "Unable to upload photo." },
         { status: 500 }
       );
     }
@@ -247,10 +213,7 @@ export async function POST(request: NextRequest) {
         .remove([storagePath]);
 
       return NextResponse.json(
-        {
-          error:
-            `Photo uploaded but could not be added to the gallery: ${insertError.message}`,
-        },
+        { error: "Unable to save gallery photo." },
         { status: 500 }
       );
     }
@@ -262,15 +225,8 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Trailhead gallery POST error:", error);
 
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unknown upload error.";
-
     return NextResponse.json(
-      {
-        error: `Unable to upload gallery photo: ${message}`,
-      },
+      { error: "Unable to upload gallery photo." },
       { status: 500 }
     );
   }
@@ -317,6 +273,10 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    /*
+     * Delete the database record first.
+     * If that succeeds, remove the actual image from Storage.
+     */
     const { error: deleteError } = await supabaseAdmin
       .from("trailhead_gallery")
       .delete()
@@ -340,6 +300,10 @@ export async function DELETE(request: NextRequest) {
         .remove([photo.storage_path]);
 
     if (storageError) {
+      /*
+       * The public gallery record is already gone, so don't report the
+       * entire delete as failed. Log the orphaned Storage object instead.
+       */
       console.error(
         "Trailhead gallery storage cleanup error:",
         storageError
