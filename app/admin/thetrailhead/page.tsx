@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, useEffect, useState } from "react";
+import heic2any from "heic2any";
 import { supabase } from "../../lib/supabase";
 
 type TrailheadSettings = {
@@ -270,6 +271,156 @@ export default function TheTrailheadAdminPage() {
     setGalleryFile(file);
   }
 
+  async function optimizeGalleryPhoto(
+    file: File
+  ): Promise<File> {
+    const fileName = file.name.toLowerCase();
+
+    const isHeic =
+      file.type.toLowerCase() === "image/heic" ||
+      file.type.toLowerCase() === "image/heif" ||
+      fileName.endsWith(".heic") ||
+      fileName.endsWith(".heif");
+
+    let sourceBlob: Blob = file;
+
+    /*
+     * iPhone HEIC / HEIF photos are converted to JPEG
+     * before being processed by the browser.
+     */
+    if (isHeic) {
+      const converted = await heic2any({
+        blob: file,
+        toType: "image/jpeg",
+        quality: 0.9,
+      });
+
+      sourceBlob = Array.isArray(converted)
+        ? converted[0]
+        : converted;
+    }
+
+    /*
+     * Small JPEG / PNG / WEBP photos can continue
+     * through the existing uploader unchanged.
+     */
+    if (!isHeic && file.size <= 3 * 1024 * 1024) {
+      return file;
+    }
+
+    const imageUrl = URL.createObjectURL(sourceBlob);
+
+    try {
+      const image = await new Promise<HTMLImageElement>(
+        (resolve, reject) => {
+          const img = new Image();
+
+          img.onload = () => resolve(img);
+
+          img.onerror = () =>
+            reject(
+              new Error(
+                "The selected photo could not be processed."
+              )
+            );
+
+          img.src = imageUrl;
+        }
+      );
+
+      /*
+       * Keep the longest side at a maximum of 2400px.
+       * This is plenty of resolution for the website gallery.
+       */
+      const maxDimension = 2400;
+
+      let width = image.naturalWidth;
+      let height = image.naturalHeight;
+
+      if (
+        width > maxDimension ||
+        height > maxDimension
+      ) {
+        const scale = Math.min(
+          maxDimension / width,
+          maxDimension / height
+        );
+
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+
+      const canvas = document.createElement("canvas");
+
+      canvas.width = width;
+      canvas.height = height;
+
+      const context = canvas.getContext("2d");
+
+      if (!context) {
+        throw new Error(
+          "Your browser could not process the selected photo."
+        );
+      }
+
+      /*
+       * Add a white background so transparent PNG areas
+       * don't turn black when converted to JPEG.
+       */
+      context.fillStyle = "#ffffff";
+      context.fillRect(
+        0,
+        0,
+        width,
+        height
+      );
+
+      context.drawImage(
+        image,
+        0,
+        0,
+        width,
+        height
+      );
+
+      const optimizedBlob =
+        await new Promise<Blob>(
+          (resolve, reject) => {
+            canvas.toBlob(
+              (blob) => {
+                if (blob) {
+                  resolve(blob);
+                } else {
+                  reject(
+                    new Error(
+                      "The photo could not be optimized."
+                    )
+                  );
+                }
+              },
+              "image/jpeg",
+              0.85
+            );
+          }
+        );
+
+      const originalName =
+        file.name.replace(/\.[^/.]+$/, "") ||
+        "trailhead-photo";
+
+      return new File(
+        [optimizedBlob],
+        `${originalName}.jpg`,
+        {
+          type: "image/jpeg",
+          lastModified: Date.now(),
+        }
+      );
+    } finally {
+      URL.revokeObjectURL(imageUrl);
+    }
+  }
+
   async function uploadGalleryPhoto() {
     if (!galleryFile) {
       setGalleryError(
@@ -293,11 +444,25 @@ export default function TheTrailheadAdminPage() {
         return;
       }
 
+      /*
+       * Optimize the image before sending it through
+       * the existing API.
+       *
+       * HEIC / HEIF -> JPEG
+       * Large images -> resized/compressed JPEG
+       * Small JPEG / PNG / WEBP -> unchanged
+       */
+      const uploadFile =
+        await optimizeGalleryPhoto(galleryFile);
+
       const formData = new FormData();
 
-      formData.append("photo", galleryFile);
+      formData.append("photo", uploadFile);
       formData.append("caption", galleryCaption);
-      formData.append("event_label", galleryEventLabel);
+      formData.append(
+        "event_label",
+        galleryEventLabel
+      );
 
       const response = await fetch(
         "/api/admin/thetrailhead-gallery",
@@ -314,7 +479,8 @@ export default function TheTrailheadAdminPage() {
 
       if (!response.ok) {
         setGalleryError(
-          data?.error || "Unable to upload gallery photo."
+          data?.error ||
+            "Unable to upload gallery photo."
         );
         setGalleryUploading(false);
         return;
@@ -343,8 +509,13 @@ export default function TheTrailheadAdminPage() {
         uploadError
       );
 
+      const errorMessage =
+        uploadError instanceof Error
+          ? uploadError.message
+          : "Unable to process the selected photo.";
+
       setGalleryError(
-        "Unable to upload gallery photo."
+        `Unable to upload gallery photo: ${errorMessage}`
       );
     }
 
@@ -757,13 +928,14 @@ export default function TheTrailheadAdminPage() {
               <input
                 id="trailhead-gallery-photo"
                 type="file"
-                accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif"
                 onChange={handleGalleryFileChange}
                 className="block w-full rounded-lg border border-white/15 bg-white px-3 py-2.5 text-sm text-black file:mr-4 file:rounded-md file:border-0 file:bg-[#F28C52] file:px-4 file:py-2 file:font-bold file:text-black"
               />
 
               <p className="mt-2 text-xs text-white/40">
                 JPG, JPEG, PNG, WEBP, HEIC, or HEIF. Maximum 50 MB.
+                Large photos are automatically optimized for the gallery.
               </p>
             </Field>
 
@@ -811,7 +983,7 @@ export default function TheTrailheadAdminPage() {
               className="rounded-xl bg-[#F28C52] px-6 py-3 font-bold text-black transition hover:bg-[#C96A2C] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {galleryUploading
-                ? "Uploading..."
+                ? "Processing & Uploading..."
                 : "Upload to Gallery"}
             </button>
           </div>
