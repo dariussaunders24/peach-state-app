@@ -126,11 +126,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const maxFileSize = 8 * 1024 * 1024;
+    const maxFileSize = 150 * 1024 * 1024;
 
     if (file.size > maxFileSize) {
       return NextResponse.json(
-        { error: "Photo must be 8 MB or smaller." },
+        { error: "Photo must be 150 MB or smaller." },
         { status: 400 }
       );
     }
