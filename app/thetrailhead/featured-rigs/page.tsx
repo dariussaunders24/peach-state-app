@@ -1,16 +1,20 @@
+
 "use client";
 
 import { FormEvent, useRef, useState } from "react";
+import heic2any from "heic2any";
 
 const MAX_PHOTOS = 4;
 const MIN_PHOTOS = 2;
-const MAX_FILE_SIZE = 8 * 1024 * 1024;
+const MAX_ORIGINAL_FILE_SIZE = 50 * 1024 * 1024;
+const MAX_UPLOAD_FILE_SIZE = 8 * 1024 * 1024;
 
 export default function FeaturedRigsPage() {
   const formRef = useRef<HTMLFormElement>(null);
 
   const [photos, setPhotos] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [processingPhoto, setProcessingPhoto] = useState(0);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
@@ -31,12 +35,12 @@ export default function FeaturedRigsPage() {
     }
 
     const oversized = selected.find(
-      (file) => file.size > MAX_FILE_SIZE
+      (file) => file.size > MAX_ORIGINAL_FILE_SIZE
     );
 
     if (oversized) {
       setError(
-        `"${oversized.name}" is larger than 8 MB. Please choose a smaller photo.`
+        `"${oversized.name}" is larger than 50 MB. Please choose a smaller photo.`
       );
       setPhotos([]);
       return;
@@ -45,7 +49,125 @@ export default function FeaturedRigsPage() {
     setPhotos(selected);
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function optimizePhoto(file: File): Promise<File> {
+    const lowerName = file.name.toLowerCase();
+
+    const isHeic =
+      ["image/heic", "image/heif"].includes(file.type.toLowerCase()) ||
+      lowerName.endsWith(".heic") ||
+      lowerName.endsWith(".heif");
+
+    if (
+      !isHeic &&
+      file.size <= 3 * 1024 * 1024 &&
+      ["image/jpeg", "image/png", "image/webp"].includes(file.type)
+    ) {
+      return file;
+    }
+
+    let source: Blob = file;
+
+    if (isHeic) {
+      const converted = await heic2any({
+        blob: file,
+        toType: "image/jpeg",
+        quality: 0.9,
+      });
+
+      source = Array.isArray(converted)
+        ? converted[0]
+        : converted;
+    }
+
+    const url = URL.createObjectURL(source);
+
+    try {
+      const img = await new Promise<HTMLImageElement>(
+        (resolve, reject) => {
+          const image = new Image();
+
+          image.onload = () => resolve(image);
+
+          image.onerror = () =>
+            reject(new Error(`Could not read ${file.name}.`));
+
+          image.src = url;
+        }
+      );
+
+      const scale = Math.min(
+        1,
+        2400 / Math.max(img.naturalWidth, img.naturalHeight)
+      );
+
+      const canvas = document.createElement("canvas");
+
+      canvas.width = Math.max(
+        1,
+        Math.round(img.naturalWidth * scale)
+      );
+
+      canvas.height = Math.max(
+        1,
+        Math.round(img.naturalHeight * scale)
+      );
+
+      const context = canvas.getContext("2d");
+
+      if (!context) {
+        throw new Error(
+          "Image processing is not supported by this browser."
+        );
+      }
+
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      context.drawImage(
+        img,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      const blob = await new Promise<Blob>(
+        (resolve, reject) => {
+          canvas.toBlob(
+            (result) =>
+              result
+                ? resolve(result)
+                : reject(
+                    new Error(
+                      `Could not optimize ${file.name}.`
+                    )
+                  ),
+            "image/jpeg",
+            0.85
+          );
+        }
+      );
+
+      const name =
+        file.name.replace(/\.[^/.]+$/, "") ||
+        "featured-rig-photo";
+
+      return new File(
+        [blob],
+        `${name}.jpg`,
+        {
+          type: "image/jpeg",
+          lastModified: Date.now(),
+        }
+      );
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
     event.preventDefault();
 
     setError("");
@@ -69,9 +191,38 @@ export default function FeaturedRigsPage() {
 
       formData.delete("photos");
 
-      photos.forEach((photo) => {
-        formData.append("photos", photo);
-      });
+      // Process photos individually to reduce
+      // memory usage on mobile devices.
+      for (
+        let index = 0;
+        index < photos.length;
+        index++
+      ) {
+        setProcessingPhoto(index + 1);
+
+        let optimized: File;
+
+        try {
+          optimized = await optimizePhoto(
+            photos[index]
+          );
+        } catch (cause) {
+          throw new Error(
+            `Unable to process ${photos[index].name}. Please try a JPG photo.`,
+            { cause }
+          );
+        }
+
+        if (optimized.size > MAX_UPLOAD_FILE_SIZE) {
+          throw new Error(
+            `${photos[index].name} is still over 8 MB after optimization. Please choose another photo.`
+          );
+        }
+
+        formData.append("photos", optimized);
+      }
+
+      setProcessingPhoto(0);
 
       const response = await fetch(
         "/api/thetrailhead-featured-rig",
@@ -81,15 +232,15 @@ export default function FeaturedRigsPage() {
         }
       );
 
-      const data = await response.json().catch(() => null);
+      const data = await response.json().catch(
+        () => null
+      );
 
       if (!response.ok) {
-        setError(
+        throw new Error(
           data?.error ||
             "Unable to submit your rig. Please try again."
         );
-        setSubmitting(false);
-        return;
       }
 
       setSuccess(true);
@@ -107,11 +258,14 @@ export default function FeaturedRigsPage() {
       );
 
       setError(
-        "Unable to submit your rig. Please try again."
+        submitError instanceof Error
+          ? submitError.message
+          : "Unable to submit your rig. Please try again."
       );
+    } finally {
+      setProcessingPhoto(0);
+      setSubmitting(false);
     }
-
-    setSubmitting(false);
   }
 
   return (
@@ -180,7 +334,7 @@ export default function FeaturedRigsPage() {
 
           <p className="mt-4 leading-7 text-white/70">
             Featured Rig submissions are open to the public. You
-            do not need to be a Peach State Off-Road & Overlanding
+            do not need to be a Peach State Off-Road &amp; Overlanding
             member, and you do not need an account to submit your
             vehicle.
           </p>
@@ -330,13 +484,14 @@ export default function FeaturedRigsPage() {
               <input
                 type="file"
                 name="photos"
-                accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif"
                 multiple
                 required
+                disabled={submitting}
                 onChange={(event) =>
                   handlePhotos(event.target.files)
                 }
-                className="block w-full cursor-pointer rounded-xl border border-white/15 bg-white/5 p-3 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#F28C52] file:px-4 file:py-2 file:font-bold file:text-black"
+                className="block w-full cursor-pointer rounded-xl border border-white/15 bg-white/5 p-3 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#F28C52] file:px-4 file:py-2 file:font-bold file:text-black disabled:opacity-50"
               />
             </label>
 
@@ -346,13 +501,18 @@ export default function FeaturedRigsPage() {
               </span>
 
               <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-white/50">
-                Maximum 8 MB each
+                Up to 50 MB original photo
               </span>
 
               <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-white/50">
-                JPG • PNG • WEBP • HEIC
+                JPG • PNG • WEBP • HEIC • HEIF
               </span>
             </div>
+
+            <p className="mt-3 text-sm text-white/50">
+              Large photos and iPhone HEIC images are automatically
+              optimized before submission.
+            </p>
 
             {photos.length > 0 && (
               <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-4">
@@ -371,6 +531,19 @@ export default function FeaturedRigsPage() {
                     </p>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {submitting && processingPhoto > 0 && (
+              <div className="mt-4 rounded-xl border border-[#F28C52]/30 bg-[#F28C52]/10 p-4">
+                <p className="font-bold text-[#F28C52]">
+                  Processing photo {processingPhoto} of {photos.length}...
+                </p>
+
+                <p className="mt-2 text-sm text-white/60">
+                  Please keep this page open while your photos
+                  are being prepared.
+                </p>
               </div>
             )}
           </FormSection>
@@ -398,7 +571,9 @@ export default function FeaturedRigsPage() {
               className="mt-5 w-full rounded-xl bg-[#F28C52] px-6 py-3.5 text-lg font-bold text-black transition hover:bg-[#C96A2C] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               {submitting
-                ? "Submitting Rig..."
+                ? processingPhoto > 0
+                  ? `Processing Photo ${processingPhoto} of ${photos.length}...`
+                  : "Submitting Rig..."
                 : "Submit My Rig"}
             </button>
           </div>

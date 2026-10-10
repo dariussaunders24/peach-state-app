@@ -1,6 +1,9 @@
+
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { createClient } from "@supabase/supabase-js";
+
+export const runtime = "nodejs";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -12,8 +15,9 @@ const supabaseAdmin = createClient(
 const TRAILHEAD_EMAIL = "thetrailheadinfo@gmail.com";
 const STORAGE_BUCKET = "trailhead-featured-rigs";
 
+const MIN_PHOTOS = 2;
 const MAX_PHOTOS = 4;
-const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8 MB per photo
+const MAX_FILE_SIZE = 8 * 1024 * 1024;
 
 const allowedTypes = [
   "image/jpeg",
@@ -23,11 +27,21 @@ const allowedTypes = [
   "image/heif",
 ];
 
+type ImageFormat = {
+  mime: string;
+  extension: string;
+};
+
 export async function POST(req: Request) {
   const uploadedPaths: string[] = [];
+  let submissionSaved = false;
 
   try {
     const formData = await req.formData();
+
+    // -----------------------------------------
+    // 1. Read application fields
+    // -----------------------------------------
 
     const name = getText(formData, "name");
     const email = getText(formData, "email");
@@ -44,7 +58,7 @@ export async function POST(req: Request) {
     const rigStory = getText(formData, "rig_story");
 
     // -----------------------------------------
-    // 1. Validate required fields
+    // 2. Validate required fields
     // -----------------------------------------
 
     if (
@@ -71,14 +85,17 @@ export async function POST(req: Request) {
     }
 
     // -----------------------------------------
-    // 2. Validate photos
+    // 3. Validate photo count
     // -----------------------------------------
 
     const photos = formData
       .getAll("photos")
-      .filter((item): item is File => item instanceof File && item.size > 0);
+      .filter(
+        (item): item is File =>
+          item instanceof File && item.size > 0
+      );
 
-    if (photos.length < 2) {
+    if (photos.length < MIN_PHOTOS) {
       return NextResponse.json(
         { error: "Please upload at least 2 vehicle photos." },
         { status: 400 }
@@ -87,85 +104,108 @@ export async function POST(req: Request) {
 
     if (photos.length > MAX_PHOTOS) {
       return NextResponse.json(
-        { error: `You may upload a maximum of ${MAX_PHOTOS} photos.` },
+        {
+          error: `You may upload a maximum of ${MAX_PHOTOS} photos.`,
+        },
         { status: 400 }
       );
     }
 
-    for (const photo of photos) {
-      if (!allowedTypes.includes(photo.type)) {
-        return NextResponse.json(
-          {
-            error:
-              "Photos must be JPG, PNG, WEBP, HEIC, or HEIF files.",
-          },
-          { status: 400 }
-        );
-      }
+    // -----------------------------------------
+    // 4. Validate photo sizes and formats
+    // -----------------------------------------
 
+    const validatedPhotos: {
+      file: File;
+      format: ImageFormat;
+    }[] = [];
+
+    for (const photo of photos) {
       if (photo.size > MAX_FILE_SIZE) {
         return NextResponse.json(
           {
-            error: "Each photo must be 8 MB or smaller.",
+            error:
+              `"${photo.name}" is larger than 8 MB after processing. ` +
+              "Please choose a smaller photo.",
           },
           { status: 400 }
         );
       }
+
+      const format = await detectImageFormat(photo);
+
+      if (!format || !allowedTypes.includes(format.mime)) {
+        return NextResponse.json(
+          {
+            error:
+              `"${photo.name}" is not a supported image. ` +
+              "Please upload JPG, PNG, WEBP, HEIC, or HEIF photos.",
+          },
+          { status: 400 }
+        );
+      }
+
+      validatedPhotos.push({ file: photo, format });
     }
 
     // -----------------------------------------
-    // 3. Generate submission ID
+    // 5. Generate submission ID
     // -----------------------------------------
 
     const submissionId = crypto.randomUUID();
 
     // -----------------------------------------
-    // 4. Upload photos to Supabase Storage
+    // 6. Upload photos to Supabase
     // -----------------------------------------
 
     const photoUrls: string[] = [];
 
-    for (let i = 0; i < photos.length; i++) {
-      const photo = photos[i];
+    for (let i = 0; i < validatedPhotos.length; i++) {
+      const { file, format } = validatedPhotos[i];
 
-      const extension =
-        getFileExtension(photo.name) ||
-        getExtensionFromMimeType(photo.type) ||
-        "jpg";
+      const storagePath =
+        `${submissionId}/` +
+        `${i + 1}-${crypto.randomUUID()}.${format.extension}`;
 
-      const storagePath = `${submissionId}/${i + 1}-${crypto.randomUUID()}.${extension}`;
+      const bytes = await file.arrayBuffer();
 
-      const bytes = await photo.arrayBuffer();
-
-      const { error: uploadError } = await supabaseAdmin.storage
-        .from(STORAGE_BUCKET)
-        .upload(storagePath, bytes, {
-          contentType: photo.type,
-          upsert: false,
-        });
+      const { error: uploadError } =
+        await supabaseAdmin.storage
+          .from(STORAGE_BUCKET)
+          .upload(storagePath, bytes, {
+            contentType: format.mime,
+            upsert: false,
+          });
 
       if (uploadError) {
-        console.error("Featured Rig photo upload error:", uploadError);
+        console.error(
+          "Featured Rig photo upload error:",
+          uploadError
+        );
 
         await cleanupUploads(uploadedPaths);
 
         return NextResponse.json(
-          { error: "Unable to upload vehicle photos." },
+          {
+            error:
+              "Unable to upload vehicle photos. Please try again.",
+          },
           { status: 500 }
         );
       }
 
       uploadedPaths.push(storagePath);
 
-      const { data: publicUrlData } = supabaseAdmin.storage
-        .from(STORAGE_BUCKET)
-        .getPublicUrl(storagePath);
+      const { data: publicUrlData } =
+        supabaseAdmin.storage
+          .from(STORAGE_BUCKET)
+          .getPublicUrl(storagePath);
 
       photoUrls.push(publicUrlData.publicUrl);
     }
 
     // -----------------------------------------
-    // 5. Save submission to database
+    // 7. Save submission to database
     // -----------------------------------------
 
     const { data: submission, error: submissionError } =
@@ -177,7 +217,6 @@ export async function POST(req: Request) {
           name,
           email,
           phone: phone || null,
-
           location,
 
           vehicle_year: vehicleYear,
@@ -204,13 +243,18 @@ export async function POST(req: Request) {
       await cleanupUploads(uploadedPaths);
 
       return NextResponse.json(
-        { error: "Unable to save your Featured Rig submission." },
+        {
+          error:
+            "Unable to save your Featured Rig submission.",
+        },
         { status: 500 }
       );
     }
 
+    submissionSaved = true;
+
     // -----------------------------------------
-    // 6. Build photo links for notification
+    // 8. Build notification email
     // -----------------------------------------
 
     const photoLinks = photoUrls
@@ -234,116 +278,143 @@ export async function POST(req: Request) {
       .join(" ");
 
     // -----------------------------------------
-    // 7. Send Trailhead notification email
+    // 9. Send notification email
     // -----------------------------------------
 
-    const { error: emailError } = await resend.emails.send({
-      from: "Peach State Off-Road <notifications@peachstateoffroad.com>",
-      to: TRAILHEAD_EMAIL,
-      replyTo: email,
-      subject: `Trailhead Featured Rig Submission — ${vehicleDisplay}`,
-      html: `
-        <div style="font-family:Arial,sans-serif;line-height:1.6;color:#222;max-width:700px;margin:auto;">
-          
-          <h2 style="margin-bottom:4px;">
-            New Trailhead Featured Rig Submission
-          </h2>
+    try {
+      const { error: emailError } =
+        await resend.emails.send({
+          from:
+            "Peach State Off-Road <notifications@peachstateoffroad.com>",
 
-          <p style="color:#666;margin-top:0;">
-            A new vehicle has been submitted for consideration for
-            The Trailhead Featured Rig Area.
-          </p>
+          to: TRAILHEAD_EMAIL,
+          replyTo: email,
 
-          <hr style="border:none;border-top:1px solid #ddd;margin:24px 0;" />
+          subject:
+            `Trailhead Featured Rig Submission — ${vehicleDisplay}`,
 
-          <h3>Applicant</h3>
+          html: `
+            <div style="
+              font-family:Arial,sans-serif;
+              line-height:1.6;
+              color:#222;
+              max-width:700px;
+              margin:auto;
+            ">
 
-          <p>
-            <strong>Name:</strong>
-            ${escapeHtml(name)}
-          </p>
+              <h2>
+                New Trailhead Featured Rig Submission
+              </h2>
 
-          <p>
-            <strong>Email:</strong>
-            ${escapeHtml(email)}
-          </p>
+              <p>
+                A new vehicle has been submitted for
+                consideration for The Trailhead
+                Featured Rig Area.
+              </p>
 
-          <p>
-            <strong>Phone:</strong>
-            ${escapeHtml(phone || "Not provided")}
-          </p>
+              <hr />
 
-          <p>
-            <strong>Location:</strong>
-            ${escapeHtml(location)}
-          </p>
+              <h3>Applicant</h3>
 
-          <hr style="border:none;border-top:1px solid #ddd;margin:24px 0;" />
+              <p>
+                <strong>Name:</strong>
+                ${escapeHtml(name)}
+              </p>
 
-          <h3>Vehicle</h3>
+              <p>
+                <strong>Email:</strong>
+                ${escapeHtml(email)}
+              </p>
 
-          <p>
-            <strong>Year:</strong>
-            ${escapeHtml(vehicleYear)}
-          </p>
+              <p>
+                <strong>Phone:</strong>
+                ${escapeHtml(phone || "Not provided")}
+              </p>
 
-          <p>
-            <strong>Make:</strong>
-            ${escapeHtml(vehicleMake)}
-          </p>
+              <p>
+                <strong>Location:</strong>
+                ${escapeHtml(location)}
+              </p>
 
-          <p>
-            <strong>Model:</strong>
-            ${escapeHtml(vehicleModel)}
-          </p>
+              <hr />
 
-          <p>
-            <strong>Vehicle Name:</strong>
-            ${escapeHtml(vehicleName || "Not provided")}
-          </p>
+              <h3>Vehicle</h3>
 
-          <p>
-            <strong>Instagram:</strong>
-            ${escapeHtml(instagram || "Not provided")}
-          </p>
+              <p>
+                <strong>Year:</strong>
+                ${escapeHtml(vehicleYear)}
+              </p>
 
-          <hr style="border:none;border-top:1px solid #ddd;margin:24px 0;" />
+              <p>
+                <strong>Make:</strong>
+                ${escapeHtml(vehicleMake)}
+              </p>
 
-          <h3>Build Details</h3>
+              <p>
+                <strong>Model:</strong>
+                ${escapeHtml(vehicleModel)}
+              </p>
 
-          <p style="white-space:pre-wrap;">
-            ${escapeHtml(buildDetails)}
-          </p>
+              <p>
+                <strong>Vehicle Name:</strong>
+                ${escapeHtml(vehicleName || "Not provided")}
+              </p>
 
-          <h3>Rig Story</h3>
+              <p>
+                <strong>Instagram:</strong>
+                ${escapeHtml(instagram || "Not provided")}
+              </p>
 
-          <p style="white-space:pre-wrap;">
-            ${escapeHtml(rigStory)}
-          </p>
+              <hr />
 
-          <h3>Vehicle Photos</h3>
+              <h3>Build Details</h3>
 
-          <ul>
-            ${photoLinks}
-          </ul>
+              <p style="white-space:pre-wrap;">
+                ${escapeHtml(buildDetails)}
+              </p>
 
-          <hr style="border:none;border-top:1px solid #ddd;margin:24px 0;" />
+              <h3>Rig Story</h3>
 
-          <p style="font-size:13px;color:#777;">
-            Submission ID: ${escapeHtml(submission.id)}
-          </p>
+              <p style="white-space:pre-wrap;">
+                ${escapeHtml(rigStory)}
+              </p>
 
-        </div>
-      `,
-    });
+              <h3>Vehicle Photos</h3>
 
-    // We keep the submission even if the notification email fails.
-    // That way a Resend problem never destroys someone's application.
+              <ul>
+                ${photoLinks}
+              </ul>
 
-    if (emailError) {
+              <hr />
+
+              <p style="
+                font-size:13px;
+                color:#777;
+              ">
+                Submission ID:
+                ${escapeHtml(submission.id)}
+              </p>
+
+            </div>
+          `,
+        });
+
+      if (emailError) {
+        console.error(
+          "Featured Rig notification email error:",
+          emailError
+        );
+
+        return NextResponse.json({
+          success: true,
+          warning:
+            "Your submission was saved, but the notification email could not be sent.",
+        });
+      }
+    } catch (emailException) {
       console.error(
-        "Featured Rig notification email error:",
-        emailError
+        "Featured Rig notification exception:",
+        emailException
       );
 
       return NextResponse.json({
@@ -353,18 +424,30 @@ export async function POST(req: Request) {
       });
     }
 
+    // -----------------------------------------
+    // 10. Success
+    // -----------------------------------------
+
     return NextResponse.json({
       success: true,
     });
   } catch (error) {
-    console.error("Featured Rig submission API error:", error);
+    console.error(
+      "Featured Rig submission API error:",
+      error
+    );
 
-    if (uploadedPaths.length > 0) {
+    // Never delete photos belonging to
+    // an already-saved submission.
+    if (!submissionSaved && uploadedPaths.length > 0) {
       await cleanupUploads(uploadedPaths);
     }
 
     return NextResponse.json(
-      { error: "Something went wrong submitting your rig." },
+      {
+        error:
+          "Something went wrong submitting your rig.",
+      },
       { status: 500 }
     );
   }
@@ -388,39 +471,118 @@ function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-function getFileExtension(filename: string) {
-  const parts = filename.split(".");
+// -----------------------------------------
+// Detect actual image format from file bytes
+// -----------------------------------------
 
-  if (parts.length < 2) {
-    return "";
+async function detectImageFormat(
+  file: File
+): Promise<ImageFormat | null> {
+  const header = new Uint8Array(
+    await file.slice(0, 32).arrayBuffer()
+  );
+
+  // JPEG
+  if (
+    header.length >= 3 &&
+    header[0] === 0xff &&
+    header[1] === 0xd8 &&
+    header[2] === 0xff
+  ) {
+    return {
+      mime: "image/jpeg",
+      extension: "jpg",
+    };
   }
 
-  return parts.pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "";
+  // PNG
+  if (
+    header.length >= 8 &&
+    header[0] === 0x89 &&
+    header[1] === 0x50 &&
+    header[2] === 0x4e &&
+    header[3] === 0x47 &&
+    header[4] === 0x0d &&
+    header[5] === 0x0a &&
+    header[6] === 0x1a &&
+    header[7] === 0x0a
+  ) {
+    return {
+      mime: "image/png",
+      extension: "png",
+    };
+  }
+
+  const ascii = (
+    start: number,
+    end: number
+  ) =>
+    String.fromCharCode(
+      ...header.slice(start, end)
+    );
+
+  // WEBP
+  if (
+    header.length >= 12 &&
+    ascii(0, 4) === "RIFF" &&
+    ascii(8, 12) === "WEBP"
+  ) {
+    return {
+      mime: "image/webp",
+      extension: "webp",
+    };
+  }
+
+  // HEIC / HEIF
+  if (
+    header.length >= 12 &&
+    ascii(4, 8) === "ftyp"
+  ) {
+    const brand = ascii(8, 12);
+
+    if (
+      [
+        "heic",
+        "heix",
+        "hevc",
+        "hevx",
+      ].includes(brand)
+    ) {
+      return {
+        mime: "image/heic",
+        extension: "heic",
+      };
+    }
+
+    if (
+      [
+        "mif1",
+        "msf1",
+      ].includes(brand)
+    ) {
+      return {
+        mime: "image/heif",
+        extension: "heif",
+      };
+    }
+  }
+
+  return null;
 }
 
-function getExtensionFromMimeType(type: string) {
-  switch (type) {
-    case "image/jpeg":
-      return "jpg";
-    case "image/png":
-      return "png";
-    case "image/webp":
-      return "webp";
-    case "image/heic":
-      return "heic";
-    case "image/heif":
-      return "heif";
-    default:
-      return "";
-  }
-}
+// -----------------------------------------
+// Cleanup incomplete uploads
+// -----------------------------------------
 
 async function cleanupUploads(paths: string[]) {
-  if (paths.length === 0) return;
+  if (paths.length === 0) {
+    return;
+  }
 
-  const { error } = await supabaseAdmin.storage
-    .from(STORAGE_BUCKET)
-    .remove(paths);
+  const { error } =
+    await supabaseAdmin.storage
+      .from(STORAGE_BUCKET)
+      .remove(paths);
 
   if (error) {
     console.error(
@@ -429,6 +591,10 @@ async function cleanupUploads(paths: string[]) {
     );
   }
 }
+
+// -----------------------------------------
+// Escape HTML for email safety
+// -----------------------------------------
 
 function escapeHtml(value: string) {
   return value
