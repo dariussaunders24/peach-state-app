@@ -44,11 +44,10 @@ const vendors = [
     url: "https://www.retevis.com",
   },
   {
-    name: "Allsouth Autosports",
-    discount: "Discount Code: Mention You Are A Peach State Member.",
-    description: "Shop Labor Discount. Off-road installs and upgrades.",
-    logo: "/vendors/allsouth.png",
-    url: "https://www.allsouthautosports.com",
+    name: "Atlanta Offroad Outfitters",
+    description: "Peach State's preferred shop for maintenance and modifications.",
+    logo: "/vendors/buildatl.png",
+    url: "https://atlantaoffroadoutfitters.com/",
   },
   {
     name: "Warrior Winches",
