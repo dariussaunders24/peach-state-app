@@ -45,7 +45,7 @@ const vendors = [
   },
   {
     name: "Atlanta Offroad Outfitters",
-    description: "Peach State's preferred shop for maintenance and modifications.",
+    description: "PSO's Preferred Atlanta Metro Area Shop Off-Road Modifications • Upgrades • Custom Builds",
     logo: "/vendors/buildatl.png",
     url: "https://atlantaoffroadoutfitters.com/",
   },
