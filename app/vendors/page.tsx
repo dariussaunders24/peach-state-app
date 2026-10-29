@@ -50,6 +50,12 @@ const vendors = [
     url: "https://atlantaoffroadoutfitters.com/",
   },
   {
+    name: "Revolution Auto Service",
+    description: "PSO's Preferred North Georgia Area Shop Off-Road Modifications • Upgrades • Custom Builds",
+    logo: "/vendors/revauto.png",
+    url: "https://www.revolutionautokennesaw.com/",
+  },
+  {
     name: "Warrior Winches",
     discount: "Discount Code: peachstate10",
     description:
